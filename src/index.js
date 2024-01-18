@@ -3,14 +3,15 @@ import ReactDOM from 'react-dom/client';
 import App from '~/App';
 import reportWebVitals from './reportWebVitals';
 import GlobalStype from '~/components/GlobalStyle';
+import './fontawesome';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <GlobalStype>
-    <App />
-    </GlobalStype>
-  </React.StrictMode>
+    <React.StrictMode>
+        <GlobalStype>
+            <App />
+        </GlobalStype>
+    </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function

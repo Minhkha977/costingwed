@@ -1,0 +1,17 @@
+.wrapper {
+    height: 80px;
+    background-color: #f9a825;
+    box-shadow: 0 -6px 10px 5px rgba(0, 0, 0, 0.5);
+}
+.inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.logo {
+    color: #fff;
+    height: 64px;
+}
+.title {
+}
