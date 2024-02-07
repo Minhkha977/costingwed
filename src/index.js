@@ -4,12 +4,27 @@ import App from '~/App';
 import reportWebVitals from './reportWebVitals';
 import GlobalStype from '~/components/GlobalStyle';
 import './fontawesome';
+import { EventType, PublicClientApplication } from '@azure/msal-browser';
+import { msalConfig } from './Config';
+
+const pca = new PublicClientApplication(msalConfig);
+
+if (!pca.getActiveAccount() && pca.getAllAccounts().length > 0) {
+    pca.setActiveAccount(pca.getActiveAccount()[0]);
+}
+
+pca.addEventCallback((event) => {
+    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
+        const account = event.payload.account;
+        pca.setActiveAccount(account);
+    }
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
         <GlobalStype>
-            <App />
+            <App msalInstance={pca} />
         </GlobalStype>
     </React.StrictMode>,
 );
