@@ -1,4 +1,4 @@
-import Header from "~/components/Layout/component/Header";
+import Header from '~/components/Header';
 
 function DefaultLayout({ children }) {
     return (
@@ -8,7 +8,7 @@ function DefaultLayout({ children }) {
                 <div className="contain">{children}</div>
             </div>
         </div>
-    )
+    );
 }
 
 export default DefaultLayout;

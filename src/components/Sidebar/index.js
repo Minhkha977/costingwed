@@ -3,19 +3,50 @@ import '@trendmicro/react-sidenav/dist/react-sidenav.css';
 import styles from './Sidebar.module.scss';
 import classNames from 'classnames/bind';
 import SideNav, { Toggle, Nav, NavItem, NavIcon, NavText } from '@trendmicro/react-sidenav';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { isVisible } from '@testing-library/user-event/dist/utils';
-import { Navbar, Tooltip } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import logo from '~/assets/images/logo.png';
+import styled from 'styled-components';
 import { Form } from 'react-bootstrap';
+import logo from '~/assets/images/logo.png';
+import { Link } from 'react-router-dom';
+import { colors } from '@mui/material';
 
 const cx = classNames.bind(styles);
+const NavHeader = styled.div`
+    display: ${(props) => (props.expanded ? 'block' : 'none')};
+    white-space: nowrap;
+    background-color: #db3d44;
+    color: #fff;
+
+    > * {
+        color: inherit;
+        background-color: inherit;
+    }
+`;
+
+const NavTitle = styled.div`
+    font-size: 2em;
+    line-height: 20px;
+    padding: 10px 0;
+`;
+
+// height: 20px + 4px = 24px;
+const NavSubTitle = styled.div`
+    font-size: 1em;
+    line-height: 20px;
+    padding-bottom: 4px;
+`;
+const NavInfoPane = styled.div`
+    float: left;
+    width: 100%;
+    padding: 10px 20px;
+    ${'' /* background-color: #eee; */}
+`;
+
 class Sidebar extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             isVisible: false,
+            unit: '1',
         };
     }
 
@@ -27,6 +58,30 @@ class Sidebar extends React.Component {
                         this.setState({ isVisible: !this.state.isVisible });
                     }}
                 ></SideNav.Toggle>
+                <NavHeader expanded={this.state.isVisible}>
+                    <NavTitle>
+                        <div>
+                            <Link to={'/'}>
+                                <img className={cx('logo')} src={logo} alt="japfa" />
+                            </Link>
+                        </div>
+                    </NavTitle>
+                </NavHeader>
+                {this.state.isVisible && (
+                    <NavInfoPane>
+                        <div>
+                            <Form.Select
+                                aria-label="Default select example"
+                                onChange={(event) => {
+                                    this.setState({ unit: event.target.value });
+                                }}
+                            >
+                                <option value="1">Heo</option>
+                                <option value="2">Gà</option>
+                            </Form.Select>
+                        </div>
+                    </NavInfoPane>
+                )}
                 <SideNav.Nav defaultSelected="/">
                     <NavItem eventKey="Unit">
                         <NavIcon>
@@ -48,9 +103,11 @@ class Sidebar extends React.Component {
                         // }
                     >
                         <NavIcon>
-                            <i class="fa fa-gear" style={{ fontSize: '1.5em' }} aria-hidden="false"></i>
+                            <i class="fa fa-gear" style={{ fontSize: '1.5em', color: 'black' }} aria-hidden="false"></i>
                         </NavIcon>
-                        <NavText>Cài đặt</NavText>
+                        <NavText>
+                            <a style={{ color: 'black' }}>Cài đặt</a>
+                        </NavText>
                         <NavItem eventKey="Setting/groupaccount" onSelect={() => this.props.navigate('/following')}>
                             <NavText>Nhóm tài khoản</NavText>
                         </NavItem>
