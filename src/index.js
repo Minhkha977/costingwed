@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '~/App';
 import reportWebVitals from './reportWebVitals';
-import GlobalStype from '~/components/GlobalStyle';
 import './fontawesome';
 import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from './Config';
@@ -23,9 +22,7 @@ pca.addEventCallback((event) => {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
-        <GlobalStype>
-            <App msalInstance={pca} />
-        </GlobalStype>
+        <App msalInstance={pca} />
     </React.StrictMode>,
 );
 

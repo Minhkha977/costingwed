@@ -1,0 +1,27 @@
+.App {
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.sidenav {
+    background-color: grey !important;
+    color: rgb(12, 64, 148);
+    width: 150;
+}
+
+.container {
+    margin: 10px 10px 20px 70px;
+    max-height: 90vh;
+    overflow: auto;
+    text-align: left;
+}
+.container {
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+}
+.container::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+@import 'https://fonts.googleapis.com/css?family=IBM+Plex+Sans+Condensed|IBM+Plex+Sans:400,600&display=swap';
+@import 'https://unpkg.com/carbon-components/css/carbon-components.min.css';

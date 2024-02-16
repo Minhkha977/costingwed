@@ -15,11 +15,10 @@ const WrapperView = () => {
     return (
         <Router>
             <div className="App">
-                <UnauthenticatedTemplate>
-                    {instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error))}
-                    {/* <button onClick={handleRedirect}>Sign up</button> */}
-                </UnauthenticatedTemplate>
                 <AuthenticatedTemplate>
+                    <button onClick={handleRedirect}>Sign up</button>
+                </AuthenticatedTemplate>
+                <UnauthenticatedTemplate>
                     <Routes>
                         {publicRoutes.map((route, index) => {
                             let Layout = DefaultLayout;
@@ -35,7 +34,7 @@ const WrapperView = () => {
                                     key={index}
                                     path={route.path}
                                     element={
-                                        <Layout>
+                                        <Layout title={route.title}>
                                             <Page />
                                         </Layout>
                                     }
@@ -43,7 +42,7 @@ const WrapperView = () => {
                             );
                         })}
                     </Routes>
-                </AuthenticatedTemplate>
+                </UnauthenticatedTemplate>
             </div>
         </Router>
     );

@@ -1,6 +1,7 @@
 .wrapper {
-    height: 80px;
-    background-color: #f9a825;
+    height: 64px;
+    background-color: grey;
+    max-height: 64px;
     box-shadow: 0 -6px 10px 5px rgba(0, 0, 0, 0.5);
 }
 .inner {
@@ -8,10 +9,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    color: #fff;
 }
 .logo {
     color: #fff;
-    height: 64px;
+    height: 30px;
+    margin-left: 70px;
 }
 .title {
+    color: #fff;
+    display: flex;
+    align-items: center;
 }
