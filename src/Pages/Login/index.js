@@ -8,12 +8,21 @@ import LoginIcon from '@mui/icons-material/Login';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import loginServices from '~/Services/Login';
+import { AuthenticatedTemplate, useMsal } from '@azure/msal-react';
+import { loginRequest } from '~/Config';
 
 const cx = classNames.bind(styles);
 
 function Login() {
     const [userName, setUserName] = useState('admin');
     const [passWord, setPassWord] = useState('123');
+    const { instance } = useMsal();
+
+    const activeAccount = instance.getActiveAccount();
+    console.log(activeAccount);
+    const handleRedirect = () => {
+        instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error));
+    };
     const handleOnChangeLogin = (name, pass) => {
         if (name != null) {
             setUserName(name);
@@ -55,15 +64,13 @@ function Login() {
                             className={cx('login-button')}
                             variant="contained"
                             endIcon={<LoginIcon />}
-                            onClick={(event) => handleOnClickLogin(event)}
-                        >
-                            Login
-                        </Button>
+                            // onClick={(event) => handleOnClickLogin(event)}
+                        ></Button>
                     </Form>
                     <div className="col-12 text-center mt-4">
                         <span className={cx('login-with')}>Or Login With</span>
                     </div>
-                    <button className={cx('social-login')}>
+                    <button className={cx('social-login')} onClick={handleRedirect}>
                         <FontAwesomeIcon icon="fa-brands fa-google-plus" />
                     </button>
                 </div>

@@ -2,9 +2,9 @@ import { LogLevel } from '@azure/msal-browser';
 
 export const msalConfig = {
     auth: {
-        clientId: 'd14ca098-eb8e-4cbb-a748-09ff6035c55f',
+        clientId: '91024f50-9a8b-4fb1-8b43-9fe7049c6eec',
         authority: 'https://login.microsoftonline.com/japfa.com',
-        redirectUri: 'http://localhost:3000/',
+        redirectUri: '/',
     },
     cache: {
         cacheLocation: 'sessionStorage', // This configures where your cache will be stored

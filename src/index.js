@@ -8,24 +8,25 @@ import { msalConfig } from './Config';
 
 const pca = new PublicClientApplication(msalConfig);
 
-if (!pca.getActiveAccount() && pca.getAllAccounts().length > 0) {
-    pca.setActiveAccount(pca.getActiveAccount()[0]);
-}
-
-pca.addEventCallback((event) => {
-    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
-        const account = event.payload.account;
-        pca.setActiveAccount(account);
+pca.initialize().then(() => {
+    if (!pca.getActiveAccount() && pca.getAllAccounts().length > 0) {
+        pca.setActiveAccount(pca.getActiveAccount()[0]);
     }
+
+    pca.addEventCallback((event) => {
+        if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
+            const account = event.payload.account;
+            pca.setActiveAccount(account);
+        }
+    });
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+        <React.StrictMode>
+            <App msalInstance={pca} />
+        </React.StrictMode>,
+    );
 });
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-    <React.StrictMode>
-        <App msalInstance={pca} />
-    </React.StrictMode>,
-);
-
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
