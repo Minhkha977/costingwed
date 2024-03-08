@@ -9,17 +9,17 @@ import { useEffect } from 'react';
 import '~/AppStyles.css';
 
 const WrapperView = () => {
-    const { instance } = useMsal();
-    const activeAccount = instance.getActiveAccount();
+    // const { instance } = useMsal();
+    // const activeAccount = instance.getActiveAccount();
 
     useEffect(() => {
         // if (activeAccount) window.location.replace('/login');
         return () => {};
     }, []);
-    console.log(activeAccount);
-    const handleRedirect = () => {
-        instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error));
-    };
+    // console.log(activeAccount);
+    // const handleRedirect = () => {
+    //     instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error));
+    // };
     return (
         <Router>
             <div className="App">

@@ -13,18 +13,24 @@ pca.initialize().then(() => {
         pca.setActiveAccount(pca.getActiveAccount()[0]);
     }
 
-    pca.addEventCallback((event) => {
-        if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
-            const account = event.payload.account;
-            pca.setActiveAccount(account);
-        }
-    });
+    pca.addEventCallback(
+        (event) => {
+            if (event.eventType === EventType.LOGIN_SUCCESS && event.payload.account) {
+                const account = event.payload.account;
+                pca.setActiveAccount(account);
+            }
+        },
+        (error) => {
+            console.log('error', error);
+        },
+    );
+    // console.log('get active account', pca.getActiveAccount());
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(
-        <React.StrictMode>
-            <App msalInstance={pca} />
-        </React.StrictMode>,
+        // <React.StrictMode>
+        <App msalInstance={pca} />,
+        // </React.StrictMode>,
     );
 });
 // If you want to start measuring performance in your app, pass a function

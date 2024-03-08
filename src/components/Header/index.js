@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styles from './Header.module.scss';
 import classNames from 'classnames/bind';
-import { settingRoutes, accountantRoutes } from '~/Routes';
+import { settingRoutes, accountantRoutes, reportRoutes, publicRoutes } from '~/Routes';
 import { Link, NavLink } from 'react-router-dom';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 // import AppBar from '@mui/material/AppBar';
@@ -43,8 +43,17 @@ import DrawIcon from '@mui/icons-material/Draw';
 import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import { useMsal, AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import Api from '~/DomainApi';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const cx = classNames.bind(styles);
+
 /**side PC */
 const drawerWidth = 240;
 
@@ -82,6 +91,10 @@ const DrawerPc = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open
     flexShrink: 0,
     whiteSpace: 'nowrap',
     boxSizing: 'border-box',
+    '.Mui-selected': {
+        color: '#ed6c02',
+        backgroundColor: '#f5e1d0',
+    },
     ...(open && {
         ...openedMixin(theme),
         '& .MuiDrawer-paper': openedMixin(theme),
@@ -148,8 +161,32 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
         },
     },
 }));
+// const headers = {
+//     'Content-Type': 'application/json',
+// };
 
 function Header() {
+    const { instance } = useMsal();
+    const activeAccount = instance.getActiveAccount();
+    const [dataUnit, setDataUnit] = React.useState([]);
+    React.useEffect(() => {
+        async function fetchData() {
+            try {
+                const response = await Api.get(`master/unit?username=${activeAccount.username}`);
+                setDataUnit(response.data);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        fetchData();
+    }, []);
+    const [valueUnit, setValueUnit] = React.useState(
+        localStorage.getItem('Unit') ? localStorage.getItem('Unit') : 'UN001',
+    );
+    const handleChangeUnit = (event) => {
+        setValueUnit(event.target.value);
+    };
+    localStorage.setItem('Unit', valueUnit);
     const location = useLocation();
     /**side pc */
     const theme = useTheme();
@@ -159,6 +196,11 @@ function Header() {
         setOpen(true);
     };
 
+    const handleLogout = () => {
+        setAnchorEl(null);
+        handleMobileMenuClose();
+        instance.logout();
+    };
     const handleDrawerClose = () => {
         setOpen(false);
     };
@@ -192,18 +234,7 @@ function Header() {
             onKeyDown={toggleDrawer(anchor, false)}
         >
             <List>
-                {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-                    <ListItem key={text} disablePadding>
-                        <ListItemButton oncl>
-                            <ListItemIcon>{index % 2 === 0 ? <HomeIcon /> : <MailIcon />}</ListItemIcon>
-                            <ListItemText primary={text} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-            <Divider />
-            <List>
-                {['All mail', 'Trash', 'Spam'].map((text, index) => (
+                {['Inbox'].map((text, index) => (
                     <ListItem key={text} disablePadding>
                         <ListItemButton>
                             <ListItemIcon>{index % 2 === 0 ? <HomeIcon /> : <MailIcon />}</ListItemIcon>
@@ -212,6 +243,164 @@ function Header() {
                     </ListItem>
                 ))}
             </List>
+            <Divider
+                sx={{
+                    backgroundColor: '#ed6c02',
+                }}
+            />
+            <ListItem key={'menu'} disablePadding sx={{ display: 'block' }} onClick={toggleDrawer('left', false)}>
+                <NavLink to={'/'} style={{ textDecoration: 'none', color: 'black' }}>
+                    <ListItemButton
+                        sx={{
+                            minHeight: 48,
+                            justifyContent: open ? 'initial' : 'center',
+                            px: 2.5,
+                        }}
+                        selected={location.pathname === '/' ? true : false}
+                    >
+                        <ListItemIcon
+                            sx={{
+                                minWidth: 0,
+                                mr: open ? 3 : 'auto',
+                                justifyContent: 'center',
+                                color: '#ed6c02',
+                            }}
+                        >
+                            {/* <HomeIcon /> */}
+                            <AssessmentIcon />
+                        </ListItemIcon>
+                        <ListItemText primary={'Dashboard'} sx={{ opacity: open ? 1 : 0 }} />
+                    </ListItemButton>
+                </NavLink>
+            </ListItem>
+            <Divider
+                sx={{
+                    backgroundColor: '#ed6c02',
+                }}
+            />
+            {settingRoutes.map((route, index) => {
+                return (
+                    <ListItem
+                        key={route.title}
+                        disablePadding
+                        sx={{ display: 'block' }}
+                        onClick={toggleDrawer('left', false)}
+                    >
+                        <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                            <ListItemButton
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                }}
+                                selected={location.pathname === route.path ? true : false}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                        color: '#ed6c02',
+                                    }}
+                                >
+                                    {index === 0 ? <GroupIcon /> : <PersonIcon />}
+                                </ListItemIcon>
+                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                            </ListItemButton>
+                        </NavLink>
+                    </ListItem>
+                );
+            })}
+            <Divider
+                sx={{
+                    backgroundColor: '#ed6c02',
+                }}
+            />
+            {accountantRoutes.map((route, index) => {
+                return (
+                    <ListItem
+                        key={route.title}
+                        disablePadding
+                        sx={{ display: 'block' }}
+                        onClick={toggleDrawer('left', false)}
+                    >
+                        <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                            <ListItemButton
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                }}
+                                selected={location.pathname === route.path ? true : false}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                        color: '#ed6c02',
+                                    }}
+                                >
+                                    {index === 0 ? (
+                                        <DrawIcon />
+                                    ) : index === 1 ? (
+                                        <ManageHistoryIcon />
+                                    ) : index === 2 ? (
+                                        <LockIcon />
+                                    ) : (
+                                        <LockOpenIcon />
+                                    )}
+                                </ListItemIcon>
+                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                            </ListItemButton>
+                        </NavLink>
+                    </ListItem>
+                );
+            })}
+
+            <Divider
+                sx={{
+                    backgroundColor: '#ed6c02',
+                }}
+            />
+            {reportRoutes.map((route, index) => {
+                return (
+                    <ListItem
+                        key={route.title}
+                        disablePadding
+                        sx={{ display: 'block' }}
+                        onClick={toggleDrawer('left', false)}
+                    >
+                        <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                            <ListItemButton
+                                sx={{
+                                    minHeight: 48,
+                                    justifyContent: open ? 'initial' : 'center',
+                                    px: 2.5,
+                                }}
+                                selected={location.pathname === route.path ? true : false}
+                            >
+                                <ListItemIcon
+                                    sx={{
+                                        minWidth: 0,
+                                        mr: open ? 3 : 'auto',
+                                        justifyContent: 'center',
+                                        color: '#ed6c02',
+                                    }}
+                                >
+                                    {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
+                                </ListItemIcon>
+                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                            </ListItemButton>
+                        </NavLink>
+                    </ListItem>
+                );
+            })}
+            <Divider
+                sx={{
+                    backgroundColor: '#ed6c02',
+                }}
+            />
         </Box>
     );
     /**App bar */
@@ -232,6 +421,7 @@ function Header() {
     const handleMenuClose = () => {
         setAnchorEl(null);
         handleMobileMenuClose();
+        // console.log('get account:', accountHomeId);
     };
 
     const handleMobileMenuOpen = (event) => {
@@ -287,7 +477,7 @@ function Header() {
                 </ListItemIcon>
                 Settings
             </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
+            <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                     <Logout fontSize="small" />
                 </ListItemIcon>
@@ -364,6 +554,7 @@ function Header() {
 
     return (
         <Box sx={{ flexGrow: 1 }}>
+            <ToastContainer stacked />
             <AppBar position="fixed" color="warning">
                 <Toolbar>
                     <IconButton
@@ -376,8 +567,11 @@ function Header() {
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h5" component="div" sx={{ display: { xs: 'block', sm: 'block' } }}>
+                    <Typography variant="h5" component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
                         Go Direct GL
+                    </Typography>
+                    <Typography variant="h5" component="div" sx={{ display: { xs: 'block', sm: 'none' } }}>
+                        GD GL
                     </Typography>
                     {/* <Search>
                         <SearchIconWrapper>
@@ -387,6 +581,54 @@ function Header() {
                     </Search> */}
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: 'flex', md: 'flex' } }}>
+                        <FormControl
+                            sx={{
+                                m: 1,
+                                // minWidth: 100,
+                                // maxWidth: 200,
+                                width: '100%',
+                                // height: 48,
+                                paddingTop: 0.5,
+                                marginRight: 2,
+                            }}
+                            size="small"
+                        >
+                            <Select
+                                labelId="demo-simple-select-helper-label"
+                                id="demo-simple-select-helper"
+                                value={valueUnit}
+                                // label="Age"
+                                displayEmpty
+                                onChange={handleChangeUnit}
+                                sx={{
+                                    backgroundColor: 'white',
+                                }}
+                            >
+                                
+                                {dataUnit.map((unit) => {
+                                    return (
+                                        <MenuItem key={unit.unit_code} value={unit.unit_code}>
+                                            {unit.unit_name}
+                                        </MenuItem>
+                                    );
+                                })}
+                            </Select>
+                        </FormControl>
+                        <Typography
+                            variant="h7"
+                            component="div"
+                            sx={{
+                                display: { xs: 'none', sm: 'flex' },
+                                width: '100%',
+                                // textAlign: 'center',
+                                alignItems: 'center',
+                                // whiteSpace: 'nowrap',
+                                // overflow: 'hidden',
+                                // textOverflow: 'ellipsis',
+                            }}
+                        >
+                            {activeAccount.username}
+                        </Typography>
                         {/* <IconButton size="large" aria-label="show 4 new mails" color="inherit">
                             <Badge badgeContent={4} color="error">
                                 <MailIcon />
@@ -442,7 +684,14 @@ function Header() {
                     </IconButton>
                 </DrawerHeader>
                 <Divider />
-                <List>
+                <List
+                // sx={{
+                //     '.Mui-selected': {
+                //         color: '#ed6c02',
+                //         backgroundColor: '#f5e1d0',
+                //     },
+                // }}
+                >
                     <ListItem
                         key={'menu'}
                         disablePadding
@@ -463,15 +712,21 @@ function Header() {
                                         minWidth: 0,
                                         mr: open ? 3 : 'auto',
                                         justifyContent: 'center',
+                                        color: '#ed6c02',
                                     }}
                                 >
-                                    <HomeIcon />
+                                    {/* <HomeIcon /> */}
+                                    <AssessmentIcon />
                                 </ListItemIcon>
-                                <ListItemText primary={'Home'} sx={{ opacity: open ? 1 : 0 }} />
+                                <ListItemText primary={'Dashboard'} sx={{ opacity: open ? 1 : 0 }} />
                             </ListItemButton>
                         </NavLink>
                     </ListItem>
-                    <Divider />
+                    <Divider
+                        sx={{
+                            backgroundColor: '#ed6c02',
+                        }}
+                    />
                     {settingRoutes.map((route, index) => {
                         return (
                             <ListItem
@@ -494,6 +749,7 @@ function Header() {
                                                 minWidth: 0,
                                                 mr: open ? 3 : 'auto',
                                                 justifyContent: 'center',
+                                                color: '#ed6c02',
                                             }}
                                         >
                                             {index === 0 ? <GroupIcon /> : <PersonIcon />}
@@ -504,7 +760,11 @@ function Header() {
                             </ListItem>
                         );
                     })}
-                    <Divider />
+                    <Divider
+                        sx={{
+                            backgroundColor: '#ed6c02',
+                        }}
+                    />
                     {accountantRoutes.map((route, index) => {
                         return (
                             <ListItem
@@ -527,6 +787,7 @@ function Header() {
                                                 minWidth: 0,
                                                 mr: open ? 3 : 'auto',
                                                 justifyContent: 'center',
+                                                color: '#ed6c02',
                                             }}
                                         >
                                             {index === 0 ? (
@@ -545,8 +806,51 @@ function Header() {
                             </ListItem>
                         );
                     })}
+
+                    <Divider
+                        sx={{
+                            backgroundColor: '#ed6c02',
+                        }}
+                    />
+                    {reportRoutes.map((route, index) => {
+                        return (
+                            <ListItem
+                                key={route.title}
+                                disablePadding
+                                sx={{ display: 'block' }}
+                                onClick={toggleDrawer('left', false)}
+                            >
+                                <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                                    <ListItemButton
+                                        sx={{
+                                            minHeight: 48,
+                                            justifyContent: open ? 'initial' : 'center',
+                                            px: 2.5,
+                                        }}
+                                        selected={location.pathname === route.path ? true : false}
+                                    >
+                                        <ListItemIcon
+                                            sx={{
+                                                minWidth: 0,
+                                                mr: open ? 3 : 'auto',
+                                                justifyContent: 'center',
+                                                color: '#ed6c02',
+                                            }}
+                                        >
+                                            {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
+                                        </ListItemIcon>
+                                        <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                    </ListItemButton>
+                                </NavLink>
+                            </ListItem>
+                        );
+                    })}
+                    <Divider
+                        sx={{
+                            backgroundColor: '#ed6c02',
+                        }}
+                    />
                 </List>
-                <Divider />
             </DrawerPc>
         </Box>
     );

@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import LoginIcon from '@mui/icons-material/Login';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
-import loginServices from '~/Services/Login';
 import { AuthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from '~/Config';
 
@@ -19,7 +18,12 @@ function Login() {
     const { instance } = useMsal();
 
     const activeAccount = instance.getActiveAccount();
-    console.log(activeAccount);
+    // console.log(activeAccount);
+    if (activeAccount) {
+        const userName = activeAccount.username.split('@');
+        localStorage.setItem('UserName', userName[0]);
+    }
+
     const handleRedirect = () => {
         instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error));
     };
@@ -32,7 +36,6 @@ function Login() {
         }
     };
     const handleOnClickLogin = () => {
-        loginServices(userName, passWord);
         console.log({ userName, passWord });
     };
 

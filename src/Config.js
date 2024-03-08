@@ -5,6 +5,7 @@ export const msalConfig = {
         clientId: '91024f50-9a8b-4fb1-8b43-9fe7049c6eec',
         authority: 'https://login.microsoftonline.com/japfa.com',
         redirectUri: '/',
+        postLogoutRedirectUri: '/',
     },
     cache: {
         cacheLocation: 'sessionStorage', // This configures where your cache will be stored
@@ -18,16 +19,16 @@ export const msalConfig = {
                 }
                 switch (level) {
                     case LogLevel.Error:
-                        console.error(message);
+                        // console.error(message);
                         return;
                     case LogLevel.Info:
-                        console.info(message);
+                        // console.info(message);
                         return;
                     case LogLevel.Verbose:
-                        console.debug(message);
+                        // console.debug(message);
                         return;
                     case LogLevel.Warning:
-                        console.warn(message);
+                        // console.warn(message);
                         return;
                     default:
                         return;
