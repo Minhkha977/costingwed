@@ -23,7 +23,7 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import SearchIcon from '@mui/icons-material/Search';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
-import ApiToken from '~/Pages/Login/ApiToken';
+import ApiToken from '~/components/Api/ApiToken';
 import { ApiListAccountGroup } from './ApiAccountGroup';
 
 function handleClick(event) {

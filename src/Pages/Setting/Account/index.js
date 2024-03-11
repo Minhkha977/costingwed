@@ -33,7 +33,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import { ToastContainer, toast } from 'react-toastify';
 import DomainApi from '~/DomainApi';
 import AlertDialog from '~/components/AlertDialog';
-import ApiToken from '~/Pages/Login/ApiToken';
+import ApiToken from '~/components/Api/ApiToken';
 
 function handleClick(event) {
     event.preventDefault();
@@ -218,10 +218,10 @@ function Account({ title }) {
             // !valueCode ||
             !valueCodeMain ||
             !valueCodeSub ||
-            !valueName ||
-            !valueDescription ||
-            !valueGroupCost ||
-            !valueTypeCost
+            !valueName
+            // !valueDescription
+            // !valueGroupCost ||
+            // !valueTypeCost
             // !checked
         ) {
             toast.error(' Main code, sub code, name, description, group code, type code is empty!');
@@ -232,7 +232,14 @@ function Account({ title }) {
 
     useEffect(() => {
         async function fetchData() {
-            if (valueCodeMain && valueCodeSub && valueName && valueGroupCost && valueTypeCost && valueDescription) {
+            if (
+                valueCodeMain &&
+                valueCodeSub &&
+                valueName
+                //  && valueGroupCost
+                //  && valueTypeCost
+                // valueDescription
+            ) {
                 try {
                     setIsLoading(true);
                     const header = {
@@ -287,10 +294,10 @@ function Account({ title }) {
             // !valueCode ||
             !valueCodeMain ||
             !valueCodeSub ||
-            !valueName ||
-            !valueDescription ||
-            !valueGroupCost ||
-            !valueTypeCost
+            !valueName
+            // !valueDescription ||
+            // !valueGroupCost ||
+            // !valueTypeCost
             // !checked
         ) {
             toast.error(' Main code, sub code, name, description, group code, type code is empty!');
@@ -301,7 +308,14 @@ function Account({ title }) {
 
     useEffect(() => {
         async function fetchData() {
-            if (valueCodeMain && valueCodeSub && valueName && valueGroupCost && valueTypeCost && valueDescription) {
+            if (
+                valueCodeMain &&
+                valueCodeSub &&
+                valueName
+                // && valueGroupCost
+                // && valueTypeCost
+                // && valueDescription
+            ) {
                 try {
                     setIsLoading(true);
                     const header = {
@@ -503,7 +517,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="div-h5">
-                                                    <h6>Main Acc code:</h6>
+                                                    <h6>Main Account:</h6>
                                                 </div>
                                                 <TextField
                                                     id="field-code-main"
@@ -520,7 +534,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="div-h5">
-                                                    <h6>Sub Acc code:</h6>
+                                                    <h6>Sub Account:</h6>
                                                 </div>
                                                 <TextField
                                                     id="field-code-sub"
