@@ -25,7 +25,7 @@ const WrapperView = () => {
             <div className="App">
                 <UnauthenticatedTemplate>
                     <Routes>
-                        <Route path="/" Component={Login}></Route>
+                        <Route exact path="/" element={<Login />} />
                     </Routes>
                 </UnauthenticatedTemplate>
                 <AuthenticatedTemplate>

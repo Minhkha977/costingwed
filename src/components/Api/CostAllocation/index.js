@@ -1,0 +1,180 @@
+import { headers } from 'next/headers';
+import { toast } from 'react-toastify';
+import DomainApi from '~/DomainApi';
+
+export async function ApiCostAllocationListHeader(valueStatus, setDataListCostAllocationHeader) {
+    try {
+        let url = `journal/cost-allocation/unitcode/${localStorage.getItem('Unit')}?username=${localStorage.getItem(
+            'UserName',
+        )}`;
+        if (valueStatus) {
+            url += `&status=${valueStatus}`;
+        }
+        const response = await DomainApi.get(url);
+        setDataListCostAllocationHeader(response.data);
+    } catch (error) {
+        console.log(error);
+        if (error.response) {
+            toast.error(' Error api get data CostAllocation list! \n' + error.response.data);
+        } else {
+            toast.error(' Error api get data CostAllocation list! \n' + error.message);
+        }
+    }
+}
+
+export async function ApiCreateCostAllocationHeader(
+    access_token,
+    valueDescription,
+    valueCurrency,
+    valueAccountGroup,
+    valueDebitEntry,
+    valueCreditEntry,
+    valueUser,
+    modelDetail,
+) {
+    if (access_token && valueUser && valueDescription) {
+        try {
+            var statusCode = false;
+            const header = {
+                Authorization: access_token,
+            };
+            const model = {
+                description: valueDescription,
+                currency: valueCurrency,
+                acc_group: valueAccountGroup,
+                debit_entry: valueDebitEntry,
+                credit_entry: valueCreditEntry,
+                detail: modelDetail,
+            };
+            let url = `journal/cost-allocation/unitcode/${localStorage.getItem('Unit')}/new?username=${valueUser}`;
+            const response = await DomainApi.post(url, model, { headers: header });
+            // setDataAEListHeader(response.data);
+            toast.success(' Success create new cost allocation!');
+            statusCode = true;
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                toast.error(' Error api create cost allocation! \n' + error.response.data);
+            } else {
+                toast.error(' Error api create cost allocation! \n' + error.message);
+            }
+            statusCode = false;
+        }
+        return statusCode;
+    }
+}
+
+export async function ApiUpdateCostAllocationHeader(
+    access_token,
+    valueAllocationCode,
+    valueDescription,
+    valueCurrency,
+    valueAccountGroup,
+    valueDebitEntry,
+    valueCreditEntry,
+    valueUser,
+    modelDetail,
+) {
+    if (access_token && valueUser && valueDescription) {
+        try {
+            var statusCode = false;
+            const header = {
+                Authorization: access_token,
+            };
+            const model = {
+                description: valueDescription,
+                currency: valueCurrency,
+                acc_group: valueAccountGroup,
+                debit_entry: valueDebitEntry,
+                credit_entry: valueCreditEntry,
+                details: modelDetail,
+            };
+
+            let url = `journal/cost-allocation/unitcode/${localStorage.getItem(
+                'Unit',
+            )}/docno/${valueAllocationCode}/update?username=${valueUser}`;
+            const response = await DomainApi.put(url, model, { headers: header });
+            // setDataAEListHeader(response.data);
+            toast.success(' Success update cost allocation!');
+            statusCode = true;
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                toast.error(' Error api update cost allocation! \n' + error.response.data);
+            } else {
+                toast.error(' Error api update cost allocation! \n' + error.message);
+            }
+            statusCode = false;
+        }
+        return statusCode;
+    }
+}
+
+export async function ApiCostAllocationListDetail(valueDocCode, setDataListCostAllocationDetail) {
+    try {
+        let url = `journal/cost-allocation/unitcode/${localStorage.getItem(
+            'Unit',
+        )}/docno/${valueDocCode}/detail?username=${localStorage.getItem('UserName')}`;
+        const response = await DomainApi.get(url);
+        setDataListCostAllocationDetail(response.data);
+    } catch (error) {
+        console.log(error);
+        if (error.response) {
+            toast.error(' Error api get data CostAllocation list! \n' + error.response.data);
+        } else {
+            toast.error(' Error api get data CostAllocation list! \n' + error.message);
+        }
+    }
+}
+
+export async function ApiProcessCostAllocation(access_token, valueDocCode) {
+    if (valueDocCode) {
+        try {
+            var statusCode = false;
+            const header = {
+                Authorization: access_token,
+            };
+            let url = `journal/cost-allocation/unitcode/${localStorage.getItem(
+                'Unit',
+            )}/docno/${valueDocCode}/run?username=${localStorage.getItem('UserName')}`;
+            const response = await DomainApi.put(url, null, { headers: header });
+            toast.success(' Success process!');
+            statusCode = true;
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                toast.error(' Error api process! \n' + error.response.data);
+            } else {
+                toast.error(' Error api process! \n' + error.message);
+            }
+            statusCode = false;
+        }
+        return statusCode;
+    }
+}
+
+export async function ApiPauseCostAllocation(access_token, valueDocCode) {
+    if (valueDocCode) {
+        try {
+            var statusCode = false;
+            const header = {
+                Authorization: access_token,
+            };
+            let url = `journal/cost-allocation/unitcode/${localStorage.getItem(
+                'Unit',
+            )}/docno/${valueDocCode}/pause?username=${localStorage.getItem('UserName')}`;
+            const response = await DomainApi.put(url, null, { headers: header });
+            toast.success(' Success pause!');
+            statusCode = true;
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                toast.error(' Error api pause! \n' + error.response.data);
+            } else {
+                toast.error(' Error api pause! \n' + error.message);
+            }
+            statusCode = false;
+        }
+        return statusCode;
+    }
+}

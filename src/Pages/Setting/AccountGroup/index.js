@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
@@ -9,27 +8,21 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Stack from '@mui/material/Stack';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableRow from '@mui/material/TableRow';
 import Form from 'react-bootstrap/Form';
 import { DataGrid } from '@mui/x-data-grid';
-import './AccountGroupStyles.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import DomainApi from '~/DomainApi';
-import { useMsal, AuthenticatedTemplate, UnauthenticatedTemplate } from '@azure/msal-react';
 import AlertDialog from '~/components/AlertDialog';
 import LoadingButton from '@mui/lab/LoadingButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import SearchIcon from '@mui/icons-material/Search';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import ApiToken from '~/components/Api/ApiToken';
-import { ApiListAccountGroup } from './ApiAccountGroup';
+import { ApiCreateAccountGroup, ApiListAccountGroup, ApiUpdateAccountGroup } from '~/components/Api/AccountGroup';
+import SaveIcon from '@mui/icons-material/Save';
 
-function handleClick(event) {
-    event.preventDefault();
-    console.info('You clicked a breadcrumb.');
-}
+import TextField from '@mui/material/TextField';
+
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
     ...theme.typography.body2,
@@ -39,20 +32,25 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-function createData(name, calories, fat, carbs, protein) {
-    return { name, calories, fat, carbs, protein };
-}
+// function TextField({ readOnly, ...props }) {
+//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
+// }
 
 const columns = [
-    { field: 'gr_acc_code', headerName: 'Group Code', minWidth: 120 },
-    { field: 'gr_acc_name', headerName: 'Group Name', flex: 0.5, minWidth: 200 },
+    { field: 'gr_acc_code', headerName: 'Group Code', minWidth: 120, headerClassName: 'super-app-theme--header' },
+    {
+        field: 'gr_acc_name',
+        headerName: 'Group Name',
+        flex: 0.5,
+        minWidth: 200,
+        headerClassName: 'super-app-theme--header',
+    },
     {
         field: 'description',
         headerName: 'Description',
-        // type: 'number',
         flex: 1,
         minWidth: 200,
-        // width: 300,
+        headerClassName: 'super-app-theme--header',
     },
 ];
 
@@ -77,12 +75,17 @@ function Account({ title }) {
             {
                 selectedRowsData.map((key) => {
                     setValueCode(key.gr_acc_code);
-                    setValueName(key.gr_acc_name);
-                    setValueDescription(key.description);
+                    setValueName(key.gr_acc_name ?? '');
+                    setValueDescription(key.description ?? '');
                 });
+                // setValueReadonly(true);
+                setValueReadonlyCode(true);
+                // setValueDisableSaveButton(true);
             }
         }
     };
+
+    /* #region  call api new */
     const [dialogIsOpenNew, setDialogIsOpenNew] = React.useState(false);
     const [dialogIsOpenUpdate, setDialogIsOpenUpdate] = React.useState(false);
     const [callApiNew, setCallApiNew] = React.useState(false);
@@ -90,47 +93,29 @@ function Account({ title }) {
         setDialogIsOpenNew(false);
         setCallApiNew(!callApiNew);
     };
-    useEffect(() => {
-        async function fetchData() {
-            if (valueCode && valueName && valueDescription) {
-                try {
-                    setIsLoading(true);
-                    const header = {
-                        Authorization: access_token,
-                    };
-                    const model = {
-                        gr_acc_code: valueCode,
-                        gr_acc_name: valueName,
-                        description: valueDescription,
-                    };
-                    const response = await DomainApi.post(
-                        `master/group-account/new?username=${localStorage.getItem(
-                            'UserName',
-                        )}&unitcode=${localStorage.getItem('Unit')}`,
-                        model,
-                        { headers: header },
-                    );
-                    console.log(response);
-                    setIsLoading(false);
-                    setReloadListAccGroup(!reloadListAccGroup);
-                    toast.success(' Success create new account group!');
-                } catch (error) {
-                    setIsLoading(false);
-                    console.log('>>Error: ', error);
-                    if (error.response) {
-                        toast.error(error.response.data);
-                    } else {
-                        toast.error(error.message);
-                    }
-                }
-            }
-        }
-        fetchData();
-    }, [callApiNew]);
     const closeDialogNew = () => {
         setDialogIsOpenNew(false);
         toast.warning(' Cancel create new!');
     };
+    const asyncApiCreateAccountGroup = async () => {
+        setIsLoading(true);
+        const statusCode = await ApiCreateAccountGroup(access_token, valueCode, valueName, valueDescription);
+        if (statusCode) {
+            setValueCode('');
+            setValueName('');
+            setValueDescription('');
+            setIsLoading(false);
+            setValueNewButton(false);
+            setValueDisableSaveButton(true);
+        }
+        setReloadListAccGroup(!reloadListAccGroup);
+    };
+
+    useEffect(() => {
+        asyncApiCreateAccountGroup();
+    }, [callApiNew]);
+    /* #endregion */
+
     const handleOnChangeValueCode = (event) => {
         setValueCode(event.target.value);
     };
@@ -140,21 +125,10 @@ function Account({ title }) {
     const handleOnChangeValueDescription = (event) => {
         setValueDescription(event.target.value);
     };
-    const handleOnClickNew = () => {
-        if (!valueCode || !valueName || !valueDescription) {
-            toast.error(' Code, name, description is empty!');
-            return;
-        }
-        setDialogIsOpenNew(true);
-    };
+
+    /* #region  call api update */
     const [callApiUpdate, setCallApiUpdate] = React.useState(false);
-    const handleOnClickUpdate = () => {
-        if (!valueCode || !valueName || !valueDescription) {
-            toast.error(' Code, name, description is empty!');
-            return;
-        }
-        setDialogIsOpenUpdate(true);
-    };
+
     const agreeDialogUpdate = () => {
         setDialogIsOpenUpdate(false);
         setCallApiUpdate(!callApiUpdate);
@@ -165,44 +139,66 @@ function Account({ title }) {
     };
 
     useEffect(() => {
-        async function fetchData() {
-            if (valueCode && valueName && valueDescription) {
-                try {
-                    setIsLoading(true);
-                    const header = {
-                        Authorization: access_token,
-                    };
-                    const model = {
-                        gr_acc_code: valueCode,
-                        gr_acc_name: valueName,
-                        description: valueDescription,
-                    };
-                    const response = await DomainApi.put(
-                        `master/group-account/update?username=${localStorage.getItem(
-                            'UserName',
-                        )}&unitcode=${localStorage.getItem('Unit')}`,
-                        model,
-                        { headers: header },
-                    );
-                    setReloadListAccGroup(!reloadListAccGroup);
-                    toast.success(' Success update account group!');
-                    setIsLoading(false);
-                } catch (error) {
-                    setIsLoading(false);
-                    console.log('>>Error: ', error);
-                    if (error.response) {
-                        toast.error(error.response.data);
-                    } else {
-                        toast.error(error.message);
-                    }
-                }
+        const asyncApiUpdateAccountGroup = async () => {
+            setIsLoading(true);
+            const statusCode = await ApiUpdateAccountGroup(access_token, valueCode, valueName, valueDescription);
+            if (statusCode) {
+                setValueUpdateButton(false);
+                setValueDisableSaveButton(true);
             }
-        }
-        fetchData();
+            setIsLoading(false);
+            setReloadListAccGroup(!reloadListAccGroup);
+        };
+        asyncApiUpdateAccountGroup();
     }, [callApiUpdate]);
     const handleOnChangeValueSearch = (event) => {
         setValueSearch(event.target.value);
     };
+    /* #endregion */
+
+    const [valueReadonly, setValueReadonly] = React.useState(true);
+    const [valueReadonlyCode, setValueReadonlyCode] = React.useState(true);
+
+    /* #region  button new */
+
+    const [valueNewButton, setValueNewButton] = React.useState(false);
+    const handleOnClickNew = () => {
+        setValueNewButton(true);
+        setValueUpdateButton(false);
+        setValueCode('');
+        setValueName('');
+        setValueDescription('');
+        setValueReadonly(false);
+        setValueReadonlyCode(false);
+        setValueDisableSaveButton(false);
+    };
+    /* #endregion */
+
+    /* #region  button update */
+    const [valueUpdateButton, setValueUpdateButton] = React.useState(false);
+    const handleOnClickUpdate = () => {
+        setValueNewButton(false);
+        setValueUpdateButton(true);
+        setValueReadonlyCode(true);
+        setValueReadonly(false);
+        setValueDisableSaveButton(false);
+    };
+    /* #endregion */
+
+    const [valueDisableSaveButton, setValueDisableSaveButton] = React.useState(true);
+    const handleClickSave = (event) => {
+        if (valueCode && valueName) {
+            if (valueNewButton) {
+                setDialogIsOpenNew(true);
+            }
+            if (valueUpdateButton) {
+                setDialogIsOpenUpdate(true);
+            }
+        } else {
+            toast.error(' Empty group code, name!');
+        }
+    };
+
     return (
         <div className="main">
             <ToastContainer />
@@ -228,13 +224,20 @@ function Account({ title }) {
                 onClose={closeDialogUpdate}
                 onAgree={agreeDialogUpdate}
             />
-            <div role="presentation" onClick={handleClick}>
+            <div role="presentation">
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
                     <Typography color="text.primary">{title}</Typography>
                 </Breadcrumbs>
             </div>
-            <Box sx={{ flexGrow: 1 }}>
+            <Box
+                sx={{
+                    flexGrow: 1,
+                    '& .super-app-theme--header': {
+                        backgroundColor: '#ffc696',
+                    },
+                }}
+            >
                 <Grid container direction={'row'} spacing={1}>
                     <Grid xs={12} md={6}>
                         <Item>
@@ -243,7 +246,7 @@ function Account({ title }) {
                                     id="outlined-basic"
                                     variant="outlined"
                                     fullWidth
-                                    label="Search"
+                                    label="Search group code"
                                     size="small"
                                     type="number"
                                     value={valueSearch}
@@ -278,6 +281,8 @@ function Account({ title }) {
                                         }}
                                         pageSizeOptions={[3, 5, 10, 15]}
                                         autoHeight
+                                        showCellVerticalBorder
+                                        showColumnVerticalBorder
                                         loading={isLoading}
                                         onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
                                         // checkboxSelection
@@ -313,6 +318,8 @@ function Account({ title }) {
                                         variant="contained"
                                         color="success"
                                         onClick={handleOnClickNew}
+                                        loading={valueNewButton}
+                                        loadingPosition="start"
                                     >
                                         New
                                     </LoadingButton>
@@ -321,8 +328,19 @@ function Account({ title }) {
                                         variant="contained"
                                         color="warning"
                                         onClick={handleOnClickUpdate}
+                                        loading={valueUpdateButton}
+                                        loadingPosition="start"
                                     >
                                         Update
+                                    </LoadingButton>
+                                    <LoadingButton
+                                        startIcon={<SaveIcon />}
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={handleClickSave}
+                                        disabled={valueDisableSaveButton}
+                                    >
+                                        Save
                                     </LoadingButton>
                                 </Stack>
                             </Stack>
@@ -342,6 +360,7 @@ function Account({ title }) {
                                                 value={valueCode}
                                                 onChange={(event) => handleOnChangeValueCode(event)}
                                                 placeholder="xxxx"
+                                                disabled={valueReadonlyCode}
                                             />
                                         </Stack>
                                         <Stack direction={'row'} spacing={0}>
@@ -357,6 +376,7 @@ function Account({ title }) {
                                                 value={valueName}
                                                 onChange={(event) => handleOnChangeValueName(event)}
                                                 placeholder="name..."
+                                                disabled={valueReadonly}
                                             />
                                         </Stack>
                                         <Stack direction={'row'} spacing={0}>
@@ -371,6 +391,7 @@ function Account({ title }) {
                                                 onChange={(event) => handleOnChangeValueDescription(event)}
                                                 rows={2}
                                                 placeholder="..."
+                                                disabled={valueReadonly}
                                             />
                                         </Stack>
                                     </Stack>

@@ -1,6 +1,12 @@
 import { LogLevel } from '@azure/msal-browser';
 
 export const msalConfig = {
+    // auth: {
+    //     clientId: '91024f50-9a8b-4fb1-8b43-9fe7049c6eec',
+    //     authority: 'https://login.microsoftonline.com/japfa.com',
+    //     redirectUri: 'https://gdsouth.japfa.com.vn:62451/',
+    //     postLogoutRedirectUri: 'https://gdsouth.japfa.com.vn:62451/',
+    // },
     auth: {
         clientId: '91024f50-9a8b-4fb1-8b43-9fe7049c6eec',
         authority: 'https://login.microsoftonline.com/japfa.com',

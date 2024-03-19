@@ -1,11 +1,8 @@
-import Header from '~/components/Header';
-import Sidebar from '~/components/Sidebar';
+import Header from '~/components/Layout/Header';
 import { useNavigate } from 'react-router-dom';
-import styles from '~/components/Sidebar/Sidebar.module.scss';
 import classNames from 'classnames/bind';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 
-const cx = classNames.bind(styles);
 const DrawerHeader = styled('div')(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
@@ -15,13 +12,11 @@ const DrawerHeader = styled('div')(({ theme }) => ({
     ...theme.mixins.toolbar,
 }));
 function DefaultLayout({ children, title }) {
-    const navigate = useNavigate();
     return (
         <div>
             <Header title={title} />
             <DrawerHeader />
-            {/* <Sidebar navigate={navigate} /> */}
-            <div className={cx('container')}>{children}</div>
+            <div className={'container'}>{children}</div>
         </div>
     );
 }

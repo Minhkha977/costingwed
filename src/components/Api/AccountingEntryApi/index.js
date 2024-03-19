@@ -1,18 +1,17 @@
-import React from 'react';
 import { toast } from 'react-toastify';
 import DomainApi from '~/DomainApi';
-import ApiToken from '../ApiToken';
+import dayjs from 'dayjs';
 
 export async function ApiAccountEntryListHeader(valueDateMonth, valueDateYear, valueSearch, setDataAEListHeader) {
     try {
-        if (valueDateMonth != 10 && valueDateMonth != 11 && valueDateMonth != 12) {
+        if (valueDateMonth !== 10 && valueDateMonth !== 11 && valueDateMonth !== 12) {
             var dateMonth = `0${valueDateMonth}`;
         }
         let url = `journal/acc-entry/unitcode/${localStorage.getItem('Unit')}?username=${localStorage.getItem(
             'UserName',
         )}&acc_period_month=${dateMonth}&acc_period_year=${valueDateYear}`;
         if (valueSearch) {
-            url += `?doc_code=${valueSearch}`;
+            url += `&doc_code=${valueSearch}`;
         }
         const response = await DomainApi.get(url);
         setDataAEListHeader(response.data);
@@ -22,16 +21,27 @@ export async function ApiAccountEntryListHeader(valueDateMonth, valueDateYear, v
     }
 }
 
-export async function ApiCreateAccountEntryHeader(access_token, valueDescription, valueCurrency, valueAccountGroup) {
+export async function ApiCreateAccountEntryHeader(
+    access_token,
+    valueDocsDateAe,
+    valueDescription,
+    valueCurrency,
+    valueAccountGroup,
+    modelDetail,
+) {
     if (access_token && valueDescription && valueCurrency && valueAccountGroup) {
         try {
+            var statusCode = false;
             const header = {
                 Authorization: access_token,
             };
+
             const model = {
+                doc_date: dayjs(valueDocsDateAe).utc(true),
                 desciption: valueDescription,
                 currency: valueCurrency,
                 grp_acc: valueAccountGroup,
+                detail: modelDetail,
             };
             let url = `journal/acc-entry/unitcode//${localStorage.getItem('Unit')}?username=${localStorage.getItem(
                 'UserName',
@@ -39,36 +49,53 @@ export async function ApiCreateAccountEntryHeader(access_token, valueDescription
             const response = await DomainApi.post(url, model, { headers: header });
             // setDataAEListHeader(response.data);
             toast.success(' Success create new account entry header!');
+            statusCode = true;
         } catch (error) {
             console.log(error);
-            toast.error(' Error api create account entry header!');
+            if (error.response) {
+                toast.error(' Error api create account entry header! \n' + error.response.data);
+            } else {
+                toast.error(' Error api create account entry header! \n' + error.message);
+            }
+            statusCode = false;
         }
+        return statusCode;
     }
 }
 
 export async function ApiUpdateAccountEntryHeader(
     access_token,
+    valueDocsDateAe,
     valueDocCode,
     valueDescription,
     valueCurrency,
     valueAccountGroup,
+    modelDetail,
+    setValueTotalDebitAe,
+    setValueTotalCreditAe,
 ) {
-    if (access_token && valueDocCode && valueDescription && valueCurrency && valueAccountGroup) {
+    if (access_token && valueDocCode && valueDescription && valueCurrency && valueAccountGroup && modelDetail) {
         try {
+            var statusCode = false;
             const header = {
                 Authorization: access_token,
             };
             const model = {
+                doc_date: dayjs(valueDocsDateAe).utc(true),
                 desciption: valueDescription,
                 currency: valueCurrency,
                 grp_acc: valueAccountGroup,
+                detail: modelDetail,
             };
             let url = `journal/acc-entry/unitcode/${localStorage.getItem(
                 'Unit',
             )}/docno/${valueDocCode}?username=${localStorage.getItem('UserName')}`;
             const response = await DomainApi.put(url, model, { headers: header });
-            // setDataAEListHeader(response.data);
+            console.log(response.data);
+            setValueTotalDebitAe(response.data.total_debit);
+            setValueTotalCreditAe(response.data.total_credit);
             toast.success(' Success update account entry header!');
+            statusCode = true;
         } catch (error) {
             console.log(error);
             console.log('>>Error: ', error);
@@ -77,7 +104,9 @@ export async function ApiUpdateAccountEntryHeader(
             } else {
                 toast.error(' Error api update account entry header! \n' + error.message);
             }
+            statusCode = false;
         }
+        return statusCode;
     }
 }
 
@@ -115,7 +144,7 @@ export async function ApiAccountEntryListDetail(valueDocNo, valueSearch, setData
                 url += `?detail_ids=${valueSearch}`;
             }
             const response = await DomainApi.get(url);
-            const dataFilter = response.data.filter((data) => data.isactive === true);
+            const dataFilter = response.data;
             setDataAEListDetail(dataFilter);
         } catch (error) {
             console.log(error);
@@ -130,107 +159,28 @@ export async function ApiAccountEntryListDetail(valueDocNo, valueSearch, setData
     }
 }
 
-export async function ApiCreateAccountEntryDetail(
-    access_token,
-    valueDocNo,
-    valueAccountCode,
-    valueDescription,
-    valueCostCenter,
-    valueTotalCreditAe,
-    valueTotalDebitAe,
-) {
-    if (access_token && valueDocNo && valueCostCenter && valueAccountCode) {
+export async function ApiImportAccountEntry(access_token, valueFile) {
+    if (access_token && valueFile) {
         try {
             const header = {
                 Authorization: access_token,
+                'Content-Type': 'multipart/form-data',
             };
-            const model = {
-                acc_code: valueAccountCode,
-                description: valueDescription,
-                cost_center: valueCostCenter,
-                credit_amount: valueTotalCreditAe,
-                debit_amout: valueTotalDebitAe,
-            };
+            const fd = new FormData();
+            fd.append('file', valueFile[0]);
             let url = `journal/acc-entry/unitcode/${localStorage.getItem(
                 'Unit',
-            )}/docno/${valueDocNo}/detail?username=${localStorage.getItem('UserName')}`;
-            const response = await DomainApi.post(url, model, { headers: header });
+            )}/import?username=${localStorage.getItem('UserName')}`;
+            const response = await DomainApi.post(url, fd, { headers: header });
             // setDataAEListHeader(response.data);
-            toast.success(' Success create new account entry Detail!');
-        } catch (error) {
-            console.log(error);
-            if (error.response) {
-                toast.error(' Error api new account entry detail! \n' + error.response.data);
-            } else {
-                toast.error(' Error api new account entry detail! \n' + error.message);
-            }
-        }
-    } else {
-        toast.error(' Empty doc no, cost center,account group!');
-    }
-}
-
-export async function ApiUpdateAccountEntryDetail(
-    access_token,
-    valueDocNo,
-    valueDetailId,
-    valueAccountCode,
-    valueDescription,
-    valueCostCenter,
-    valueTotalCreditAe,
-    valueTotalDebitAe,
-) {
-    if (access_token && valueDocNo && valueAccountCode) {
-        try {
-            const header = {
-                Authorization: access_token,
-            };
-            const model = {
-                acc_code: valueAccountCode,
-                description: valueDescription,
-                cost_center: valueCostCenter,
-                credit_amount: valueTotalCreditAe,
-                debit_amout: valueTotalDebitAe,
-            };
-
-            let url = `journal/acc-entry/unitcode/${localStorage.getItem(
-                'Unit',
-            )}/docno/${valueDocNo}/detail/${valueDetailId}?username=${localStorage.getItem('UserName')}`;
-            const response = await DomainApi.put(url, model, { headers: header });
-            // setDataAEListHeader(response.data);
-            toast.success(' Success update account entry Detail!');
-        } catch (error) {
-            console.log(error);
-            if (error.response) {
-                toast.error(' Error api update account entry detail! \n' + error.response.data);
-            } else {
-                toast.error(' Error api update account entry detail! \n' + error.message);
-            }
-        }
-    } else {
-        toast.error(' Empty doc no, account code!');
-    }
-}
-
-export async function ApiDeleteAccountEntryDetail(access_token, valueDocNo, valueDetailId) {
-    if (access_token && valueDocNo && valueDetailId) {
-        try {
-            const header = {
-                Authorization: access_token,
-            };
-            let url = `journal/acc-entry/unitcode/${localStorage.getItem(
-                'Unit',
-            )}/docno/${valueDocNo}/detail/${valueDetailId}?username=${localStorage.getItem('UserName')}`;
-            const response = await DomainApi.delete(url, { headers: header });
-            // setDataAEListHeader(response.data);
-            toast.success(' Success delete account entry detail!');
+            toast.success(' Success import file!');
         } catch (error) {
             console.log(error);
             console.log('>>Error: ', error);
             if (error.response) {
-                toast.error(' Error api delete account entry detail! \n' + error.response.data);
+                toast.error(' Error import file! \n' + error.response.data);
             } else {
-                toast.error(' Error api delete account entry detail! \n' + error.message);
+                toast.error('  Error import file! \n' + error.message);
             }
         }
     }

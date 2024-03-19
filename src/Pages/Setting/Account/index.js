@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
@@ -34,11 +33,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import DomainApi from '~/DomainApi';
 import AlertDialog from '~/components/AlertDialog';
 import ApiToken from '~/components/Api/ApiToken';
+import { ApiAccountList, ApiCreateAccount, ApiUpdateAccount } from '~/components/Api/Account';
+import SaveIcon from '@mui/icons-material/Save';
+import TextField from '@mui/material/TextField';
+import { ApiGroupCost, ApiTypeCost } from '~/components/Api/Master';
 
-function handleClick(event) {
-    event.preventDefault();
-    console.info('You clicked a breadcrumb.');
-}
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
     ...theme.typography.body2,
@@ -48,37 +47,54 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-function RenderCheckBoxList(props) {
-    const [checked, setChecked] = React.useState(props.value);
+// function TextField({ readOnly, ...props }) {
+//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
+// }
 
-    const handleChange = (event) => {
-        setChecked(event.target.checked);
-    };
-
-    return <Checkbox checked={checked} onChange={handleChange} />;
-}
-
-const columns = [
-    { field: 'account_code_display', headerName: 'Account Code', width: 300 },
-    { field: 'account_name', headerName: 'Account Name', width: 300 },
-    {
-        field: 'expense_name',
-        headerName: 'Cost Group',
-        // type: 'number',
-        width: 300,
-    },
-    { field: 'expense_type_name', headerName: 'Cost Type', width: 300 },
-    {
-        field: 'is_shared_expense',
-        headerName: 'General Account',
-        width: 300,
-        renderCell: RenderCheckBoxList,
-    },
-];
 function Account({ title }) {
+    const columns = [
+        {
+            field: 'account_code_display',
+            headerName: 'Account Code',
+            width: 130,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'account_name',
+            headerName: 'Account Name',
+            minWidth: 300,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'expense_name',
+            headerName: 'Cost Group',
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+        {
+            field: 'expense_type_name',
+            headerName: 'Cost Type',
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+        {
+            field: 'is_shared_expense',
+            headerName: 'General Account',
+            width: 130,
+            type: 'boolean',
+            headerClassName: 'super-app-theme--header',
+        },
+    ];
+
     const [isLoading, setIsLoading] = React.useState(false);
 
     const access_token = ApiToken();
+
+    const [valueReadonly, setValueReadonly] = React.useState(true);
+    const [valueReadonlyCode, setValueReadonlyCode] = React.useState(true);
 
     const [valueSearch, setValueSearch] = React.useState('');
     const [valueCode, setValueCode] = React.useState('');
@@ -107,28 +123,19 @@ function Account({ title }) {
         setValueSearch(event.target.value);
     };
 
+    /* #region  call api list */
+
     const [reloadListAccount, setReloadListAccount] = React.useState(false);
     const [dataList, setDataList] = useState([]);
-
+    const asyncApiListAccount = async () => {
+        setIsLoading(true);
+        await ApiAccountList(valueSearch, setDataList);
+        setIsLoading(false);
+    };
     useEffect(() => {
-        async function fetchData() {
-            try {
-                let url = `master/chart-of-account/unit/${localStorage.getItem('Unit')}/list`;
-                if (valueSearch) {
-                    url += `?acc_code=${valueSearch}`;
-                }
-                setIsLoading(true);
-                const response = await DomainApi.get(url);
-                setDataList(response.data);
-                setIsLoading(false);
-            } catch (error) {
-                setIsLoading(false);
-                console.log(error);
-                toast.error(' Error api get data account list!');
-            }
-        }
-        fetchData();
+        asyncApiListAccount();
     }, [reloadListAccount]);
+    /* #endregion */
 
     const onRowsSelectionHandler = (ids) => {
         const selectedRowsData = ids.map((id) => dataList.find((row) => row.account_code === id));
@@ -140,14 +147,15 @@ function Account({ title }) {
                     setValueCodeMain(key.account_main);
                     setValueCodeSub(key.account_sub);
                     setValueName(key.account_name);
-                    setValueDescription(key.description);
-                    setValueGroupCost(key.expense_acc);
-                    setValueTypeCost(key.expense_type);
+                    setValueDescription(key.description ?? '');
+                    setValueGroupCost(key.expense_acc ?? '');
+                    setValueTypeCost(key.expense_type ?? '');
                     setChecked(key.is_shared_expense);
                 });
             }
         }
     };
+    /* #region  call api data group cost */
 
     const [dataGroupCost, setDataGroupCost] = React.useState([]);
     const [valueGroupCost, setValueGroupCost] = React.useState('');
@@ -155,44 +163,21 @@ function Account({ title }) {
         setValueGroupCost(event.target.value);
     };
     React.useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await DomainApi.get(
-                    `master/group-expense/unit/${localStorage.getItem('Unit')}?username=${localStorage.getItem(
-                        'UserName',
-                    )}`,
-                );
-                setDataGroupCost(response.data);
-            } catch (error) {
-                console.log(error);
-                toast.error(' Error api get data group cost list!');
-            }
-        }
-        fetchData();
+        ApiGroupCost(setDataGroupCost);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    /* #endregion */
 
+    /* #region  call api data type cost */
     const [dataTypeCost, setDataTypeCost] = React.useState([]);
     const [valueTypeCost, setValueTypeCost] = React.useState('');
     const handleChangeTypeCost = (event) => {
         setValueTypeCost(event.target.value);
     };
     React.useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await DomainApi.get(
-                    `master/type-expense/unit/${localStorage.getItem('Unit')}?username=${localStorage.getItem(
-                        'UserName',
-                    )}`,
-                );
-                setDataTypeCost(response.data);
-            } catch (error) {
-                console.log(error);
-                toast.error(' Error api get type cost list!');
-            }
-        }
-        fetchData();
+        ApiTypeCost(setDataTypeCost);
     }, []);
+    /* #endregion */
 
     const [checked, setChecked] = React.useState(false);
     const handleChangeChecked = (event) => {
@@ -213,71 +198,54 @@ function Account({ title }) {
         toast.warning(' Cancel create new!');
     };
 
+    /* #region  button new */
+
+    const [valueNewButton, setValueNewButton] = React.useState(false);
     const handleOnClickNew = () => {
-        if (
-            // !valueCode ||
-            !valueCodeMain ||
-            !valueCodeSub ||
-            !valueName
-            // !valueDescription
-            // !valueGroupCost ||
-            // !valueTypeCost
-            // !checked
-        ) {
-            toast.error(' Main code, sub code, name, description, group code, type code is empty!');
-            return;
-        }
-        setDialogIsOpenNew(true);
+        setValueNewButton(true);
+        setValueUpdateButton(false);
+
+        setValueCode('');
+        setValueCodeMain('');
+        setValueCodeSub('');
+        setValueName('');
+        setValueDescription('');
+        setValueGroupCost('');
+        setValueTypeCost('');
+        setChecked(false);
+
+        setValueReadonly(false);
+        setValueReadonlyCode(false);
+        setValueDisableSaveButton(false);
     };
+    /* #endregion */
 
     useEffect(() => {
-        async function fetchData() {
-            if (
-                valueCodeMain &&
-                valueCodeSub &&
-                valueName
-                //  && valueGroupCost
-                //  && valueTypeCost
-                // valueDescription
-            ) {
-                try {
-                    setIsLoading(true);
-                    const header = {
-                        Authorization: access_token,
-                    };
-                    const model = {
-                        main_acc: valueCodeMain,
-                        sub_acc: valueCodeSub,
-                        acc_name: valueName,
-                        description: valueDescription,
-                        expense_acc: valueGroupCost,
-                        expense_type: valueTypeCost,
-                        is_shared: checked,
-                        sub_unit: '',
-                        cost_center: '',
-                    };
-                    const response = await DomainApi.post(
-                        `master/chart-of-account/new?username=${localStorage.getItem(
-                            'UserName',
-                        )}&unitcode=${localStorage.getItem('Unit')}`,
-                        model,
-                        { headers: header },
-                    );
-                    setIsLoading(false);
-                    setReloadListAccount(!reloadListAccount);
-                    toast.success(' Success create new account!');
-                } catch (error) {
-                    setIsLoading(false);
-                    console.log('>>Error: ', error);
-                    if (error.response) {
-                        toast.error(error.response.data);
-                    } else {
-                        toast.error(error.message);
-                    }
-                }
+        const asyncApiCreateAccount = async () => {
+            const statusCode = await ApiCreateAccount(
+                access_token,
+                valueCodeMain,
+                valueCodeSub,
+                valueName,
+                valueDescription,
+                valueGroupCost,
+                valueTypeCost,
+                checked,
+            );
+            if (statusCode) {
+                setValueCodeMain('');
+                setValueCodeSub('');
+                setValueName('');
+                setValueDescription('');
+                setValueGroupCost('');
+                setValueTypeCost('');
+                setChecked(false);
+                setValueNewButton(false);
+                setValueDisableSaveButton(true);
             }
-        }
-        fetchData();
+        };
+        asyncApiCreateAccount();
+        setReloadListAccount(!reloadListAccount);
     }, [callApiNew]);
 
     const agreeDialogUpdate = () => {
@@ -289,75 +257,53 @@ function Account({ title }) {
         toast.warning(' Cancel create new!');
     };
 
+    /* #region  button update */
+    const [valueUpdateButton, setValueUpdateButton] = React.useState(false);
     const handleOnClickUpdate = () => {
-        if (
-            // !valueCode ||
-            !valueCodeMain ||
-            !valueCodeSub ||
-            !valueName
-            // !valueDescription ||
-            // !valueGroupCost ||
-            // !valueTypeCost
-            // !checked
-        ) {
-            toast.error(' Main code, sub code, name, description, group code, type code is empty!');
-            return;
-        }
-        setDialogIsOpenUpdate(true);
+        setValueNewButton(false);
+        setValueUpdateButton(true);
+        setValueReadonly(false);
+        setValueReadonlyCode(true);
+        setValueDisableSaveButton(false);
     };
+    /* #endregion */
 
     useEffect(() => {
-        async function fetchData() {
-            if (
-                valueCodeMain &&
-                valueCodeSub &&
-                valueName
-                // && valueGroupCost
-                // && valueTypeCost
-                // && valueDescription
-            ) {
-                try {
-                    setIsLoading(true);
-                    const header = {
-                        Authorization: access_token,
-                    };
-                    const model = {
-                        acc_ids: valueId,
-                        main_acc: valueCodeMain,
-                        sub_acc: valueCodeSub,
-                        acc_name: valueName,
-                        description: valueDescription,
-                        expense_acc: valueGroupCost,
-                        expense_type: valueTypeCost,
-                        is_shared: checked,
-                        sub_unit: '',
-                        cost_center: '',
-                    };
-                    const response = await DomainApi.put(
-                        `/master/chart-of-account/update?username=${localStorage.getItem(
-                            'UserName',
-                        )}&unitcode=${localStorage.getItem('Unit')}`,
-                        model,
-                        { headers: header },
-                    );
-                    setIsLoading(false);
-                    setReloadListAccount(!reloadListAccount);
-                    toast.success(' Success update account!');
-                } catch (error) {
-                    setIsLoading(false);
-                    console.log('>>Error: ', error);
-                    if (error.response) {
-                        toast.error(error.response.data);
-                    } else {
-                        toast.error(error.message);
-                    }
-                }
+        const asyncApiCreateAccount = async () => {
+            const statusCode = await ApiUpdateAccount(
+                access_token,
+                valueId,
+                valueCodeMain,
+                valueCodeSub,
+                valueName,
+                valueDescription,
+                valueGroupCost,
+                valueTypeCost,
+                checked,
+            );
+            if (statusCode) {
+                setValueUpdateButton(false);
+                setValueDisableSaveButton(true);
             }
-        }
-        fetchData();
+        };
+        asyncApiCreateAccount();
+        setReloadListAccount(!reloadListAccount);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [callApiUpdate]);
 
+    const [valueDisableSaveButton, setValueDisableSaveButton] = React.useState(true);
+    const handleClickSave = (event) => {
+        if (valueCodeMain && valueCodeSub && valueName) {
+            if (valueNewButton) {
+                setDialogIsOpenNew(true);
+            }
+            if (valueUpdateButton) {
+                setDialogIsOpenUpdate(true);
+            }
+        } else {
+            toast.error(' Empty main code, sub code, name!');
+        }
+    };
     return (
         <div className="main">
             <ToastContainer />
@@ -389,13 +335,20 @@ function Account({ title }) {
                 onClose={closeDialogUpdate}
                 onAgree={agreeDialogUpdate}
             />
-            <div role="presentation" onClick={handleClick}>
+            <div role="presentation">
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
                     <Typography color="text.primary">{title}</Typography>
                 </Breadcrumbs>
             </div>
-            <Box sx={{ flexGrow: 1 }}>
+            <Box
+                sx={{
+                    flexGrow: 1,
+                    '& .super-app-theme--header': {
+                        backgroundColor: '#ffc696',
+                    },
+                }}
+            >
                 <Grid container spacing={1}>
                     <Grid xs={12} md={6}>
                         <Item>
@@ -404,9 +357,8 @@ function Account({ title }) {
                                     id="search"
                                     variant="outlined"
                                     fullWidth
-                                    label="Search account code"
+                                    label="Search"
                                     size="small"
-                                    type="number"
                                     value={valueSearch}
                                     onChange={(event) => handleOnChangeValueSearch(event)}
                                 />
@@ -438,6 +390,8 @@ function Account({ title }) {
                                         }}
                                         pageSizeOptions={[3, 5, 10, 15]}
                                         autoHeight
+                                        showCellVerticalBorder
+                                        showColumnVerticalBorder
                                         getRowId={(row) => row.account_code}
                                         loading={isLoading}
                                         onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
@@ -478,6 +432,8 @@ function Account({ title }) {
                                                 variant="contained"
                                                 color="success"
                                                 onClick={handleOnClickNew}
+                                                loading={valueNewButton}
+                                                loadingPosition="start"
                                             >
                                                 New
                                             </LoadingButton>
@@ -487,8 +443,19 @@ function Account({ title }) {
                                                 variant="contained"
                                                 color="warning"
                                                 onClick={handleOnClickUpdate}
+                                                loading={valueUpdateButton}
+                                                loadingPosition="start"
                                             >
                                                 Update
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                startIcon={<SaveIcon />}
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={handleClickSave}
+                                                disabled={valueDisableSaveButton}
+                                            >
+                                                Save
                                             </LoadingButton>
                                         </Stack>
                                     </Stack>
@@ -500,17 +467,16 @@ function Account({ title }) {
                                                 <div className="div-h5">
                                                     <h6>Account Code:</h6>
                                                 </div>
-                                                <h6
-                                                    style={{
-                                                        width: '100%',
-                                                        textAlign: 'left',
-                                                        fontWeight: 'bold',
-                                                        alignItems: 'center',
-                                                        display: 'flex',
-                                                    }}
-                                                >
-                                                    {valueCode}
-                                                </h6>
+                                                <TextField
+                                                    id="field-code-main"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    size="small"
+                                                    type="number"
+                                                    value={valueCode}
+                                                    placeholder="xxxxx xxx"
+                                                    disabled
+                                                />
                                             </Stack>
                                         </Grid>
 
@@ -528,6 +494,7 @@ function Account({ title }) {
                                                     value={valueCodeMain}
                                                     onChange={(event) => handleOnChangeValueCodeMain(event)}
                                                     placeholder="xxxxx"
+                                                    disabled={valueReadonlyCode}
                                                 />
                                             </Stack>
                                         </Grid>
@@ -545,6 +512,7 @@ function Account({ title }) {
                                                     value={valueCodeSub}
                                                     onChange={(event) => handleOnChangeValueCodeSub(event)}
                                                     placeholder="xxx"
+                                                    disabled={valueReadonlyCode}
                                                 />
                                             </Stack>
                                         </Grid>
@@ -563,6 +531,7 @@ function Account({ title }) {
                                                     value={valueName}
                                                     onChange={(event) => handleOnChangeValueName(event)}
                                                     placeholder="name..."
+                                                    disabled={valueReadonly}
                                                 />
                                             </Stack>
                                         </Grid>
@@ -579,14 +548,15 @@ function Account({ title }) {
                                                     onChange={(event) => handleOnChangeValueDescription(event)}
                                                     rows={2}
                                                     placeholder="..."
+                                                    disabled={valueReadonly}
                                                 />
                                             </Stack>
                                         </Grid>
                                         <Grid container direction={'row'} xs={12} md={12}>
-                                            <Grid xs={12} md={6}>
+                                            <Grid xs={12} md={4}>
                                                 <Stack direction={'row'} spacing={0}>
                                                     <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                        <h6>Group Cost:</h6>
+                                                        <h6>Expense group:</h6>
                                                     </div>
                                                     <FormControl sx={{ m: 1, maxWidth: 250 }} size="small">
                                                         <Select
@@ -596,6 +566,7 @@ function Account({ title }) {
                                                             displayEmpty
                                                             onChange={handleChangeGroupCost}
                                                             sx={{ minWidth: 150 }}
+                                                            disabled={valueReadonly}
                                                         >
                                                             {dataGroupCost.map((data) => {
                                                                 return (
@@ -611,10 +582,10 @@ function Account({ title }) {
                                                     </FormControl>
                                                 </Stack>
                                             </Grid>
-                                            <Grid xs={12} md={6}>
+                                            <Grid xs={12} md={4}>
                                                 <Stack direction={'row'} spacing={0}>
                                                     <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                        <h6>Type Cost:</h6>
+                                                        <h6>Expense:</h6>
                                                     </div>
                                                     <FormControl sx={{ m: 1, maxWidth: 250 }} size="small">
                                                         <Select
@@ -624,6 +595,7 @@ function Account({ title }) {
                                                             displayEmpty
                                                             onChange={handleChangeTypeCost}
                                                             sx={{ minWidth: 150 }}
+                                                            disabled={valueReadonly}
                                                         >
                                                             {dataTypeCost.map((data) => {
                                                                 return (
@@ -639,19 +611,26 @@ function Account({ title }) {
                                                     </FormControl>
                                                 </Stack>
                                             </Grid>
+                                            <Grid
+                                                xs={12}
+                                                md={4}
+                                                sx={{ display: 'flex', marginTop: 0, alignItems: 'center' }}
+                                            >
+                                                <Stack direction={'row'} spacing={0}>
+                                                    <div className="div-h5" style={{ marginLeft: 8 }}>
+                                                        <h6>General Account:</h6>
+                                                    </div>
+                                                    <Checkbox
+                                                        checked={checked}
+                                                        onChange={handleChangeChecked}
+                                                        inputProps={{ 'aria-label': 'controlled' }}
+                                                        color="success"
+                                                        size="medium"
+                                                        disabled={valueReadonly}
+                                                    />
+                                                </Stack>
+                                            </Grid>
                                         </Grid>
-                                        <Stack direction={'row'} spacing={0} style={{ marginTop: 0 }}>
-                                            <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                <h6>General Account:</h6>
-                                            </div>
-                                            <Checkbox
-                                                checked={checked}
-                                                onChange={handleChangeChecked}
-                                                inputProps={{ 'aria-label': 'controlled' }}
-                                                color="success"
-                                                size="medium"
-                                            />
-                                        </Stack>
                                     </Stack>
                                 </Item>
                             </Grid>

@@ -1,7 +1,6 @@
 {
     "name": "costingwed",
-    "version": "0.1.0",
-    "homepage": "./",
+    "version": "0.1.6",
     "private": true,
     "dependencies": {
         "@azure/msal-browser": "^3.7.1",
@@ -51,6 +50,8 @@
     },
     "scripts": {
         "start": "react-app-rewired start",
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d build",
         "build": "react-app-rewired build",
         "test": "react-app-rewired test",
         "eject": "react-app-rewired eject"

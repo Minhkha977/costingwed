@@ -1,7 +1,7 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import { useState, useEffect } from 'react';
-import TextField from '@mui/material/TextField';
+// import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
@@ -19,7 +19,13 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Form from 'react-bootstrap/Form';
 import axios from 'axios';
-import { DataGrid } from '@mui/x-data-grid';
+import {
+    GridRowModes,
+    DataGrid,
+    GridActionsCellItem,
+    GridToolbarContainer,
+    GridRowEditStopReasons,
+} from '@mui/x-data-grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
@@ -30,12 +36,40 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
-import LockIcon from '@mui/icons-material/Lock';
+import { Enum_Status_CostAllocation } from '~/components/Enum';
+import {
+    ApiCostAllocationListDetail,
+    ApiCostAllocationListHeader,
+    ApiCreateCostAllocationHeader,
+    ApiPauseCostAllocation,
+    ApiProcessCostAllocation,
+    ApiUpdateCostAllocationHeader,
+} from '~/components/Api/CostAllocation';
+import ApiToken from '~/components/Api/ApiToken';
+import { ApiCurrency } from '~/components/Api/Master';
 import LoadingButton from '@mui/lab/LoadingButton';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import SearchIcon from '@mui/icons-material/Search';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import YoutubeSearchedForIcon from '@mui/icons-material/YoutubeSearchedFor';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import PostAddIcon from '@mui/icons-material/PostAdd';
+import PlaylistAddCheckCircleIcon from '@mui/icons-material/PlaylistAddCheckCircle';
+import SaveIcon from '@mui/icons-material/Save';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import TextField from '@mui/material/TextField';
+import { toast, ToastContainer } from 'react-toastify';
+import AlertDialog from '~/components/AlertDialog';
+import { AssignmentReturnedSharp } from '@mui/icons-material';
+import { ApiAccountList } from '~/components/Api/Account';
+import { ApiListAccountGroup } from '~/components/Api/AccountGroup';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
+import CancelIcon from '@mui/icons-material/Close';
+import { faL } from '@fortawesome/free-solid-svg-icons';
+import { AutocompleteControlled } from '~/components/MasterFunction';
+import Autocomplete from '@mui/material/Autocomplete';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -45,69 +79,609 @@ const Item = styled(Paper)(({ theme }) => ({
     direction: 'row',
     color: theme.palette.text.secondary,
 }));
-const singleSelect = ['CH NVT', 'SH BP'];
-const columns = [
-    { field: 'id', headerName: 'No.', width: 100 },
+
+const columnsHeader = [
+    { field: 'ids', headerName: 'No.', width: 50, headerClassName: 'super-app-theme--header' },
     {
-        field: 'username',
-        headerName: 'Document Code',
-        width: 300,
-        editable: true,
-        type: 'singleSelect',
-        valueOptions: singleSelect,
+        field: 'doc_code',
+        headerName: 'Allocation code',
+        width: 150,
+        headerClassName: 'super-app-theme--header',
     },
-    { field: 'name', headerName: 'Date Added', width: 300 },
+
     {
-        field: 'phone',
-        headerName: 'Content',
-        // type: 'number',
-        width: 300,
+        field: 'description',
+        headerName: 'Description',
+        minWidth: 300,
+        flex: 1,
+        headerClassName: 'super-app-theme--header',
     },
-    { field: 'email', headerName: 'Cost Center', width: 300 },
+    {
+        field: 'from_date',
+        headerName: 'From date',
+        width: 120,
+        headerClassName: 'super-app-theme--header',
+        valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+        headerAlign: 'center',
+    },
+    {
+        field: 'to_date',
+        headerName: 'To date',
+        width: 120,
+        headerClassName: 'super-app-theme--header',
+        valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+        headerAlign: 'center',
+    },
+    {
+        field: 'process_percent',
+        headerName: '% Process',
+        width: 100,
+        headerClassName: 'super-app-theme--header',
+        valueFormatter: ({ value }) => `${value} %`,
+        type: 'number',
+    },
+    {
+        field: 'total_cost',
+        headerName: 'Total cost',
+        width: 150,
+        headerClassName: 'super-app-theme--header',
+        type: 'number',
+    },
+    {
+        field: 'status_display',
+        headerName: 'Status',
+        width: 120,
+        headerClassName: 'super-app-theme--header',
+        headerAlign: 'center',
+    },
 ];
 
+// function TextField({ readOnly, ...props }) {
+//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
+// }
+
 function CostAllocation({ title }) {
-    const [data, setData] = useState([]);
+    const access_token = ApiToken();
+    const [valueIsLoading, setIsLoading] = React.useState(false);
+    const [valueSearch, setValueSearch] = React.useState('');
+    const handleOnChangeValueSearch = (event) => {
+        setValueSearch(event.target.value);
+    };
+    const [valueAllocationCode, setValueAllocationCode] = React.useState('');
+    const [valueUser, setValueUser] = React.useState('');
+    const [valueDocDate, setValueDocDate] = React.useState(dayjs());
+    const [valueUpdateDate, setValueUpdateDate] = React.useState(dayjs());
+    const [valueDescription, setValueDescription] = React.useState('');
+    const [valueEditGrid, setValueEditGrid] = React.useState(false);
+    const columnVisibilityModel = React.useMemo(() => {
+        if (valueEditGrid) {
+            return {
+                actions: true,
+            };
+        }
+        return {
+            actions: false,
+        };
+    }, [valueEditGrid]);
+
+    /* #region  button status */
+    const status = Enum_Status_CostAllocation();
+    const [valueStatus, setValueStatus] = React.useState('');
+    const handleChangeStatus = (event) => {
+        setValueStatus(event.target.value);
+        setReloadListHeader(!reloadListHeader);
+    };
+    /* #endregion */
+
+    /* #region  button currency */
+    const [dataListCurrency, setDataListCurrency] = React.useState([]);
+    const [valueCurrency, setValueCurrency] = useState('VND');
+
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-                setData(response.data);
-            } catch (error) {
-                console.log(error);
+        ApiCurrency(setDataListCurrency);
+    }, []);
+    /* #endregion */
+
+    /* #region  button account list */
+    const [valueAccountGroup, setValueAccountGroup] = useState('');
+    const [dataListAccountGroup, setDataListAccountGroup] = useState([]);
+    useEffect(() => {
+        ApiListAccountGroup('', setDataListAccountGroup);
+    }, []);
+    /* #endregion */
+
+    /* #region  select debit and creedit list */
+    const [valueCreditEntry, setValueCreditEntry] = React.useState(0);
+    const [valueCreditAuto, setValueCreditAuto] = React.useState({});
+    const [valueDebitEntry, setValueDebitEntry] = React.useState(0);
+    const [valueDebitAuto, setValueDebitAuto] = React.useState({});
+    const [dataListAccount, setDataListAccount] = useState([]);
+
+    useEffect(() => {
+        ApiAccountList('', setDataListAccount);
+    }, []);
+    /* #endregion */
+
+    /* #region data list header */
+    const [dataListHeader, setDataListHeader] = useState([]);
+    const [reloadListHeader, setReloadListHeader] = useState([]);
+    useEffect(() => {
+        setIsLoading(true);
+        const asyncApiListHeader = async () => {
+            await ApiCostAllocationListHeader(valueStatus, setDataListHeader);
+        };
+        asyncApiListHeader();
+        setIsLoading(false);
+    }, [reloadListHeader]);
+
+    const onHandleRowsSelectionHeader = (ids) => {
+        const selectedRowsData = ids.map((id) => dataListHeader.find((row) => row.ids === id));
+        if (selectedRowsData) {
+            {
+                selectedRowsData.map((key) => {
+                    setValueAllocationCode(key.doc_code);
+                    setValueUser(key.updated_user);
+                    setValueDocDate(dayjs(key.doc_date));
+                    setValueDescription(key.description);
+                    setValueUpdateDate(dayjs(key.updated_date));
+                    setValueAccountGroup(key.acc_group);
+                    setValueCurrency(key.currency);
+                    setValueDebitEntry(key.debit_entry);
+                    const filterDebit = dataListAccount.filter((data) => data.account_code === key.debit_entry);
+                    setValueDebitAuto(filterDebit[0]);
+                    setValueCreditEntry(key.credit_entry);
+                    const filterCredit = dataListAccount.filter((data) => data.account_code === key.credit_entry);
+                    setValueCreditAuto(filterCredit[0]);
+                    setValueReadonly(true);
+                    setValueReadonlyDocdate(true);
+                    if (key.status === 2) {
+                        setValueButtonProcess(true);
+                        setValueButtonPause(false);
+                    }
+                    if (key.status === 3) {
+                        setValueButtonProcess(false);
+                        setValueButtonPause(true);
+                    }
+                    setValueEditGrid(false);
+                    setValueDisabledSaveButton(true);
+                    setValueButtonNew(false);
+                    setValueButtonUpdate(false);
+                });
+                setReloadListDetail(!reloadListDetail);
             }
         }
-        fetchData();
-    }, []);
-    console.log(data);
-    const [age, setAge] = React.useState('');
-
-    const handleChange = (event) => {
-        setAge(event.target.value);
     };
-    let newDate = new Date();
-    const [value, setValue] = React.useState(dayjs(newDate));
-    let number = 1234.56789;
-    const [valueTab, setValueTab] = React.useState('Manage Accounting Entries');
+    /* #endregion */
+    const [valueReadonly, setValueReadonly] = React.useState(true);
+    const [valueReadonlyDocdate, setValueReadonlyDocdate] = React.useState(true);
+    const [valueDisabledSaveButton, setValueDisabledSaveButton] = React.useState(true);
 
-    const handleChangeTab = (event, newValue) => {
-        setValueTab(newValue);
+    /* #region button new header */
+    const [valueButtonNew, setValueButtonNew] = React.useState(false);
+
+    const handleClickNewHeader = (event) => {
+        setValueDisabledSaveButton(false);
+        setValueReadonly(false);
+        setValueReadonlyDocdate(false);
+        setValueButtonUpdate(false);
+        setValueButtonNew(true);
+        setValueAllocationCode('');
+        setValueUser(localStorage.getItem('UserName'));
+        setValueDescription('');
+        setValueDocDate(dayjs());
+        setValueUpdateDate(dayjs());
+        setValueAccountGroup(9000);
+        setValueDebitEntry('');
+        setValueDebitAuto({});
+        setValueCreditEntry('');
+        setValueCreditAuto({});
+        setValueButtonProcess(false);
+        setValueButtonPause(false);
+        setDataListDetail([]);
+        setValueEditGrid(true);
+    };
+    /* #endregion */
+
+    /* #region button update header */
+    const [valueButtonUpdate, setValueButtonUpdate] = React.useState(false);
+    const handleClickUpdateHeader = (event) => {
+        setValueDisabledSaveButton(false);
+        setValueReadonly(false);
+        setValueReadonlyDocdate(true);
+        setValueButtonNew(false);
+        setValueButtonUpdate(true);
+        setValueUpdateDate(dayjs());
+        setValueEditGrid(true);
+    };
+    /* #endregion */
+
+    /* #region button save header */
+    const handleClickSaveHeader = (event) => {
+        if (valueDescription && valueAccountGroup) {
+            if (valueButtonNew) {
+                setDialogIsOpenNewHeader(true);
+            }
+            if (valueButtonUpdate) {
+                setDialogIsOpenUpdate(true);
+            }
+        } else {
+            toast.error(' Empty description, account group!');
+        }
+    };
+    /* #endregion */
+
+    /* #region button Process */
+    const [valueButtonProcess, setValueButtonProcess] = React.useState(false);
+    const handleClickButtonProcess = (event) => {
+        if (valueAllocationCode) {
+            setCallApiProcess(!callApiProcess);
+        } else {
+            toast.error('Empty allocation code!');
+        }
     };
 
-    const [checked, setChecked] = React.useState(false);
+    const [callApiProcess, setCallApiProcess] = React.useState(false);
+    useEffect(() => {
+        const apiProcess = async () => {
+            const statusCode = await ApiProcessCostAllocation(access_token, valueAllocationCode);
+            if (statusCode) {
+                setValueButtonProcess(true);
+                setValueButtonPause(false);
+                setReloadListHeader(!reloadListHeader);
+            }
+        };
+        apiProcess();
+    }, [callApiProcess]);
+    /* #endregion */
 
-    const handleChangeChecked = (event) => {
-        setChecked(event.target.checked);
+    /* #region button Pause */
+    const [valueButtonPause, setValueButtonPause] = React.useState(false);
+    const handleClickButtonPause = (event) => {
+        if (valueAllocationCode) {
+            setCallApiPause(!callApiPause);
+        } else {
+            toast.error('Empty allocation code!');
+        }
     };
+    const [callApiPause, setCallApiPause] = React.useState(false);
+    useEffect(() => {
+        const apiPause = async () => {
+            const statusCode = await ApiPauseCostAllocation(access_token, valueAllocationCode);
+            if (statusCode) {
+                setValueButtonProcess(false);
+                setValueButtonPause(true);
+                setReloadListHeader(!reloadListHeader);
+            }
+        };
+        apiPause();
+    }, [callApiPause]);
+    /* #endregion */
+
+    /* #region  call api new */
+    const [dialogIsOpenNewHeader, setDialogIsOpenNewHeader] = React.useState(false);
+    const [callApiNewHeader, setCallApiNewHeader] = React.useState(false);
+    const agreeDialogNewHeader = () => {
+        setDialogIsOpenNewHeader(false);
+        setCallApiNewHeader(!callApiNewHeader);
+    };
+    const closeDialogNewHeader = () => {
+        setDialogIsOpenNewHeader(false);
+        toast.warning(' Cancel create new!');
+    };
+
+    useEffect(() => {
+        const apiNewHeader = async () => {
+            const statusCode = await ApiCreateCostAllocationHeader(
+                access_token,
+                valueDescription,
+                valueCurrency,
+                valueAccountGroup,
+                valueDebitEntry,
+                valueCreditEntry,
+                valueUser,
+                dataList,
+            );
+            if (statusCode) {
+                setValueAllocationCode('');
+                setValueUser('');
+                setValueDescription('');
+                setValueDocDate(dayjs());
+                setValueUpdateDate(dayjs());
+                setValueAccountGroup('');
+                setValueDebitEntry('');
+                setValueCreditEntry('');
+                setValueButtonNew(false);
+                setValueDisabledSaveButton(true);
+                setValueReadonly(true);
+                setValueReadonlyDocdate(true);
+                setValueEditGrid(false);
+            }
+
+            setReloadListHeader(!reloadListHeader);
+        };
+        apiNewHeader();
+    }, [callApiNewHeader]);
+    /* #endregion */
+
+    /* #region  call api update */
+    const [dialogIsOpenUpdate, setDialogIsOpenUpdate] = React.useState(false);
+    const [callApiUpdate, setCallApiUpdate] = React.useState(false);
+    const agreeDialogUpdate = () => {
+        setDialogIsOpenUpdate(false);
+        setCallApiUpdate(!callApiUpdate);
+    };
+    const closeDialogUpdate = () => {
+        setDialogIsOpenUpdate(false);
+        toast.warning(' Cancel Update!');
+    };
+
+    useEffect(() => {
+        const apiUpdate = async () => {
+            const statusCode = await ApiUpdateCostAllocationHeader(
+                access_token,
+                valueAllocationCode,
+                valueDescription,
+                valueCurrency,
+                valueAccountGroup,
+                valueDebitEntry,
+                valueCreditEntry,
+                valueUser,
+                dataList,
+            );
+            if (statusCode) {
+                setValueButtonUpdate(false);
+                setValueDisabledSaveButton(true);
+                setValueReadonly(true);
+                setValueEditGrid(false);
+            }
+            setReloadListHeader(!reloadListHeader);
+        };
+        apiUpdate();
+    }, [callApiUpdate]);
+    /* #endregion */
+
+    /* #region  call api detail list */
+    const [dataListDetail, setDataListDetail] = useState([]);
+    const [reloadListDetail, setReloadListDetail] = useState([]);
+    useEffect(() => {
+        const process = async () => {
+            setIsLoading(true);
+            if (valueAllocationCode) {
+                await ApiCostAllocationListDetail(valueAllocationCode, setDataListDetail);
+            }
+            setIsLoading(false);
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reloadListDetail]);
+    /* #endregion */
+
+    const columnsDataDetail = [
+        {
+            field: 'detail_ids',
+            headerName: 'No.',
+            width: 50,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'actions',
+            type: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            cellClassName: 'actions',
+            headerClassName: 'super-app-theme--header',
+            getActions: ({ id }) => {
+                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
+
+                if (isInEditMode) {
+                    return [
+                        <GridActionsCellItem
+                            icon={<SaveIcon />}
+                            label="Save"
+                            sx={{
+                                color: 'primary.main',
+                            }}
+                            onClick={handleSaveClick(id)}
+                        />,
+                        <GridActionsCellItem
+                            icon={<CancelIcon />}
+                            label="Cancel"
+                            className="textPrimary"
+                            onClick={handleCancelClick(id)}
+                            color="inherit"
+                        />,
+                    ];
+                }
+
+                return [
+                    <GridActionsCellItem
+                        icon={<EditIcon />}
+                        label="Edit"
+                        className="textPrimary"
+                        onClick={handleEditClick(id)}
+                        color="inherit"
+                    />,
+                    <GridActionsCellItem
+                        icon={<DeleteIcon />}
+                        label="Delete"
+                        onClick={handleDeleteClick(id)}
+                        color="inherit"
+                    />,
+                ];
+            },
+        },
+        {
+            field: 'doc_date',
+            headerName: 'Doc date',
+            width: 150,
+            editable: valueEditGrid,
+            type: 'date',
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+        },
+        {
+            field: 'description',
+            headerName: 'Description',
+            minWidth: 400,
+            editable: valueEditGrid,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'amount',
+            headerName: 'Amount',
+            width: 150,
+            editable: valueEditGrid,
+            type: 'number',
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'status_display',
+            headerName: 'Status',
+            width: 150,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+        },
+    ];
+    const [dataList, setDataList] = useState([]);
+
+    /* #region  handle click edit detail */
+    const [valueId, setValueId] = React.useState(1);
+    const handleOnClickNewAeDetail = () => {
+        setValueId(valueId + 1);
+        setDataListDetail((oldRows) => [
+            ...oldRows,
+            {
+                detail_ids: valueId,
+                doc_code: '',
+                doc_date: dayjs().utc(),
+                unitcode: '',
+                acc_code: '',
+                description: '',
+                cost_center: '',
+                credit_amount: null,
+                debit_amount: null,
+                isactive: true,
+                updated_user: localStorage.getItem('UserName'),
+                updated_date: new Date(),
+                is_new_item: true,
+                isNew: true,
+            },
+        ]);
+        setRowModesModel((oldModel) => ({
+            ...oldModel,
+            [valueId]: { mode: GridRowModes.Edit, fieldToFocus: 'cost_center' },
+        }));
+    };
+    useEffect(() => {
+        if (dataListDetail.length !== 0) {
+            const newData = dataListDetail.map((data) => {
+                return { ...data, is_new_item: 'is_new_item' in data, is_delete_item: 'is_delete_item' in data };
+            });
+            setDataList(newData);
+        }
+    }, [dataListDetail]);
+
+    const [rowModesModel, setRowModesModel] = React.useState({});
+    const handleEditClick = (id) => () => {
+        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
+    };
+
+    const handleSaveClick = (id) => () => {
+        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
+    };
+
+    const handleDeleteClick = (id) => () => {
+        // setDataListAccountEntryDetail(dataListAccountEntryDetail.filter((row) => row.detail_ids !== id));
+        const row = {
+            ...dataListDetail.filter((row) => row.detail_ids === id),
+            is_delete_item: true,
+        };
+        const updatedRow = {
+            ...row[0],
+            is_delete_item: true,
+        };
+        setDataListDetail(dataListDetail.map((row) => (row.detail_ids === id ? updatedRow : row)));
+    };
+
+    const handleCancelClick = (id) => () => {
+        setRowModesModel({
+            ...rowModesModel,
+            [id]: { mode: GridRowModes.View, ignoreModifications: true },
+        });
+
+        const editedRow = dataListDetail.find((row) => row.detail_ids === id);
+        if (editedRow.isNew) {
+            setDataListDetail(dataListDetail.filter((row) => row.detail_ids !== id));
+        }
+    };
+    /* #endregion */
+
+    const handleRowModesModelChange = (newRowModesModel) => {
+        setRowModesModel(newRowModesModel);
+    };
+    const handleRowEditStop = (params, event) => {
+        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
+            event.defaultMuiPrevented = true;
+        }
+    };
+    const processRowUpdate = (newRow) => {
+        const updatedRow = { ...newRow, isNew: false };
+        setDataListDetail(dataListDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)));
+        return updatedRow;
+    };
+
+    let number = 0;
+    console.log('value', valueDebitEntry);
     return (
         <div className="main">
-            <div role="presentation" onClick={''}>
+            <ToastContainer />
+            <AlertDialog
+                title={'Create a new Allocation?'}
+                content={
+                    <>
+                        Description: {valueDescription}
+                        <br /> Account group: {valueAccountGroup}
+                        <br /> Debit entry: {valueDebitEntry}
+                        <br /> Credit entry: {valueCreditEntry}
+                    </>
+                }
+                onOpen={dialogIsOpenNewHeader}
+                onClose={closeDialogNewHeader}
+                onAgree={agreeDialogNewHeader}
+            />
+            <AlertDialog
+                title={'update Allocation?'}
+                content={
+                    <>
+                        Allocation code: {valueAllocationCode}
+                        <br /> Description: {valueDescription}
+                        <br /> Account group: {valueAccountGroup}
+                        <br /> Debit entry: {valueDebitEntry}
+                        <br /> Credit entry: {valueCreditEntry}
+                    </>
+                }
+                onOpen={dialogIsOpenUpdate}
+                onClose={closeDialogUpdate}
+                onAgree={agreeDialogUpdate}
+            />
+            <div role="presentation">
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
                     <Typography color="text.primary">{title}</Typography>
                 </Breadcrumbs>
             </div>
-            <Box sx={{ width: '100%', typography: 'body' }}>
+            <Box
+                sx={{
+                    width: '100%',
+                    typography: 'body',
+                    '& .super-app-theme--header': {
+                        backgroundColor: '#ffc696',
+                    },
+                }}
+            >
                 <Grid container spacing={1}>
                     <Grid xs={12} md={12} sx={{ width: '100%' }}>
                         <Item>
@@ -130,16 +704,18 @@ function CostAllocation({ title }) {
                                             size="small"
                                         >
                                             <Select
-                                                labelId="demo-simple-select-helper-label"
-                                                id="demo-simple-select-helper"
-                                                // value={age}
-                                                // label="Age"
+                                                value={valueStatus}
                                                 displayEmpty
-                                                // onChange={handleChange}
+                                                onChange={handleChangeStatus}
+                                                // onChange={(e) => setValueStatus(e.target.value)}
                                             >
-                                                <MenuItem value={10}>Group 1</MenuItem>
-                                                <MenuItem value={20}>Group 2</MenuItem>
-                                                <MenuItem value={30}>Group 3</MenuItem>
+                                                {status.map((data) => {
+                                                    return (
+                                                        <MenuItem key={data.code} value={data.code}>
+                                                            {data.name}
+                                                        </MenuItem>
+                                                    );
+                                                })}
                                             </Select>
                                         </FormControl>
                                     </Stack>
@@ -157,17 +733,20 @@ function CostAllocation({ title }) {
                                             fullWidth
                                             label="Search"
                                             size="small"
+                                            value={valueSearch}
+                                            onChange={(event) => handleOnChangeValueSearch(event)}
                                         />
 
-                                        <LoadingButton
-                                            loading
-                                            loadingPosition="end"
-                                            variant="contained"
-                                            color="warning"
-                                            endIcon={<LockIcon />}
-                                        >
-                                            Search
-                                        </LoadingButton>
+                                        <div>
+                                            <LoadingButton
+                                                startIcon={<SearchIcon />}
+                                                variant="contained"
+                                                color="warning"
+                                                onClick={() => setReloadListHeader(!reloadListHeader)}
+                                            >
+                                                Search
+                                            </LoadingButton>
+                                        </div>
                                     </Stack>
                                 </Grid>
                             </Grid>
@@ -201,15 +780,20 @@ function CostAllocation({ title }) {
                                     <Stack spacing={0}>
                                         <div style={{ width: '100%' }}>
                                             <DataGrid
-                                                rows={data}
-                                                columns={columns}
+                                                rows={dataListHeader}
+                                                columns={columnsHeader}
                                                 initialState={{
                                                     pagination: {
-                                                        paginationModel: { page: 0, pageSize: 3 },
+                                                        paginationModel: { page: 0, pageSize: 5 },
                                                     },
                                                 }}
-                                                pageSizeOptions={[3, 5, 10, 15]}
+                                                pageSizeOptions={[5, 10, 15]}
                                                 autoHeight
+                                                getRowId={(row) => row.ids}
+                                                loading={valueIsLoading}
+                                                onRowSelectionModelChange={(ids) => onHandleRowsSelectionHeader(ids)}
+                                                showCellVerticalBorder
+                                                showColumnVerticalBorder
                                             />
                                         </div>
                                     </Stack>
@@ -244,53 +828,94 @@ function CostAllocation({ title }) {
                                                 1. Cost allocation information
                                             </h5>
                                         </>
-
-                                        <Button variant="contained" color="warning">
-                                            New
-                                        </Button>
-                                        <Button variant="contained" color="warning">
-                                            Save
-                                        </Button>
-                                        <LoadingButton
-                                            // loading
-                                            loadingPosition="start"
-                                            variant="contained"
-                                            color="warning"
-                                            startIcon={<LockIcon />}
-                                        >
-                                            Delete
-                                        </LoadingButton>
+                                        <Stack direction={'row'} spacing={1}>
+                                            <LoadingButton
+                                                startIcon={<AddBoxIcon />}
+                                                variant="contained"
+                                                color="success"
+                                                onClick={handleClickNewHeader}
+                                                disabled={valueButtonNew}
+                                                loading={valueButtonNew}
+                                                loadingPosition="start"
+                                            >
+                                                New
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                startIcon={<SystemUpdateAltIcon />}
+                                                variant="contained"
+                                                color="warning"
+                                                onClick={handleClickUpdateHeader}
+                                                disabled={valueButtonUpdate}
+                                                loading={valueButtonUpdate}
+                                                loadingPosition="start"
+                                            >
+                                                Update
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                startIcon={<SaveIcon />}
+                                                variant="contained"
+                                                color="primary"
+                                                onClick={handleClickSaveHeader}
+                                                disabled={valueDisabledSaveButton}
+                                            >
+                                                Save
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                startIcon={<CurrencyExchangeIcon />}
+                                                variant="contained"
+                                                color="secondary"
+                                                loading={valueButtonProcess}
+                                                loadingPosition="start"
+                                                disabled={valueButtonProcess}
+                                                onClick={handleClickButtonProcess}
+                                            >
+                                                Process
+                                            </LoadingButton>
+                                            <LoadingButton
+                                                startIcon={<StopCircleIcon />}
+                                                variant="contained"
+                                                color="error"
+                                                disabled={valueButtonPause}
+                                                onClick={handleClickButtonPause}
+                                            >
+                                                Pause
+                                            </LoadingButton>
+                                        </Stack>
                                     </Stack>
                                 </Grid>
                                 <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                     <Item>
                                         <Grid container xs={12} md={12} spacing={1}>
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>CA code:</h6>
+                                                    <h6 style={{ width: '40%' }}>Allocation code:</h6>
                                                     <TextField
-                                                        id="outlined-basic"
                                                         variant="outlined"
                                                         fullWidth
                                                         size="small"
-                                                        placeholder="name..."
+                                                        placeholder="xxxxxx"
+                                                        value={valueAllocationCode}
+                                                        onChange={(e) => setValueAllocationCode(e.target.value)}
+                                                        disabled
+                                                        // inputProps={{ readOnly: { valueDisabledText } }}
+                                                        // disabled={valueDisabledText}
                                                     />
                                                 </Stack>
                                             </Grid>
 
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>Docs date:</h6>
+                                                    <h6 style={{ width: '40%' }}>Doc date:</h6>
                                                     <div style={{ width: '100%' }}>
                                                         <LocalizationProvider
                                                             dateAdapter={AdapterDayjs}
@@ -303,13 +928,15 @@ function CostAllocation({ title }) {
                                                                 <DatePicker
                                                                     // label={'"month" and "year"'}
                                                                     // views={['month', 'year']}
-                                                                    value={value}
+                                                                    value={valueDocDate}
                                                                     // sx={{ width: 300 }}
                                                                     slotProps={{
                                                                         textField: { size: 'small' },
                                                                     }}
                                                                     formatDensity="spacious"
-                                                                    format="DD/MM/YYYY"
+                                                                    format="DD-MM-YYYY"
+                                                                    onChange={(e) => setValueDocDate(e)}
+                                                                    disabled={valueReadonlyDocdate}
                                                                 />
                                                             </DemoContainer>
                                                         </LocalizationProvider>
@@ -317,7 +944,7 @@ function CostAllocation({ title }) {
                                                 </Stack>
                                             </Grid>
 
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
@@ -326,23 +953,25 @@ function CostAllocation({ title }) {
                                                 >
                                                     <h6 style={{ width: '40%' }}>User:</h6>
                                                     <TextField
-                                                        id="outlined-basic"
                                                         variant="outlined"
                                                         fullWidth
                                                         size="small"
-                                                        placeholder="name..."
+                                                        placeholder="name"
+                                                        value={valueUser}
+                                                        onChange={(e) => setValueUser(e.target.value)}
+                                                        disabled
                                                     />
                                                 </Stack>
                                             </Grid>
 
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>Date:</h6>
+                                                    <h6 style={{ width: '40%' }}>Update date:</h6>
                                                     <div style={{ width: '100%' }}>
                                                         <LocalizationProvider
                                                             dateAdapter={AdapterDayjs}
@@ -355,43 +984,41 @@ function CostAllocation({ title }) {
                                                                 <DatePicker
                                                                     // label={'"month" and "year"'}
                                                                     // views={['month', 'year']}
-                                                                    value={value}
+                                                                    value={valueUpdateDate}
                                                                     // sx={{ width: 300 }}
                                                                     slotProps={{
                                                                         textField: { size: 'small' },
                                                                     }}
                                                                     formatDensity="spacious"
-                                                                    format="DD/MM/YYYY"
+                                                                    format="DD-MM-YYYY"
+                                                                    onChange={(e) => setValueUpdateDate(e)}
+                                                                    disabled
                                                                 />
                                                             </DemoContainer>
                                                         </LocalizationProvider>
                                                     </div>
                                                 </Stack>
                                             </Grid>
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>Content:</h6>
+                                                    <h6 style={{ width: '40%' }}>Descriptiont:</h6>
                                                     <Form.Control
                                                         type="text"
                                                         as="textarea"
                                                         rows={3}
                                                         placeholder="..."
+                                                        value={valueDescription}
+                                                        onChange={(e) => setValueDescription(e.target.value)}
+                                                        disabled={valueReadonly}
                                                     />
-                                                    {/* <TextField
-                                                                        id="outlined-basic"
-                                                                        variant="outlined"
-                                                                        fullWidth
-                                                                        size="small"
-                                                                        placeholder="name..."
-                                                                    /> */}
                                                 </Stack>
                                             </Grid>
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack spacing={1}>
                                                     <Stack
                                                         direction={'row'}
@@ -410,16 +1037,27 @@ function CostAllocation({ title }) {
                                                             size="small"
                                                         >
                                                             <Select
-                                                                labelId="demo-simple-select-helper-label"
-                                                                id="demo-simple-select-helper"
-                                                                value={age}
-                                                                // label="Age"
+                                                                value={valueAccountGroup}
                                                                 displayEmpty
-                                                                onChange={handleChange}
+                                                                onChange={(e) => setValueAccountGroup(e.target.value)}
+                                                                disabled={valueReadonly}
                                                             >
-                                                                <MenuItem value={10}>Group 1</MenuItem>
-                                                                <MenuItem value={20}>Group 2</MenuItem>
-                                                                <MenuItem value={30}>Group 3</MenuItem>
+                                                                {dataListAccountGroup
+                                                                    .sort(
+                                                                        (a, b) =>
+                                                                            parseFloat(a.gr_acc_code) -
+                                                                            parseFloat(b.gr_acc_code),
+                                                                    )
+                                                                    .map((data) => {
+                                                                        return (
+                                                                            <MenuItem
+                                                                                key={data.gr_acc_code}
+                                                                                value={data.gr_acc_code}
+                                                                            >
+                                                                                {data.gr_acc_code} - {data.gr_acc_name}
+                                                                            </MenuItem>
+                                                                        );
+                                                                    })}
                                                             </Select>
                                                         </FormControl>
                                                     </Stack>
@@ -440,53 +1078,104 @@ function CostAllocation({ title }) {
                                                             size="small"
                                                         >
                                                             <Select
-                                                                labelId="demo-simple-select-helper-label"
-                                                                id="demo-simple-select-helper"
-                                                                value={age}
-                                                                // label="Age"
+                                                                value={valueCurrency}
                                                                 displayEmpty
-                                                                onChange={handleChange}
+                                                                onChange={(e) => setValueCurrency(e.target.value)}
+                                                                disabled={valueReadonly}
                                                             >
-                                                                <MenuItem value={10}>Group 1</MenuItem>
-                                                                <MenuItem value={20}>Group 2</MenuItem>
-                                                                <MenuItem value={30}>Group 3</MenuItem>
+                                                                {dataListCurrency.map((data) => {
+                                                                    return (
+                                                                        <MenuItem key={data.code} value={data.code}>
+                                                                            {data.name}
+                                                                        </MenuItem>
+                                                                    );
+                                                                })}
                                                             </Select>
                                                         </FormControl>
                                                     </Stack>
                                                 </Stack>
                                             </Grid>
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>in debt:</h6>
-                                                    <TextField
-                                                        id="outlined-basic"
-                                                        variant="outlined"
-                                                        fullWidth
-                                                        size="small"
-                                                        placeholder="name..."
-                                                    />
+                                                    <h6 style={{ width: '40%' }}>Debit entry:</h6>
+
+                                                    <div style={{ width: '100%' }}>
+                                                        <Autocomplete
+                                                            fullWidth
+                                                            componentsProps={{
+                                                                popper: {
+                                                                    style: { width: 'fit-content' },
+                                                                },
+                                                            }}
+                                                            size="small"
+                                                            disabled={valueReadonly}
+                                                            // freeSolo
+                                                            value={valueDebitAuto}
+                                                            onChange={(event, newValue) => {
+                                                                setValueDebitEntry(
+                                                                    newValue ? newValue.account_code : '',
+                                                                );
+                                                                setValueDebitAuto(newValue);
+                                                            }}
+                                                            options={dataListAccount.sort(
+                                                                (a, b) =>
+                                                                    parseFloat(a.account_code) -
+                                                                    parseFloat(b.account_code),
+                                                            )}
+                                                            getOptionLabel={(option) =>
+                                                                `${option.account_code_display ?? ''} - ${
+                                                                    option.account_name ?? ''
+                                                                }`
+                                                            }
+                                                            renderInput={(params) => <TextField {...params} />}
+                                                        />
+                                                    </div>
                                                 </Stack>
                                             </Grid>
-                                            <Grid Item xs={12} md={6}>
+                                            <Grid xs={12} md={6}>
                                                 <Stack
                                                     direction={'row'}
                                                     spacing={2}
                                                     alignItems={'center'}
                                                     justifyContent={'flex-start'}
                                                 >
-                                                    <h6 style={{ width: '40%' }}>available:</h6>
-                                                    <TextField
-                                                        id="outlined-basic"
-                                                        variant="outlined"
-                                                        fullWidth
-                                                        size="small"
-                                                        placeholder="name..."
-                                                    />
+                                                    <h6 style={{ width: '40%' }}>Credit entry:</h6>
+                                                    <div style={{ width: '100%' }}>
+                                                        <Autocomplete
+                                                            fullWidth
+                                                            componentsProps={{
+                                                                popper: {
+                                                                    style: { width: 'fit-content' },
+                                                                },
+                                                            }}
+                                                            size="small"
+                                                            disabled={valueReadonly}
+                                                            // freeSolo
+                                                            value={valueCreditAuto}
+                                                            onChange={(event, newValue) => {
+                                                                setValueCreditEntry(
+                                                                    newValue ? newValue.account_code : '',
+                                                                );
+                                                                setValueCreditAuto(newValue);
+                                                            }}
+                                                            options={dataListAccount.sort(
+                                                                (a, b) =>
+                                                                    parseFloat(a.account_code) -
+                                                                    parseFloat(b.account_code),
+                                                            )}
+                                                            getOptionLabel={(option) =>
+                                                                `${option.account_code_display ?? ''} - ${
+                                                                    option.account_name ?? ''
+                                                                }`
+                                                            }
+                                                            renderInput={(params) => <TextField {...params} />}
+                                                        />
+                                                    </div>
                                                 </Stack>
                                             </Grid>
                                         </Grid>
@@ -519,41 +1208,73 @@ function CostAllocation({ title }) {
                                         >
                                             2. Detail
                                         </h5>
-                                        <Button variant="contained" color="primary">
-                                            Import
-                                        </Button>
+                                        <Stack direction={'row'} spacing={1}>
+                                            <input
+                                                type="file"
+                                                required
+                                                disabled={!valueEditGrid}
+                                                // onChange={handleClickChoseFile}
+                                            />
+                                            <LoadingButton
+                                                component="label"
+                                                role={undefined}
+                                                variant="contained"
+                                                startIcon={<PostAddIcon />}
+                                                // onClick={handleClickImportFile}
+                                                disabled={!valueEditGrid}
+                                            >
+                                                Import
+                                                {/* <VisuallyHiddenInput type="file" /> */}
+                                            </LoadingButton>
 
-                                        <Button variant="contained" color="success">
-                                            Save
-                                        </Button>
-                                        <Button variant="contained" color="warning">
-                                            Update
-                                        </Button>
-                                        <Button variant="contained" color="error">
-                                            Delete
-                                        </Button>
+                                            <LoadingButton
+                                                startIcon={<AddBoxIcon />}
+                                                variant="contained"
+                                                color="success"
+                                                onClick={handleOnClickNewAeDetail}
+                                                sx={{ alignItems: 'left' }}
+                                                disabled={!valueEditGrid}
+                                            >
+                                                Detail
+                                            </LoadingButton>
+                                        </Stack>
                                     </Stack>
                                 </Grid>
                                 <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                     <Item>
                                         <Stack spacing={0}>
-                                            <div style={{ width: '100%' }}>
+                                            <div style={{ width: '100%', minHeight: 500 }}>
                                                 <DataGrid
-                                                    rows={data}
-                                                    columns={columns}
-                                                    initialState={{
-                                                        pagination: {
-                                                            paginationModel: { page: 0, pageSize: 3 },
+                                                    columnVisibilityModel={columnVisibilityModel}
+                                                    rows={dataListDetail.filter((data) => data.is_delete_item !== true)}
+                                                    columns={columnsDataDetail}
+                                                    autoHeight
+                                                    showCellVerticalBorder
+                                                    showColumnVerticalBorder
+                                                    getRowId={(id) => id.detail_ids}
+                                                    loading={valueIsLoading}
+                                                    editMode="row"
+                                                    rowModesModel={rowModesModel}
+                                                    onRowModesModelChange={handleRowModesModelChange}
+                                                    onRowEditStop={handleRowEditStop}
+                                                    processRowUpdate={processRowUpdate}
+                                                    slotProps={{
+                                                        baseSelect: {
+                                                            MenuProps: {
+                                                                PaperProps: {
+                                                                    sx: {
+                                                                        maxHeight: 250,
+                                                                    },
+                                                                },
+                                                            },
                                                         },
                                                     }}
-                                                    pageSizeOptions={[3, 5, 10, 15]}
-                                                    autoHeight
                                                 />
                                             </div>
                                         </Stack>
                                     </Item>
                                 </Grid>
-                                <Grid Item xs={12} md={6}>
+                                <Grid xs={12} md={6}>
                                     <Stack spacing={1}>
                                         <Stack
                                             direction={'row'}
