@@ -11,7 +11,7 @@ export async function ApiAccountEntryListHeader(valueDateMonth, valueDateYear, v
             'UserName',
         )}&acc_period_month=${dateMonth}&acc_period_year=${valueDateYear}`;
         if (valueSearch) {
-            url += `&doc_code=${valueSearch}`;
+            url += `&search_text=${valueSearch}`;
         }
         const response = await DomainApi.get(url);
         setDataAEListHeader(response.data);

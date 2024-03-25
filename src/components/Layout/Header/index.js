@@ -573,6 +573,13 @@ function Header() {
                     <Typography variant="h5" component="div" sx={{ display: { xs: 'block', sm: 'none' } }}>
                         GD GL
                     </Typography>
+                    <Typography
+                        variant="h8"
+                        component="div"
+                        sx={{ display: { xs: 'block', sm: 'block' }, marginLeft: 1 }}
+                    >
+                        v0.1.5
+                    </Typography>
                     {/* <Search>
                         <SearchIconWrapper>
                             <SearchIcon />

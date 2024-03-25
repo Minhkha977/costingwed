@@ -40,7 +40,8 @@ export async function ApiCostCenter(setDataCostCenter) {
         const response = await DomainApi.get(
             `master/cost-center?username=${localStorage.getItem('UserName')}&unitcode=${localStorage.getItem('Unit')}`,
         );
-        setDataCostCenter(response.data);
+        const data = [{ code: null, name: 'Not selected', unitcode: 'UN001' }, ...response.data];
+        setDataCostCenter(data);
     } catch (error) {
         console.log(error);
         toast.error(' Error api get cost center list!');

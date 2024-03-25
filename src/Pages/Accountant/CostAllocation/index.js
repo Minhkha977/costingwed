@@ -70,6 +70,9 @@ import CancelIcon from '@mui/icons-material/Close';
 import { faL } from '@fortawesome/free-solid-svg-icons';
 import { AutocompleteControlled } from '~/components/MasterFunction';
 import Autocomplete from '@mui/material/Autocomplete';
+import { NumericFormat } from 'react-number-format';
+import { type } from '@testing-library/user-event/dist/type';
+import * as xlsx from 'xlsx';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -139,6 +142,17 @@ const columnsHeader = [
 // function TextField({ readOnly, ...props }) {
 //     return <MuiTextField {...props} inputProps={{ readOnly }} />;
 // }
+const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+});
 
 function CostAllocation({ title }) {
     const access_token = ApiToken();
@@ -634,7 +648,42 @@ function CostAllocation({ title }) {
     };
 
     let number = 0;
-    console.log('value', valueDebitEntry);
+    const [fileExcel, setFileExcell] = React.useState(null);
+    const handleClickChoseFile = (event) => {
+        setFileExcell(event.target.files);
+    };
+    const handleClickImportFile = (event) => {
+        let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+        if (!fileExcel) {
+            toast.error('No file chosen!');
+        } else {
+            if (fileExcel && fileType.includes(fileExcel[0].type)) {
+                let reader = new FileReader();
+                reader.readAsArrayBuffer(fileExcel[0]);
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const workbook = xlsx.read(data, { type: 'buffer' });
+                    const worksheetname = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[worksheetname];
+                    const dataExcel = xlsx.utils.sheet_to_json(worksheet);
+                    const dataDetail = dataListDetail.map((data) => {
+                        return {
+                            detail_ids: data.detail_ids,
+                            doc_date: data.doc_date,
+                            description: data.description,
+                            amount: data.amount,
+                        };
+                    });
+                    setDataListDetail(dataExcel.concat(dataDetail));
+                };
+                setFileExcell(null);
+            } else {
+                setFileExcell(null);
+                toast.error('Please chosen excel file!');
+            }
+        }
+    };
+    console.log(dataListDetail);
     return (
         <div className="main">
             <ToastContainer />
@@ -868,6 +917,7 @@ function CostAllocation({ title }) {
                                                 loadingPosition="start"
                                                 disabled={valueButtonProcess}
                                                 onClick={handleClickButtonProcess}
+                                                sx={{ display: valueButtonProcess ? 'none' : null }}
                                             >
                                                 Process
                                             </LoadingButton>
@@ -877,6 +927,7 @@ function CostAllocation({ title }) {
                                                 color="error"
                                                 disabled={valueButtonPause}
                                                 onClick={handleClickButtonPause}
+                                                sx={{ display: valueButtonPause ? 'none' : null }}
                                             >
                                                 Pause
                                             </LoadingButton>
@@ -1213,14 +1264,14 @@ function CostAllocation({ title }) {
                                                 type="file"
                                                 required
                                                 disabled={!valueEditGrid}
-                                                // onChange={handleClickChoseFile}
+                                                onChange={handleClickChoseFile}
                                             />
                                             <LoadingButton
                                                 component="label"
                                                 role={undefined}
                                                 variant="contained"
                                                 startIcon={<PostAddIcon />}
-                                                // onClick={handleClickImportFile}
+                                                onClick={handleClickImportFile}
                                                 disabled={!valueEditGrid}
                                             >
                                                 Import

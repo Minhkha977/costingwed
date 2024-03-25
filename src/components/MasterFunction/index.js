@@ -11,31 +11,30 @@ import TextField from '@mui/material/TextField';
 //     { id: 5, name: 'name 5' },
 // ];
 
-export function AutocompleteControlled({ options, value, setValue }) {
+export function AutocompleteControlled({ options, value, setValue, setSelect, id }) {
     // const [value, setValue] = React.useState(null);
     // const [value, setValue] = React.useState([userList[0].name]);
     // const [inputValue, setInputValue] = React.useState('');
-    console.log('value', value);
-    console.log(options);
+    // console.log('value', value);
+    // console.log(options);
     return (
         <Autocomplete
-            value={value}
-            onChange={(event, newValue) => {
-                setValue(newValue);
-            }}
+            value={value[id] ? value[id] : null}
+            // inputValue={inputValue[id]}
             fullWidth
-            // multiple
-            options={options.map((option) => option.account_code)}
-            getOptionLabel={(option) => `${option.account_code_display} - ${option.account_name}`}
-            freeSolo
-            // inputValue={inputValue}
-            // onInputChange={(event, newInputValue) => {
-            //   setInputValue(newInputValue);
-            // }}
-            // renderTags={(value, getTagProps) =>
-            //     value.map((option, index) => <Chip variant="outlined" label={option} {...getTagProps({ index })} />)
-            // }
-            renderInput={(params) => <TextField {...params} variant="outlined" placeholder="Search" />}
+            options={options.sort((a, b) => parseFloat(a.account_code) - parseFloat(b.account_code))}
+            getOptionLabel={(option) => `${option.account_code_display ?? ''} - ${option.account_name ?? ''}`}
+            onChange={(e, newValue) => {
+                // setInputValue((old) => [...old, newValue]);
+                setValue((old) => {
+                    return {
+                        ...old,
+                        [id]: newValue,
+                    };
+                });
+                // [...selectedRowIds, clickedRowId]
+            }}
+            renderInput={(params) => <TextField {...params} />}
         />
     );
 }
