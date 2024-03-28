@@ -74,6 +74,7 @@ import { ApiAccountList } from '~/components/Api/Account';
 import { Input } from '@mui/icons-material';
 import { AutocompleteControlled } from '~/components/MasterFunction';
 import Autocomplete from '@mui/material/Autocomplete';
+import { useSelector, useDispatch } from 'react-redux';
 
 var utc = require('dayjs/plugin/utc');
 dayjs.extend(utc);
@@ -94,14 +95,20 @@ const columnsDataAeHeader = [
     {
         field: 'doc_code',
         headerName: 'Document Code',
-        width: 200,
+        width: 150,
         headerClassName: 'super-app-theme--header',
     },
     {
         field: 'doc_date',
         headerName: 'Posting Date',
-        width: 200,
+        width: 150,
         valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+        headerClassName: 'super-app-theme--header',
+    },
+    {
+        field: 'grp_acc',
+        headerName: 'Account group',
+        width: 120,
         headerClassName: 'super-app-theme--header',
     },
     {
@@ -195,12 +202,14 @@ function AccountingEntry({ title }) {
     const [dataList, setDataList] = useState([]);
     useEffect(() => {
         setIsLoading(true);
-        ApiAccountEntryListHeader(
-            valueDateAccountPeriod.month() + 1,
-            valueDateAccountPeriod.year(),
-            valueSearchAccountingEntry,
-            setDataAEListHeader,
-        );
+        if (dataPeriod_From_Redux) {
+            ApiAccountEntryListHeader(
+                valueDateAccountPeriod.month() + 1,
+                valueDateAccountPeriod.year(),
+                valueSearchAccountingEntry,
+                setDataAEListHeader,
+            );
+        }
         setIsLoading(false);
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -214,7 +223,7 @@ function AccountingEntry({ title }) {
                     setValueCodeAe(key.doc_code);
                     setValueDocsDateAe(dayjs(key.doc_date));
                     setValueDescriptionAe(key.description);
-                    setValueDateAccountPeriod(dayjs(key.updated_date));
+                    setValueDateAe(dayjs(key.updated_date));
                     setValueUserAe(key.updated_by);
                     setValueAccountGroupAE(key.grp_acc);
                     setValueCurrency(key.currency);
@@ -236,7 +245,7 @@ function AccountingEntry({ title }) {
     const [valueAccountGroupMemo, setValueAccountGroupMemo] = useState('');
 
     /* #region  call api account group */
-    const [valueAccountGroupAE, setValueAccountGroupAE] = useState('');
+    const [valueAccountGroupAE, setValueAccountGroupAE] = useState(9000);
     const [dataListAccountGroup, setDataListAccountGroup] = useState([]);
     const handleChangeAccountGroupAE = (event) => {
         setValueAccountGroupAE(event.target.value);
@@ -282,7 +291,7 @@ function AccountingEntry({ title }) {
         setValueDescriptionAe('');
         setValueDocsDateAe(dayjs());
         setValueDateAe(dayjs());
-        setValueAccountGroupAE('');
+        setValueAccountGroupAE(9000);
         setValueTotalDebitAe(0);
         setValueTotalCreditAe(0);
         setDataListAccountEntryDetail([]);
@@ -300,12 +309,12 @@ function AccountingEntry({ title }) {
             valueDescriptionAe,
             valueCurrency,
             valueAccountGroupAE,
-            dataListAccountEntryDetail,
+            dataList,
         );
         if (statusCode) {
             setValueCodeAe('');
             setValueDocsDateAe(dayjs());
-            setValueDateAccountPeriod(dayjs());
+            setValueDateAe(dayjs());
             setValueUserAe(localStorage.getItem('UserName'));
             setValueDescriptionAe('');
             setValueAccountGroupAE('');
@@ -370,7 +379,6 @@ function AccountingEntry({ title }) {
             setValueReadonlyPostingDate(true);
             setValueEditGrid(false);
         }
-        // setValueDateAccountPeriod(dayjs());
         // setValueUserAe(localStorage.getItem('UserName'));
         setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
     };
@@ -416,7 +424,7 @@ function AccountingEntry({ title }) {
         setValueCodeAe('');
         setValueDocsDateAe(dayjs());
         setValueUserAe('');
-        setValueDateAccountPeriod(dayjs());
+        setValueDateAe(dayjs());
         setValueDescriptionAe('');
         setValueAccountGroupAE('');
         setValueTotalDebitAe(0);
@@ -457,13 +465,14 @@ function AccountingEntry({ title }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dataListAccountEntryDetail]);
 
-    const [valueId, setValueId] = React.useState(1);
+    const [valueId, setValueId] = React.useState(0);
     const handleOnClickNewAeDetail = () => {
         // const id = dataListAccountEntryDetail.sort((a, b) => parseFloat(b.detail_ids) - parseFloat(a.detail_ids));
         setValueId(valueId + 1);
         setDataListAccountEntryDetail((oldRows) => [
             ...oldRows,
             {
+                id: oldRows.length + 1,
                 detail_ids: valueId,
                 doc_code: '',
                 unitcode: '',
@@ -491,8 +500,12 @@ function AccountingEntry({ title }) {
     const handleChangeTab = (event, newValue) => {
         setValueTab(newValue);
     };
-
+    const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
     const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
+    useEffect(() => {
+        setValueDateAccountPeriod(dayjs(dataPeriod_From_Redux));
+    }, [dataPeriod_From_Redux]);
+    console.log(valueDateAccountPeriod);
     const handleOnChangeDateAccountPeriod = (event) => {
         setValueDateAccountPeriod(event);
     };
@@ -516,7 +529,7 @@ function AccountingEntry({ title }) {
 
     const columnsDataAeDetail = [
         {
-            field: 'detail_ids',
+            field: 'id',
             headerName: 'No.',
             width: 50,
             headerClassName: 'super-app-theme--header',
@@ -1014,10 +1027,10 @@ function AccountingEntry({ title }) {
                                                                 columns={columnsDataAeHeader}
                                                                 initialState={{
                                                                     pagination: {
-                                                                        paginationModel: { page: 0, pageSize: 3 },
+                                                                        paginationModel: { page: 0, pageSize: 5 },
                                                                     },
                                                                 }}
-                                                                pageSizeOptions={[3, 5, 10, 15]}
+                                                                pageSizeOptions={[5, 10, 15]}
                                                                 autoHeight
                                                                 showCellVerticalBorder
                                                                 showColumnVerticalBorder
@@ -1414,11 +1427,11 @@ function AccountingEntry({ title }) {
                                                                     columns={columnsDataAeDetail}
                                                                     // initialState={{
                                                                     //     pagination: {
-                                                                    //         paginationModel: { page: 0, pageSize: 3 },
+                                                                    //         paginationModel: { page: 0, pageSize: 5 },
                                                                     //     },
                                                                     //     pinnedColumns: { right: ['actions'] },
                                                                     // }}
-                                                                    // pageSizeOptions={[3, 5, 10, 15]}
+                                                                    // pageSizeOptions={[5, 10, 15]}
                                                                     autoHeight
                                                                     showCellVerticalBorder
                                                                     showColumnVerticalBorder
@@ -1540,10 +1553,10 @@ function AccountingEntry({ title }) {
                                                         columns={columns}
                                                         initialState={{
                                                             pagination: {
-                                                                paginationModel: { page: 0, pageSize: 3 },
+                                                                paginationModel: { page: 0, pageSize: 5 },
                                                             },
                                                         }}
-                                                        pageSizeOptions={[3, 5, 10, 15]}
+                                                        pageSizeOptions={[5, 10, 15]}
                                                         autoHeight
                                                     /> */}
                                                 </div>
@@ -1868,10 +1881,10 @@ function AccountingEntry({ title }) {
                                                                     columns={columns}
                                                                     initialState={{
                                                                         pagination: {
-                                                                            paginationModel: { page: 0, pageSize: 3 },
+                                                                            paginationModel: { page: 0, pageSize: 5 },
                                                                         },
                                                                     }}
-                                                                    pageSizeOptions={[3, 5, 10, 15]}
+                                                                    pageSizeOptions={[5, 10, 15]}
                                                                     autoHeight
                                                                 /> */}
                                                             </div>

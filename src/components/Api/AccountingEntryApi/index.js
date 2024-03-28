@@ -14,6 +14,7 @@ export async function ApiAccountEntryListHeader(valueDateMonth, valueDateYear, v
             url += `&search_text=${valueSearch}`;
         }
         const response = await DomainApi.get(url);
+
         setDataAEListHeader(response.data);
     } catch (error) {
         console.log(error);
@@ -144,8 +145,24 @@ export async function ApiAccountEntryListDetail(valueDocNo, valueSearch, setData
                 url += `?detail_ids=${valueSearch}`;
             }
             const response = await DomainApi.get(url);
-            const dataFilter = response.data;
-            setDataAEListDetail(dataFilter);
+            // const dataFilter = response.data;
+            const data = response.data.map((data, index) => {
+                return {
+                    id: index + 1,
+                    detail_ids: data.detail_ids,
+                    doc_code: data.doc_code,
+                    unitcode: data.unitcode,
+                    acc_code: data.acc_code,
+                    description: data.description,
+                    cost_center: data.cost_center,
+                    credit_amount: data.credit_amount,
+                    debit_amount: data.debit_amount,
+                    isactive: data.isactive,
+                    updated_user: data.updated_user,
+                    updated_date: data.updated_date,
+                };
+            });
+            setDataAEListDetail(data);
         } catch (error) {
             console.log(error);
             if (error.response) {

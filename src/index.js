@@ -5,6 +5,8 @@ import reportWebVitals from './reportWebVitals';
 import './fontawesome';
 import { EventType, PublicClientApplication } from '@azure/msal-browser';
 import { msalConfig } from './Config';
+import { store } from './Redux/store';
+import { Provider } from 'react-redux';
 
 const pca = new PublicClientApplication(msalConfig);
 
@@ -27,9 +29,11 @@ pca.addEventCallback(
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-    <React.StrictMode>
-        <App msalInstance={pca} />,
-    </React.StrictMode>,
+    <Provider store={store}>
+        {/* <React.StrictMode> */}
+        <App msalInstance={pca} />
+        {/* </React.StrictMode> */}
+    </Provider>,
 );
 
 // If you want to start measuring performance in your app, pass a function

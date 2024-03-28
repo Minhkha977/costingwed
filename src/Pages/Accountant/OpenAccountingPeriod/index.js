@@ -30,12 +30,12 @@ import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import Tab from '@mui/material/Tab';
-import TabContext from '@mui/lab/TabContext';
-import TabList from '@mui/lab/TabList';
-import TabPanel from '@mui/lab/TabPanel';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { useSelector, useDispatch } from 'react-redux';
+import { toast, ToastContainer } from 'react-toastify';
+import AlertDialog from '~/components/AlertDialog';
+import { ApiReopenPeriod } from '~/components/Api/OpenAccountingPeriod';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -46,14 +46,59 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 function OpenAccountingPeriod({ title }) {
-    const [loading, setLoading] = React.useState(false);
-    function handleLoading() {
-        setLoading(true);
-    }
-    let newDate = new Date();
-    const [value, setValue] = React.useState(dayjs(newDate));
+    const access_token = useSelector((state) => state.FetchApi.token);
+    const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
+    const [dateReopenPeriod, setDateReopenPeriod] = React.useState(null);
+
+    const handleChangeReopenPeriod = (e) => {
+        setDateReopenPeriod(e);
+    };
+    const valueUser = localStorage.getItem('UserName') ? localStorage.getItem('UserName') : '';
+    const [dialogIsOpen, setDialogIsOpen] = React.useState(false);
+    const [callApiReopen, setCallApiReopen] = React.useState(false);
+    const agreeDialogr = () => {
+        setDialogIsOpen(false);
+        setCallApiReopen(!callApiReopen);
+    };
+    const closeDialog = () => {
+        setDialogIsOpen(false);
+        toast.warning(' Cancel create new!');
+    };
+    useEffect(() => {
+        const fetchApiReopen = async () => {
+            if (dateReopenPeriod) {
+                const statusCode = await ApiReopenPeriod(access_token);
+                if (statusCode) {
+                    dataPeriod_From_Redux = dateReopenPeriod;
+                    setDateReopenPeriod(null);
+                }
+            }
+        };
+        fetchApiReopen();
+    }, [callApiReopen]);
+    const handleReopenPeriod = () => {
+        if (dateReopenPeriod) {
+            setDialogIsOpen(true);
+        } else {
+            toast.warning(' Please select a reopening month!');
+        }
+    };
     return (
         <div className="main">
+            <ToastContainer />
+            <AlertDialog
+                title={'Open next period?'}
+                content={
+                    <>
+                        Closed until period: {dayjs(dataPeriod_From_Redux).format('MM - YYYY')}
+                        <br /> Reopen the accounting period: {dayjs(dateReopenPeriod).format('MM - YYYY')}
+                        <br /> User: {valueUser}
+                    </>
+                }
+                onOpen={dialogIsOpen}
+                onClose={closeDialog}
+                onAgree={agreeDialogr}
+            />
             <div role="presentation">
                 <Breadcrumbs aria-label="breadcrumb">
                     <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
@@ -76,13 +121,14 @@ function OpenAccountingPeriod({ title }) {
                                             <DatePicker
                                                 // label={'"month" and "year"'}
                                                 views={['month', 'year']}
-                                                value={value}
+                                                value={dayjs(dataPeriod_From_Redux)}
                                                 // sx={{ width: 300 }}
                                                 slotProps={{
                                                     textField: { size: 'small' },
                                                 }}
                                                 formatDensity="spacious"
-                                                format="MM/YYYY"
+                                                format="MM - YYYY"
+                                                disabled
                                             />
                                         </DemoContainer>
                                     </LocalizationProvider>
@@ -98,13 +144,14 @@ function OpenAccountingPeriod({ title }) {
                                             <DatePicker
                                                 // label={'"month" and "year"'}
                                                 views={['month', 'year']}
-                                                value={value}
+                                                value={dateReopenPeriod}
                                                 // sx={{ width: 300 }}
                                                 slotProps={{
                                                     textField: { size: 'small' },
                                                 }}
                                                 formatDensity="spacious"
                                                 format="MM/YYYY"
+                                                onChange={(e) => handleChangeReopenPeriod(e)}
                                             />
                                         </DemoContainer>
                                     </LocalizationProvider>
@@ -116,28 +163,21 @@ function OpenAccountingPeriod({ title }) {
                                 </Grid>
                                 <Grid xs={7} md={6}>
                                     <Stack alignItems={'flex-start'}>
-                                        <TextField
-                                            id="outlined-basic"
-                                            variant="standard"
-                                            fullWidth
-                                            size="small"
-                                            // value={'kha.nguyenminhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                                            sx={{ width: { xs: '100%', lg: '70%' } }}
-                                        />
+                                        <TextField variant="outlined" size="small" value={valueUser} disabled />
                                     </Stack>
                                 </Grid>
 
                                 <Grid xs={12} md={12}>
                                     <Stack justifyContent={'center'} alignItems={'center'}>
                                         <LoadingButton
-                                            loading={loading}
+                                            // loading={isLoading}
                                             loadingPosition="start"
                                             variant="contained"
                                             color="warning"
                                             startIcon={<LockOpenIcon />}
-                                            onClick={handleLoading}
+                                            onClick={handleReopenPeriod}
                                         >
-                                            Open period
+                                            Reopen period
                                         </LoadingButton>
                                     </Stack>
                                 </Grid>

@@ -741,7 +741,7 @@ function Header() {
                                 sx={{ display: 'block' }}
                                 onClick={toggleDrawer('left', false)}
                             >
-                                <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                                <Link to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
                                     <ListItemButton
                                         sx={{
                                             minHeight: 48,
@@ -762,7 +762,7 @@ function Header() {
                                         </ListItemIcon>
                                         <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
                                     </ListItemButton>
-                                </NavLink>
+                                </Link>
                             </ListItem>
                         );
                     })}

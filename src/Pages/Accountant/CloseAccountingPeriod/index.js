@@ -201,10 +201,10 @@ function CloseAccountingPeriod({ title }) {
                                         columns={columns}
                                         initialState={{
                                             pagination: {
-                                                paginationModel: { page: 0, pageSize: 3 },
+                                                paginationModel: { page: 0, pageSize: 5 },
                                             },
                                         }}
-                                        pageSizeOptions={[3, 5, 10, 15]}
+                                        pageSizeOptions={[5, 10, 15]}
                                         autoHeight
                                     />
                                 </div>

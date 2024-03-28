@@ -116,7 +116,22 @@ export async function ApiCostAllocationListDetail(valueDocCode, setDataListCostA
             'Unit',
         )}/docno/${valueDocCode}/detail?username=${localStorage.getItem('UserName')}`;
         const response = await DomainApi.get(url);
-        setDataListCostAllocationDetail(response.data);
+        const data = response.data.map((data, index) => {
+            return {
+                id: index + 1,
+                detail_ids: data.detail_ids,
+                unitcode: data.unitcode,
+                doc_date: data.doc_date,
+                description: data.description,
+                amount: data.amount,
+                status: data.status,
+                status_display: data.status_display,
+                updated_user: data.updated_user,
+                updated_date: data.updated_date,
+                entry_doc_code: data.entry_doc_code,
+            };
+        });
+        setDataListCostAllocationDetail(data);
     } catch (error) {
         console.log(error);
         if (error.response) {

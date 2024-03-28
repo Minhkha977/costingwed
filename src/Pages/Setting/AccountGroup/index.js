@@ -78,9 +78,11 @@ function Account({ title }) {
                     setValueName(key.gr_acc_name ?? '');
                     setValueDescription(key.description ?? '');
                 });
-                // setValueReadonly(true);
+                setValueReadonly(true);
                 setValueReadonlyCode(true);
-                // setValueDisableSaveButton(true);
+                setValueDisableSaveButton(true);
+                setValueNewButton(false);
+                setValueUpdateButton(false);
             }
         }
     };
@@ -246,9 +248,9 @@ function Account({ title }) {
                                     id="outlined-basic"
                                     variant="outlined"
                                     fullWidth
-                                    label="Search group code"
+                                    label="Search"
                                     size="small"
-                                    type="number"
+                                    // type="number"
                                     value={valueSearch}
                                     onChange={(event) => handleOnChangeValueSearch(event)}
                                 />
@@ -276,10 +278,10 @@ function Account({ title }) {
                                         getRowId={(row) => row.gr_acc_code}
                                         initialState={{
                                             pagination: {
-                                                paginationModel: { page: 0, pageSize: 3 },
+                                                paginationModel: { page: 0, pageSize: 5 },
                                             },
                                         }}
-                                        pageSizeOptions={[3, 5, 10, 15]}
+                                        pageSizeOptions={[5, 10, 15]}
                                         autoHeight
                                         showCellVerticalBorder
                                         showColumnVerticalBorder
@@ -361,6 +363,12 @@ function Account({ title }) {
                                                 onChange={(event) => handleOnChangeValueCode(event)}
                                                 placeholder="xxxx"
                                                 disabled={valueReadonlyCode}
+                                                onInput={(e) => {
+                                                    e.target.value = Math.max(0, parseInt(e.target.value))
+                                                        .toString()
+                                                        .slice(0, 4);
+                                                }}
+                                                min={0}
                                             />
                                         </Stack>
                                         <Stack direction={'row'} spacing={0}>

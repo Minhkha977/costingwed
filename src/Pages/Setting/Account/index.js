@@ -33,10 +33,13 @@ import { ToastContainer, toast } from 'react-toastify';
 import DomainApi from '~/DomainApi';
 import AlertDialog from '~/components/AlertDialog';
 import ApiToken from '~/components/Api/ApiToken';
-import { ApiAccountList, ApiCreateAccount, ApiUpdateAccount } from '~/components/Api/Account';
+import { ApiAccountList, ApiCreateAccount, ApiImportFileAccount, ApiUpdateAccount } from '~/components/Api/Account';
 import SaveIcon from '@mui/icons-material/Save';
 import TextField from '@mui/material/TextField';
 import { ApiGroupCost, ApiTypeCost } from '~/components/Api/Master';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useSelector, useDispatch } from 'react-redux';
+import PostAddIcon from '@mui/icons-material/PostAdd';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -47,10 +50,17 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-// function TextField({ readOnly, ...props }) {
-//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
-// }
-
+const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+});
 function Account({ title }) {
     const columns = [
         {
@@ -91,7 +101,7 @@ function Account({ title }) {
 
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const access_token = ApiToken();
+    const access_token = useSelector((state) => state.FetchApi.token);
 
     const [valueReadonly, setValueReadonly] = React.useState(true);
     const [valueReadonlyCode, setValueReadonlyCode] = React.useState(true);
@@ -152,6 +162,11 @@ function Account({ title }) {
                     setValueTypeCost(key.expense_type ?? '');
                     setChecked(key.is_shared_expense);
                 });
+                setValueReadonly(true);
+                setValueReadonlyCode(true);
+                setValueDisableSaveButton(true);
+                setValueNewButton(false);
+                setValueUpdateButton(false);
             }
         }
     };
@@ -304,6 +319,44 @@ function Account({ title }) {
             toast.error(' Empty main code, sub code, name!');
         }
     };
+
+    const [fileExcel, setFileExcell] = React.useState(null);
+    const handleClickChoseFile = (event) => {
+        setFileExcell(event.target.files);
+    };
+
+    const [dialogIsOpenImportFile, setDialogIsOpenImportFile] = React.useState(false);
+    const [callApiImportFile, setCallApiImportFile] = React.useState(false);
+    const agreeDialogImportFile = async () => {
+        setDialogIsOpenImportFile(false);
+        setCallApiImportFile(!callApiImportFile);
+    };
+    const closeDialogImportFile = () => {
+        setDialogIsOpenImportFile(false);
+        toast.warning(' Cancel Import');
+    };
+
+    useEffect(() => {
+        const apiImportFile = async () => {
+            const statusCode = await ApiImportFileAccount(access_token, fileExcel);
+            setFileExcell(null);
+            setReloadListAccount(!reloadListAccount);
+        };
+        apiImportFile();
+    }, [callApiImportFile]);
+    const handleClickImportFile = (event) => {
+        let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
+        if (!fileExcel) {
+            toast.error('No file chosen!');
+        } else {
+            if (fileExcel && fileType.includes(fileExcel[0].type)) {
+                setDialogIsOpenImportFile(true);
+            } else {
+                setFileExcell(null);
+                toast.error('Please chosen excel file!');
+            }
+        }
+    };
     return (
         <div className="main">
             <ToastContainer />
@@ -334,6 +387,13 @@ function Account({ title }) {
                 onOpen={dialogIsOpenUpdate}
                 onClose={closeDialogUpdate}
                 onAgree={agreeDialogUpdate}
+            />
+            <AlertDialog
+                title={'Import file accounting?'}
+                content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
+                onOpen={dialogIsOpenImportFile}
+                onClose={closeDialogImportFile}
+                onAgree={agreeDialogImportFile}
             />
             <div role="presentation">
                 <Breadcrumbs aria-label="breadcrumb">
@@ -385,10 +445,10 @@ function Account({ title }) {
                                         columns={columns}
                                         initialState={{
                                             pagination: {
-                                                paginationModel: { page: 0, pageSize: 3 },
+                                                paginationModel: { page: 0, pageSize: 5 },
                                             },
                                         }}
-                                        pageSizeOptions={[3, 5, 10, 15]}
+                                        pageSizeOptions={[5, 10, 15]}
                                         autoHeight
                                         showCellVerticalBorder
                                         showColumnVerticalBorder
@@ -422,11 +482,38 @@ function Account({ title }) {
                                             Account Information
                                         </h5>
 
-                                        <Stack
-                                            direction={'row'}
-                                            spacing={1}
-                                            // sx={{ display: { xs: 'none', md: 'flex' } }}
-                                        >
+                                        <Stack width={'100%'} direction={'row'} spacing={1} alignItems={'center'}>
+                                            <Button
+                                                component="label"
+                                                role={undefined}
+                                                variant="outlined"
+                                                tabIndex={-1}
+                                                startIcon={<PostAddIcon />}
+                                                sx={{
+                                                    width: 300,
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}
+                                            >
+                                                {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : ''}
+                                                <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+                                            </Button>
+                                            <Button
+                                                component="label"
+                                                role={undefined}
+                                                variant="contained"
+                                                tabIndex={-1}
+                                                startIcon={<CloudUploadIcon />}
+                                                onClick={handleClickImportFile}
+                                                sx={{
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                }}
+                                            >
+                                                Upload file
+                                            </Button>
                                             <LoadingButton
                                                 startIcon={<AddBoxIcon />}
                                                 variant="contained"
@@ -495,6 +582,12 @@ function Account({ title }) {
                                                     onChange={(event) => handleOnChangeValueCodeMain(event)}
                                                     placeholder="xxxxx"
                                                     disabled={valueReadonlyCode}
+                                                    onInput={(e) => {
+                                                        e.target.value = Math.max(0, parseInt(e.target.value))
+                                                            .toString()
+                                                            .slice(0, 5);
+                                                    }}
+                                                    min={0}
                                                 />
                                             </Stack>
                                         </Grid>
@@ -513,6 +606,12 @@ function Account({ title }) {
                                                     onChange={(event) => handleOnChangeValueCodeSub(event)}
                                                     placeholder="xxx"
                                                     disabled={valueReadonlyCode}
+                                                    onInput={(e) => {
+                                                        e.target.value = Math.max(0, parseInt(e.target.value))
+                                                            .toString()
+                                                            .slice(0, 3);
+                                                    }}
+                                                    min={0}
                                                 />
                                             </Stack>
                                         </Grid>

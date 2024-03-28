@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { publicRoutes } from '~/Routes';
 import { DefaultLayout } from './components/Layout';
 import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal, MsalProvider } from '@azure/msal-react';
@@ -7,19 +7,22 @@ import { loginRequest } from './Config';
 import Login from './Pages/Login';
 import { useEffect } from 'react';
 import '~/AppStyles.css';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchPeriod, fetchApiToken } from '~/Redux/FetchApi/fetchApiMaster';
 
 const WrapperView = () => {
-    // const { instance } = useMsal();
-    // const activeAccount = instance.getActiveAccount();
-
+    const { instance } = useMsal();
+    const activeAccount = instance.getActiveAccount();
+    var dispatch = useDispatch();
+    const unitcode = useSelector((state) => state.Actions.unitcode);
     useEffect(() => {
-        // if (activeAccount) window.location.replace('/login');
-        return () => {};
+        dispatch(fetchPeriod(unitcode));
     }, []);
-    // console.log(activeAccount);
-    // const handleRedirect = () => {
-    //     instance.loginRedirect({ ...loginRequest, prompt: 'create' }).catch((error) => console.log(error));
-    // };
+    useEffect(() => {
+        if (activeAccount) {
+            dispatch(fetchApiToken(activeAccount ? activeAccount.username : ''));
+        }
+    }, [activeAccount]);
     return (
         <Router>
             <div className="App">
@@ -43,6 +46,7 @@ const WrapperView = () => {
                                 <Route
                                     key={index}
                                     path={route.path}
+                                    exact
                                     element={
                                         <Layout title={route.title}>
                                             <Page title={route.title} />

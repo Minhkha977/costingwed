@@ -472,7 +472,7 @@ function CostAllocation({ title }) {
 
     const columnsDataDetail = [
         {
-            field: 'detail_ids',
+            field: 'id',
             headerName: 'No.',
             width: 50,
             headerClassName: 'super-app-theme--header',
@@ -554,7 +554,14 @@ function CostAllocation({ title }) {
         {
             field: 'status_display',
             headerName: 'Status',
-            width: 150,
+            width: 100,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'entry_doc_code',
+            headerName: 'Doc code',
+            width: 100,
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
         },

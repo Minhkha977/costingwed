@@ -113,3 +113,32 @@ export async function ApiUpdateAccount(
         return statusCode;
     }
 }
+
+export async function ApiImportFileAccount(access_token, valueFile) {
+    if (access_token && valueFile) {
+        try {
+            var statusCode = false;
+            const header = {
+                Authorization: access_token,
+                'Content-Type': 'multipart/form-data',
+            };
+            const fd = new FormData();
+            fd.append('file', valueFile[0]);
+            let url = `master/chart-of-account/unitcode/${localStorage.getItem(
+                'Unit',
+            )}/import?username=${localStorage.getItem('UserName')}`;
+            const response = await DomainApi.post(url, fd, { headers: header });
+            // setDataAEListHeader(response.data);
+            toast.success(' Success import file!');
+            statusCode = true;
+        } catch (error) {
+            console.log(error);
+            if (error.response) {
+                toast.error(error.response.data);
+            } else {
+                toast.error(error.message);
+            }
+        }
+        return statusCode;
+    }
+}
