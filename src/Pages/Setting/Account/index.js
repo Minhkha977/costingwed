@@ -96,6 +96,13 @@ function Account({ title }) {
             width: 130,
             type: 'boolean',
             headerClassName: 'super-app-theme--header',
+            valueGetter: (value) => {
+                if (value.value === false) {
+                    return null;
+                }
+                // Convert the decimal value to a percentage
+                return value;
+            },
         },
     ];
 

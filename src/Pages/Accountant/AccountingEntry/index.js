@@ -71,9 +71,6 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import CancelIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import { ApiAccountList } from '~/components/Api/Account';
-import { Input } from '@mui/icons-material';
-import { AutocompleteControlled } from '~/components/MasterFunction';
-import Autocomplete from '@mui/material/Autocomplete';
 import { useSelector, useDispatch } from 'react-redux';
 
 var utc = require('dayjs/plugin/utc');
@@ -118,6 +115,12 @@ const columnsDataAeHeader = [
         flex: 1,
         headerClassName: 'super-app-theme--header',
     },
+    {
+        field: 'import_code',
+        headerName: 'Import Code',
+        width: 130,
+        headerClassName: 'super-app-theme--header',
+    },
 ];
 
 // function TextField({ readOnly, ...props }) {
@@ -138,7 +141,7 @@ const VisuallyHiddenInput = styled('input')({
 
 function AccountingEntry({ title }) {
     const access_token = ApiToken();
-
+    const [buttonSelectMode, setButtonSelectMode] = React.useState(false);
     const [valueReadonly, setValueReadonly] = React.useState(true);
     const [valueReadonlyPostingDate, setValueReadonlyPostingDate] = React.useState(true);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -148,28 +151,16 @@ function AccountingEntry({ title }) {
         setValueSearchAccountingEntry(event.target.value);
     };
     const [valueEditGrid, setValueEditGrid] = React.useState(false);
-    const [valueEdit, setValueEdit] = React.useState(false);
     const columnVisibilityModel = React.useMemo(() => {
-        if (valueEdit) {
-            return {
-                actions: true,
-                acc_code: false,
-                t: true,
-            };
-        }
         if (valueEditGrid) {
             return {
                 actions: true,
-                acc_code: true,
-                t: false,
             };
         }
         return {
             actions: false,
-            acc_code: true,
-            t: false,
         };
-    }, [valueEditGrid, valueEdit]);
+    }, [valueEditGrid]);
     /* #region  handle value */
     const [valueCodeAe, setValueCodeAe] = useState('');
     const [valueUserAe, setValueUserAe] = useState('');
@@ -202,23 +193,27 @@ function AccountingEntry({ title }) {
     const [dataList, setDataList] = useState([]);
     useEffect(() => {
         setIsLoading(true);
-        if (dataPeriod_From_Redux) {
-            ApiAccountEntryListHeader(
-                valueDateAccountPeriod.month() + 1,
-                valueDateAccountPeriod.year(),
-                valueSearchAccountingEntry,
-                setDataAEListHeader,
-            );
-        }
+        const callApiDataListHeader = async () => {
+            if (dataPeriod_From_Redux) {
+                await ApiAccountEntryListHeader(
+                    valueDateAccountPeriod.month() + 1,
+                    valueDateAccountPeriod.year(),
+                    valueSearchAccountingEntry,
+                    setDataAEListHeader,
+                );
+            }
+        };
+
         setIsLoading(false);
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reloadListAccountingEntryHeader]);
-
+    const [selectedRows, setValueSelectedRows] = useState([]);
     const onHandleRowsSelectionAeHeader = (ids) => {
         const selectedRowsData = ids.map((id) => dataListAEHeader.find((row) => row.doc_code === id));
         if (selectedRowsData) {
             {
+                setValueSelectedRows(ids);
                 selectedRowsData.map((key) => {
                     setValueCodeAe(key.doc_code);
                     setValueDocsDateAe(dayjs(key.doc_date));
@@ -235,7 +230,6 @@ function AccountingEntry({ title }) {
                     setValueReadonly(true);
                     setValueReadonlyPostingDate(true);
                     setValueEditGrid(false);
-                    setValueEdit(false);
                 });
                 setReloadListAeDetail(!reloadListAeDetail);
             }
@@ -295,9 +289,9 @@ function AccountingEntry({ title }) {
         setValueTotalDebitAe(0);
         setValueTotalCreditAe(0);
         setDataListAccountEntryDetail([]);
+        setDataList([]);
         setValueId(1);
         setValueEditGrid(true);
-        setValueEdit(false);
         setValueReadonly(false);
         setValueReadonlyPostingDate(false);
     };
@@ -358,7 +352,6 @@ function AccountingEntry({ title }) {
         setValueReadonly(false);
         setValueReadonlyPostingDate(true);
         setValueEditGrid(true);
-        setValueEdit(false);
     };
     const callApiUpdate = async () => {
         const statusCode = await ApiUpdateAccountEntryHeader(
@@ -413,14 +406,14 @@ function AccountingEntry({ title }) {
         toast.warning(' Cancel delete!');
     };
     const handleOnClickDeleteAeHeader = () => {
-        if (!access_token || !valueCodeAe) {
+        if (!access_token || selectedRows.length === 0) {
             toast.error('Document no is empty!');
             return;
         }
         setDialogIsOpenDeleteAeHeader(true);
     };
     const apiDeleteAeHeader = async () => {
-        await ApiDeleteAccountEntryHeader(access_token, valueCodeAe);
+        await ApiDeleteAccountEntryHeader(access_token, selectedRows);
         setValueCodeAe('');
         setValueDocsDateAe(dayjs());
         setValueUserAe('');
@@ -436,6 +429,7 @@ function AccountingEntry({ title }) {
     }, [callApiDeleteAeHeader]);
     /* #endregion */
 
+    const [valueDescriptionDetail, setValueDescriptionDetail] = useState('');
     const [dataListAccountEntryDetail, setDataListAccountEntryDetail] = useState([]);
     const [reloadListAeDetail, setReloadListAeDetail] = useState([]);
     useEffect(() => {
@@ -477,7 +471,7 @@ function AccountingEntry({ title }) {
                 doc_code: '',
                 unitcode: '',
                 acc_code: '',
-                description: '',
+                description: valueDescriptionDetail,
                 cost_center: '',
                 credit_amount: null,
                 debit_amount: null,
@@ -492,7 +486,6 @@ function AccountingEntry({ title }) {
             ...oldModel,
             [valueId]: { mode: GridRowModes.Edit, fieldToFocus: 'cost_center' },
         }));
-        setValueEdit(true);
     };
 
     const [valueTab, setValueTab] = React.useState('Manage Accounting Entry');
@@ -607,37 +600,7 @@ function AccountingEntry({ title }) {
             },
             headerClassName: 'super-app-theme--header',
         },
-        {
-            field: 't',
-            headerName: 'Account code',
-            width: 200,
-            editable: valueEditGrid,
-            // type: 'singleSelect',
-            // getOptionValue: (value) => value.account_code,
-            // getOptionLabel: (value) => `${value.account_code_display} - ${value.account_name}`,
-            // valueOptions: dataListAccount.sort((a, b) => parseFloat(a.account_code) - parseFloat(b.account_code)),
-            // PaperProps: {
-            //     sx: { maxHeight: 200 },
-            // },
-            headerClassName: 'super-app-theme--header',
-            renderEditCell: (params) => (
-                <AutocompleteControlled
-                    options={dataListAccount}
-                    value={valueAccountCode}
-                    setValue={setValueAccountCode}
-                    setValueSetAccountCode
-                    id={params.id}
-                />
-            ),
-            renderCell: (params) => (
-                <AutocompleteControlled
-                    options={dataListAccount}
-                    value={valueAccountCode}
-                    setValue={setValueAccountCode}
-                    id={params.id}
-                />
-            ),
-        },
+
         {
             field: 'debit_amount',
             headerName: 'Debit',
@@ -679,7 +642,6 @@ function AccountingEntry({ title }) {
     const [rowModesModel, setRowModesModel] = React.useState({});
     const handleEditClick = (id) => () => {
         setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-        setValueEdit(true);
     };
 
     const handleSaveClick = (id) => () => {
@@ -714,11 +676,13 @@ function AccountingEntry({ title }) {
 
     const handleRowModesModelChange = (newRowModesModel) => {
         setRowModesModel(newRowModesModel);
-        setValueEdit(!valueEdit);
     };
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
             event.defaultMuiPrevented = true;
+        }
+        if (event.code === 'Tab') {
+            setRowModesModel({ ...rowModesModel, [params.id]: { mode: GridRowModes.View } });
         }
     };
     const processRowUpdate = (newRow) => {
@@ -726,18 +690,22 @@ function AccountingEntry({ title }) {
         setDataListAccountEntryDetail(
             dataListAccountEntryDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)),
         );
-        if (valueAccountCode.length !== 0) {
-            const rowEdit = valueAccountCode[newRow.detail_ids];
-            if (rowEdit) {
-                const updatedRow = {
-                    ...newRow,
-                    acc_code: rowEdit.account_code,
-                };
-                setDataListAccountEntryDetail(
-                    dataListAccountEntryDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)),
-                );
-            }
+        if (!valueDescriptionAe) {
+            setValueDescriptionAe(newRow.description);
         }
+        setValueDescriptionDetail(newRow.description);
+        // if (valueAccountCode.length !== 0) {
+        //     const rowEdit = valueAccountCode[newRow.detail_ids];
+        //     if (rowEdit) {
+        //         const updatedRow = {
+        //             ...newRow,
+        //             acc_code: rowEdit.account_code,
+        //         };
+        //         setDataListAccountEntryDetail(
+        //             dataListAccountEntryDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)),
+        //         );
+        //     }
+        // }
         return updatedRow;
     };
     const [fileExcel, setFileExcell] = React.useState(null);
@@ -777,6 +745,7 @@ function AccountingEntry({ title }) {
             }
         }
     };
+
     return (
         <div className="main">
             <ToastContainer />
@@ -1005,6 +974,14 @@ function AccountingEntry({ title }) {
                                                                 Accounting Entry List
                                                             </h5>
                                                         </>
+                                                        <Button
+                                                            component="label"
+                                                            role={undefined}
+                                                            variant="outlined"
+                                                            onClick={() => setButtonSelectMode(!buttonSelectMode)}
+                                                        >
+                                                            Select Mode
+                                                        </Button>
                                                         <input type="file" required onChange={handleClickChoseFile} />
                                                         <Button
                                                             component="label"
@@ -1039,6 +1016,7 @@ function AccountingEntry({ title }) {
                                                                 onRowSelectionModelChange={(ids) =>
                                                                     onHandleRowsSelectionAeHeader(ids)
                                                                 }
+                                                                checkboxSelection={buttonSelectMode}
                                                             />
                                                         </div>
                                                     </Stack>
@@ -1425,13 +1403,6 @@ function AccountingEntry({ title }) {
                                                                             data.is_delete_item !== true,
                                                                     )}
                                                                     columns={columnsDataAeDetail}
-                                                                    // initialState={{
-                                                                    //     pagination: {
-                                                                    //         paginationModel: { page: 0, pageSize: 5 },
-                                                                    //     },
-                                                                    //     pinnedColumns: { right: ['actions'] },
-                                                                    // }}
-                                                                    // pageSizeOptions={[5, 10, 15]}
                                                                     autoHeight
                                                                     showCellVerticalBorder
                                                                     showColumnVerticalBorder

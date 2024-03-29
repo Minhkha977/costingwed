@@ -112,15 +112,15 @@ export async function ApiUpdateAccountEntryHeader(
 }
 
 export async function ApiDeleteAccountEntryHeader(access_token, valueDocCode) {
-    if (access_token && valueDocCode) {
+    if (access_token && valueDocCode.length > 0) {
         try {
             const header = {
                 Authorization: access_token,
             };
             let url = `journal/acc-entry/unitcode/${localStorage.getItem(
                 'Unit',
-            )}/docno/${valueDocCode}?username=${localStorage.getItem('UserName')}`;
-            const response = await DomainApi.delete(url, { headers: header });
+            )}/delete?username=${localStorage.getItem('UserName')}`;
+            const response = await DomainApi.put(url, valueDocCode, { headers: header });
             // setDataAEListHeader(response.data);
             toast.success(' Success delete account entry header!');
         } catch (error) {

@@ -24,6 +24,7 @@ export async function ApiCostAllocationListHeader(valueStatus, setDataListCostAl
 
 export async function ApiCreateCostAllocationHeader(
     access_token,
+    valueDocsDate,
     valueDescription,
     valueCurrency,
     valueAccountGroup,
@@ -39,6 +40,7 @@ export async function ApiCreateCostAllocationHeader(
                 Authorization: access_token,
             };
             const model = {
+                doc_date: valueDocsDate,
                 description: valueDescription,
                 currency: valueCurrency,
                 acc_group: valueAccountGroup,
@@ -66,6 +68,7 @@ export async function ApiCreateCostAllocationHeader(
 
 export async function ApiUpdateCostAllocationHeader(
     access_token,
+    valueDocDate,
     valueAllocationCode,
     valueDescription,
     valueCurrency,
@@ -82,6 +85,7 @@ export async function ApiUpdateCostAllocationHeader(
                 Authorization: access_token,
             };
             const model = {
+                doc_date: valueDocDate,
                 description: valueDescription,
                 currency: valueCurrency,
                 acc_group: valueAccountGroup,

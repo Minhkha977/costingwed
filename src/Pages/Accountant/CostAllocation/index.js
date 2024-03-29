@@ -67,8 +67,6 @@ import { ApiListAccountGroup } from '~/components/Api/AccountGroup';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import CancelIcon from '@mui/icons-material/Close';
-import { faL } from '@fortawesome/free-solid-svg-icons';
-import { AutocompleteControlled } from '~/components/MasterFunction';
 import Autocomplete from '@mui/material/Autocomplete';
 import { NumericFormat } from 'react-number-format';
 import { type } from '@testing-library/user-event/dist/type';
@@ -247,7 +245,7 @@ function CostAllocation({ title }) {
                     const filterCredit = dataListAccount.filter((data) => data.account_code === key.credit_entry);
                     setValueCreditAuto(filterCredit[0]);
                     setValueReadonly(true);
-                    setValueReadonlyDocdate(true);
+                    // setValueReadonlyDocdate(true);
                     if (key.status === 2) {
                         setValueButtonProcess(true);
                         setValueButtonPause(false);
@@ -267,7 +265,7 @@ function CostAllocation({ title }) {
     };
     /* #endregion */
     const [valueReadonly, setValueReadonly] = React.useState(true);
-    const [valueReadonlyDocdate, setValueReadonlyDocdate] = React.useState(true);
+    // const [valueReadonlyDocdate, setValueReadonlyDocdate] = React.useState(true);
     const [valueDisabledSaveButton, setValueDisabledSaveButton] = React.useState(true);
 
     /* #region button new header */
@@ -276,7 +274,7 @@ function CostAllocation({ title }) {
     const handleClickNewHeader = (event) => {
         setValueDisabledSaveButton(false);
         setValueReadonly(false);
-        setValueReadonlyDocdate(false);
+        // setValueReadonlyDocdate(false);
         setValueButtonUpdate(false);
         setValueButtonNew(true);
         setValueAllocationCode('');
@@ -301,7 +299,7 @@ function CostAllocation({ title }) {
     const handleClickUpdateHeader = (event) => {
         setValueDisabledSaveButton(false);
         setValueReadonly(false);
-        setValueReadonlyDocdate(true);
+        // setValueReadonlyDocdate(true);
         setValueButtonNew(false);
         setValueButtonUpdate(true);
         setValueUpdateDate(dayjs());
@@ -387,6 +385,7 @@ function CostAllocation({ title }) {
         const apiNewHeader = async () => {
             const statusCode = await ApiCreateCostAllocationHeader(
                 access_token,
+                valueDocDate,
                 valueDescription,
                 valueCurrency,
                 valueAccountGroup,
@@ -407,7 +406,7 @@ function CostAllocation({ title }) {
                 setValueButtonNew(false);
                 setValueDisabledSaveButton(true);
                 setValueReadonly(true);
-                setValueReadonlyDocdate(true);
+                // setValueReadonlyDocdate(true);
                 setValueEditGrid(false);
             }
 
@@ -433,6 +432,7 @@ function CostAllocation({ title }) {
         const apiUpdate = async () => {
             const statusCode = await ApiUpdateCostAllocationHeader(
                 access_token,
+                valueDocDate,
                 valueAllocationCode,
                 valueDescription,
                 valueCurrency,
@@ -575,6 +575,7 @@ function CostAllocation({ title }) {
         setDataListDetail((oldRows) => [
             ...oldRows,
             {
+                id: oldRows.length + 1,
                 detail_ids: valueId,
                 doc_code: '',
                 doc_date: dayjs().utc(),
@@ -646,6 +647,9 @@ function CostAllocation({ title }) {
     const handleRowEditStop = (params, event) => {
         if (params.reason === GridRowEditStopReasons.rowFocusOut) {
             event.defaultMuiPrevented = true;
+        }
+        if (event.code === 'Tab') {
+            setRowModesModel({ ...rowModesModel, [params.id]: { mode: GridRowModes.View } });
         }
     };
     const processRowUpdate = (newRow) => {
@@ -994,7 +998,7 @@ function CostAllocation({ title }) {
                                                                     formatDensity="spacious"
                                                                     format="DD-MM-YYYY"
                                                                     onChange={(e) => setValueDocDate(e)}
-                                                                    disabled={valueReadonlyDocdate}
+                                                                    disabled={valueReadonly}
                                                                 />
                                                             </DemoContainer>
                                                         </LocalizationProvider>
