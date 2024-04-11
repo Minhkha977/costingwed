@@ -1,38 +1,4 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import DomainApi from '~/DomainApi';
-import { fetchPeriod } from '../FetchApi/fetchApiMaster';
-
-// const initialState_data = {
-//     listData: [],
-//     isLoading: false,
-//     isError: false,
-// };
-
-// export const period = createSlice({
-//     name: 'period',
-//     initialState_data,
-//     reducers: {},
-//     extraReducers: (builder) => {
-//         // Add reducers for additional action types here, and handle loading state as needed
-//         builder
-//             .addCase(fetchPeriod.pending, (state, action) => {
-//                 // Add user to the state array
-//                 state.isLoading = true;
-//                 state.isError = false;
-//             })
-//             .addCase(fetchPeriod.fulfilled, (state, action) => {
-//                 // Add user to the state array
-//                 state.listData = action.payload;
-//                 state.isLoading = false;
-//                 state.isError = false;
-//             })
-//             .addCase(fetchPeriod.rejected, (state, action) => {
-//                 // Add user to the state array
-//                 state.isLoading = false;
-//                 state.isError = true;
-//             });
-//     },
-// });
 
 const initialState = {
     value: 0,

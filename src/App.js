@@ -2,27 +2,13 @@ import { Fragment } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { publicRoutes } from '~/Routes';
 import { DefaultLayout } from './components/Layout';
-import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal, MsalProvider } from '@azure/msal-react';
-import { loginRequest } from './Config';
+import { AuthenticatedTemplate, UnauthenticatedTemplate, MsalProvider } from '@azure/msal-react';
 import Login from './Pages/Login';
-import { useEffect } from 'react';
 import '~/AppStyles.css';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchPeriod, fetchApiToken } from '~/Redux/FetchApi/fetchApiMaster';
+import CallApiMaster from './CallApiMaster';
 
 const WrapperView = () => {
-    const { instance } = useMsal();
-    const activeAccount = instance.getActiveAccount();
-    var dispatch = useDispatch();
-    const unitcode = useSelector((state) => state.Actions.unitcode);
-    useEffect(() => {
-        dispatch(fetchPeriod(unitcode));
-    }, []);
-    useEffect(() => {
-        if (activeAccount) {
-            dispatch(fetchApiToken(activeAccount ? activeAccount.username : ''));
-        }
-    }, [activeAccount]);
+    CallApiMaster();
     return (
         <Router>
             <div className="App">

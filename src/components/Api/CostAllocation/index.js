@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { headers } from 'next/headers';
 import { toast } from 'react-toastify';
 import DomainApi from '~/DomainApi';
@@ -40,13 +41,13 @@ export async function ApiCreateCostAllocationHeader(
                 Authorization: access_token,
             };
             const model = {
-                doc_date: valueDocsDate,
+                doc_date: dayjs(valueDocsDate).utc(true),
                 description: valueDescription,
                 currency: valueCurrency,
                 acc_group: valueAccountGroup,
                 debit_entry: valueDebitEntry,
                 credit_entry: valueCreditEntry,
-                detail: modelDetail,
+                detail: modelDetail.filter((data) => data.is_delete_item !== true),
             };
             let url = `journal/cost-allocation/unitcode/${localStorage.getItem('Unit')}/new?username=${valueUser}`;
             const response = await DomainApi.post(url, model, { headers: header });
@@ -85,7 +86,7 @@ export async function ApiUpdateCostAllocationHeader(
                 Authorization: access_token,
             };
             const model = {
-                doc_date: valueDocDate,
+                doc_date: dayjs(valueDocDate).utc(true),
                 description: valueDescription,
                 currency: valueCurrency,
                 acc_group: valueAccountGroup,

@@ -9,19 +9,10 @@ import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Form from 'react-bootstrap/Form';
-import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
 import './AccountStyles.css';
-import InputLabel from '@mui/material/InputLabel';
+import '../../../Container.css';
 import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
@@ -30,9 +21,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import SearchIcon from '@mui/icons-material/Search';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import { ToastContainer, toast } from 'react-toastify';
-import DomainApi from '~/DomainApi';
 import AlertDialog from '~/components/AlertDialog';
-import ApiToken from '~/components/Api/ApiToken';
 import { ApiAccountList, ApiCreateAccount, ApiImportFileAccount, ApiUpdateAccount } from '~/components/Api/Account';
 import SaveIcon from '@mui/icons-material/Save';
 import TextField from '@mui/material/TextField';
@@ -40,6 +29,9 @@ import { ApiGroupCost, ApiTypeCost } from '~/components/Api/Master';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useSelector, useDispatch } from 'react-redux';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
+import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
+import { Form, Input, InputNumber, Space, Spin } from 'antd';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -107,7 +99,6 @@ function Account({ title }) {
     ];
 
     const [isLoading, setIsLoading] = React.useState(false);
-
     const access_token = useSelector((state) => state.FetchApi.token);
 
     const [valueReadonly, setValueReadonly] = React.useState(true);
@@ -121,9 +112,6 @@ function Account({ title }) {
     const [valueName, setValueName] = React.useState('');
     const [valueDescription, setValueDescription] = React.useState('');
 
-    const handleOnChangeValueCode = (event) => {
-        setValueCode(event.target.value);
-    };
     const handleOnChangeValueCodeMain = (event) => {
         setValueCodeMain(event.target.value);
     };
@@ -140,20 +128,22 @@ function Account({ title }) {
         setValueSearch(event.target.value);
     };
 
+    // TODO call api get data account
     /* #region  call api list */
-
     const [reloadListAccount, setReloadListAccount] = React.useState(false);
     const [dataList, setDataList] = useState([]);
-    const asyncApiListAccount = async () => {
-        setIsLoading(true);
-        await ApiAccountList(valueSearch, setDataList);
-        setIsLoading(false);
-    };
+
     useEffect(() => {
+        const asyncApiListAccount = async () => {
+            setIsLoading(true);
+            await ApiAccountList(valueSearch, setDataList);
+            setIsLoading(false);
+        };
         asyncApiListAccount();
     }, [reloadListAccount]);
     /* #endregion */
 
+    //! select row in datagrid
     const onRowsSelectionHandler = (ids) => {
         const selectedRowsData = ids.map((id) => dataList.find((row) => row.account_code === id));
         if (selectedRowsData) {
@@ -167,7 +157,7 @@ function Account({ title }) {
                     setValueDescription(key.description ?? '');
                     setValueGroupCost(key.expense_acc ?? '');
                     setValueTypeCost(key.expense_type ?? '');
-                    setChecked(key.is_shared_expense);
+                    setValueCostCenter(key.cost_center);
                 });
                 setValueReadonly(true);
                 setValueReadonlyCode(true);
@@ -177,19 +167,32 @@ function Account({ title }) {
             }
         }
     };
-    /* #region  call api data group cost */
 
+    // TODO call api cost center
+    /* #region  call api data cost center */
+    const dataCostCenter = useSelector((state) => state.FetchApi.listData_CostCenter);
+    const [valueCostCenter, setValueCostCenter] = React.useState('');
+    /* #endregion */
+
+    // TODO call api expense group
+    /* #region  call api data group cost */
     const [dataGroupCost, setDataGroupCost] = React.useState([]);
     const [valueGroupCost, setValueGroupCost] = React.useState('');
     const handleChangeGroupCost = (event) => {
         setValueGroupCost(event.target.value);
     };
     React.useEffect(() => {
-        ApiGroupCost(setDataGroupCost);
+        const fetchApiExpenseGroup = async () => {
+            setIsLoading(true);
+            await ApiGroupCost(setDataGroupCost);
+            setIsLoading(false);
+        };
+        fetchApiExpenseGroup();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     /* #endregion */
 
+    // TODO call api expense
     /* #region  call api data type cost */
     const [dataTypeCost, setDataTypeCost] = React.useState([]);
     const [valueTypeCost, setValueTypeCost] = React.useState('');
@@ -197,14 +200,14 @@ function Account({ title }) {
         setValueTypeCost(event.target.value);
     };
     React.useEffect(() => {
-        ApiTypeCost(setDataTypeCost);
+        const fetchApiExpense = async () => {
+            setIsLoading(true);
+            await ApiTypeCost(setDataTypeCost);
+            setIsLoading(false);
+        };
+        fetchApiExpense();
     }, []);
     /* #endregion */
-
-    const [checked, setChecked] = React.useState(false);
-    const handleChangeChecked = (event) => {
-        setChecked(event.target.checked);
-    };
 
     const [dialogIsOpenNew, setDialogIsOpenNew] = React.useState(false);
     const [dialogIsOpenUpdate, setDialogIsOpenUpdate] = React.useState(false);
@@ -234,7 +237,7 @@ function Account({ title }) {
         setValueDescription('');
         setValueGroupCost('');
         setValueTypeCost('');
-        setChecked(false);
+        setValueCostCenter('');
 
         setValueReadonly(false);
         setValueReadonlyCode(false);
@@ -242,8 +245,10 @@ function Account({ title }) {
     };
     /* #endregion */
 
+    // TODO call api create
     useEffect(() => {
         const asyncApiCreateAccount = async () => {
+            setIsLoading(true);
             const statusCode = await ApiCreateAccount(
                 access_token,
                 valueCodeMain,
@@ -252,7 +257,7 @@ function Account({ title }) {
                 valueDescription,
                 valueGroupCost,
                 valueTypeCost,
-                checked,
+                valueCostCenter,
             );
             if (statusCode) {
                 setValueCodeMain('');
@@ -261,11 +266,14 @@ function Account({ title }) {
                 setValueDescription('');
                 setValueGroupCost('');
                 setValueTypeCost('');
-                setChecked(false);
+                setValueCostCenter('');
                 setValueNewButton(false);
                 setValueDisableSaveButton(true);
+                setValueReadonly(true);
+                setValueReadonlyCode(true);
             }
         };
+        setIsLoading(false);
         asyncApiCreateAccount();
         setReloadListAccount(!reloadListAccount);
     }, [callApiNew]);
@@ -290,8 +298,10 @@ function Account({ title }) {
     };
     /* #endregion */
 
+    //TODO call api update account
     useEffect(() => {
-        const asyncApiCreateAccount = async () => {
+        const asyncApiUpdateAccount = async () => {
+            setIsLoading(true);
             const statusCode = await ApiUpdateAccount(
                 access_token,
                 valueId,
@@ -301,18 +311,21 @@ function Account({ title }) {
                 valueDescription,
                 valueGroupCost,
                 valueTypeCost,
-                checked,
+                valueCostCenter,
             );
             if (statusCode) {
+                setValueReadonly(true);
                 setValueUpdateButton(false);
                 setValueDisableSaveButton(true);
             }
+            setIsLoading(false);
         };
-        asyncApiCreateAccount();
+        asyncApiUpdateAccount();
         setReloadListAccount(!reloadListAccount);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [callApiUpdate]);
 
+    //! handle click save
     const [valueDisableSaveButton, setValueDisableSaveButton] = React.useState(true);
     const handleClickSave = (event) => {
         if (valueCodeMain && valueCodeSub && valueName) {
@@ -343,9 +356,12 @@ function Account({ title }) {
         toast.warning(' Cancel Import');
     };
 
+    //TODO call api import file excel
     useEffect(() => {
         const apiImportFile = async () => {
+            setIsLoading(true);
             const statusCode = await ApiImportFileAccount(access_token, fileExcel);
+            setIsLoading(false);
             setFileExcell(null);
             setReloadListAccount(!reloadListAccount);
         };
@@ -364,222 +380,275 @@ function Account({ title }) {
             }
         }
     };
+
+    OnKeyEvent(() => setReloadListAccount(!reloadListAccount), 'Enter');
+    OnMultiKeyEvent(handleOnClickNew, valueNewButton ? '' : 'n');
+    OnMultiKeyEvent(handleOnClickUpdate, valueUpdateButton ? '' : 'u');
+    OnMultiKeyEvent(handleClickSave, valueDisableSaveButton ? '' : 's');
+    OnMultiKeyEvent(handleClickImportFile, 'f');
+
     return (
-        <div className="main">
-            <ToastContainer />
-            <AlertDialog
-                title={'Create a new account?'}
-                content={
-                    <>
-                        Main Acc code: {valueCodeMain}
-                        <br /> Sub Acc name: {valueCodeSub}
-                        <br /> Account name: {valueName}
-                        <br /> Description: {valueDescription}
-                    </>
-                }
-                onOpen={dialogIsOpenNew}
-                onClose={closeDialogNew}
-                onAgree={agreeDialogNew}
-            />
-            <AlertDialog
-                title={'Update account?'}
-                content={
-                    <>
-                        Main Acc code: {valueCodeMain}
-                        <br /> Sub Acc name: {valueCodeSub}
-                        <br /> Account name: {valueName}
-                        <br /> Description: {valueDescription}
-                    </>
-                }
-                onOpen={dialogIsOpenUpdate}
-                onClose={closeDialogUpdate}
-                onAgree={agreeDialogUpdate}
-            />
-            <AlertDialog
-                title={'Import file accounting?'}
-                content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
-                onOpen={dialogIsOpenImportFile}
-                onClose={closeDialogImportFile}
-                onAgree={agreeDialogImportFile}
-            />
-            <div role="presentation">
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
-                    <Typography color="text.primary">{title}</Typography>
-                </Breadcrumbs>
-            </div>
-            <Box
-                sx={{
-                    flexGrow: 1,
-                    '& .super-app-theme--header': {
-                        backgroundColor: '#ffc696',
-                    },
-                }}
-            >
-                <Grid container spacing={1}>
-                    <Grid xs={12} md={6}>
-                        <Item>
-                            <Stack direction="row" spacing={2}>
-                                <TextField
-                                    id="search"
-                                    variant="outlined"
-                                    fullWidth
-                                    label="Search"
-                                    size="small"
-                                    value={valueSearch}
-                                    onChange={(event) => handleOnChangeValueSearch(event)}
-                                />
-                                <div>
-                                    <LoadingButton
-                                        startIcon={<SearchIcon />}
-                                        variant="contained"
-                                        color="warning"
-                                        onClick={() => setReloadListAccount(!reloadListAccount)}
-                                    >
-                                        Search
-                                    </LoadingButton>
-                                </div>
-                            </Stack>
-                        </Item>
-                    </Grid>
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Stack spacing={0}>
-                                <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account List</h5>
-                                <div style={{ width: '100%' }}>
-                                    <DataGrid
-                                        rows={dataList}
-                                        columns={columns}
-                                        initialState={{
-                                            pagination: {
-                                                paginationModel: { page: 0, pageSize: 5 },
-                                            },
-                                        }}
-                                        pageSizeOptions={[5, 10, 15]}
-                                        autoHeight
-                                        showCellVerticalBorder
-                                        showColumnVerticalBorder
-                                        getRowId={(row) => row.account_code}
-                                        loading={isLoading}
-                                        onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
+        <Spin size="large" tip="Loading" spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
+            <div className="main">
+                <ToastContainer />
+                {dialogIsOpenNew && (
+                    <AlertDialog
+                        title={'Create a new account?'}
+                        content={
+                            <>
+                                Main Acc code: {valueCodeMain}
+                                <br /> Sub Acc name: {valueCodeSub}
+                                <br /> Account name: {valueName}
+                                <br /> Description: {valueDescription}
+                            </>
+                        }
+                        onOpen={dialogIsOpenNew}
+                        onClose={closeDialogNew}
+                        onAgree={agreeDialogNew}
+                    />
+                )}
+
+                {dialogIsOpenUpdate && (
+                    <AlertDialog
+                        title={'Update account?'}
+                        content={
+                            <>
+                                Main Acc code: {valueCodeMain}
+                                <br /> Sub Acc name: {valueCodeSub}
+                                <br /> Account name: {valueName}
+                                <br /> Description: {valueDescription}
+                            </>
+                        }
+                        onOpen={dialogIsOpenUpdate}
+                        onClose={closeDialogUpdate}
+                        onAgree={agreeDialogUpdate}
+                    />
+                )}
+
+                {dialogIsOpenImportFile && (
+                    <AlertDialog
+                        title={'Import file accounting?'}
+                        content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
+                        onOpen={dialogIsOpenImportFile}
+                        onClose={closeDialogImportFile}
+                        onAgree={agreeDialogImportFile}
+                    />
+                )}
+
+                <div role="presentation">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            href="/material-ui/getting-started/installation/"
+                        ></Link>
+                        <Typography color="text.primary">{title}</Typography>
+                    </Breadcrumbs>
+                </div>
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        '& .super-app-theme--header': {
+                            backgroundColor: '#ffc696',
+                        },
+                    }}
+                >
+                    <Grid container spacing={1}>
+                        <Grid xs={12} md={6}>
+                            <Item>
+                                <Stack direction="row" spacing={2}>
+                                    <TextField
+                                        id="search"
+                                        variant="outlined"
+                                        fullWidth
+                                        label="Search"
+                                        size="small"
+                                        value={valueSearch}
+                                        onChange={(event) => handleOnChangeValueSearch(event)}
                                     />
-                                </div>
-                            </Stack>
-                        </Item>
-                    </Grid>
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Grid container spacing={2}>
-                                <Grid xs={12} md={12}>
-                                    <Stack
-                                        width={'100%'}
-                                        direction={'row'}
-                                        spacing={2}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-end'}
-                                        height={50}
-                                    >
-                                        <h5
-                                            style={{
-                                                fontWeight: 'bold',
-                                                textAlign: 'left',
-                                                width: '100%',
-                                            }}
+                                    <div>
+                                        <LoadingButton
+                                            startIcon={<SearchIcon />}
+                                            variant="contained"
+                                            color="warning"
+                                            onClick={() => setReloadListAccount(!reloadListAccount)}
                                         >
-                                            Account Information
-                                        </h5>
-
-                                        <Stack width={'100%'} direction={'row'} spacing={1} alignItems={'center'}>
-                                            <Button
-                                                component="label"
-                                                role={undefined}
-                                                variant="outlined"
-                                                tabIndex={-1}
-                                                startIcon={<PostAddIcon />}
-                                                sx={{
-                                                    width: 300,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
+                                            Search
+                                        </LoadingButton>
+                                    </div>
+                                </Stack>
+                            </Item>
+                        </Grid>
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Stack spacing={0}>
+                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account List</h5>
+                                    <div style={{ width: '100%' }}>
+                                        <DataGrid
+                                            rows={dataList}
+                                            columns={columns}
+                                            initialState={{
+                                                pagination: {
+                                                    paginationModel: { page: 0, pageSize: 5 },
+                                                },
+                                            }}
+                                            pageSizeOptions={[5, 10, 15]}
+                                            autoHeight
+                                            showCellVerticalBorder
+                                            showColumnVerticalBorder
+                                            getRowId={(row) => row.account_code}
+                                            loading={isLoading}
+                                            onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
+                                        />
+                                    </div>
+                                </Stack>
+                            </Item>
+                        </Grid>
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Grid container spacing={2}>
+                                    <Grid xs={12} md={12} Grid>
+                                        <Stack
+                                            width={'100%'}
+                                            direction={'row'}
+                                            spacing={2}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-end'}
+                                            height={50}
+                                        >
+                                            <h5
+                                                style={{
+                                                    fontWeight: 'bold',
+                                                    textAlign: 'left',
+                                                    width: '100%',
                                                 }}
                                             >
-                                                {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : ''}
-                                                <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
-                                            </Button>
-                                            <Button
-                                                component="label"
-                                                role={undefined}
-                                                variant="contained"
-                                                tabIndex={-1}
-                                                startIcon={<CloudUploadIcon />}
-                                                onClick={handleClickImportFile}
-                                                sx={{
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                }}
-                                            >
-                                                Upload file
-                                            </Button>
-                                            <LoadingButton
-                                                startIcon={<AddBoxIcon />}
-                                                variant="contained"
-                                                color="success"
-                                                onClick={handleOnClickNew}
-                                                loading={valueNewButton}
-                                                loadingPosition="start"
-                                            >
-                                                New
-                                            </LoadingButton>
+                                                Account Information
+                                            </h5>
 
-                                            <LoadingButton
-                                                startIcon={<SystemUpdateAltIcon />}
-                                                variant="contained"
-                                                color="warning"
-                                                onClick={handleOnClickUpdate}
-                                                loading={valueUpdateButton}
-                                                loadingPosition="start"
+                                            <Stack
+                                                width={'100%'}
+                                                direction={'row'}
+                                                spacing={1}
+                                                alignItems={'center'}
+                                                sx={{ display: { xs: 'none', md: 'flex' } }}
                                             >
-                                                Update
-                                            </LoadingButton>
-                                            <LoadingButton
-                                                startIcon={<SaveIcon />}
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={handleClickSave}
-                                                disabled={valueDisableSaveButton}
-                                            >
-                                                Save
-                                            </LoadingButton>
+                                                <Button
+                                                    component="label"
+                                                    role={undefined}
+                                                    variant="outlined"
+                                                    tabIndex={-1}
+                                                    startIcon={<PostAddIcon />}
+                                                    sx={{
+                                                        width: 300,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                >
+                                                    {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : 'Import File'}
+                                                    <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+                                                </Button>
+                                                <Button
+                                                    component="label"
+                                                    role={undefined}
+                                                    variant="contained"
+                                                    tabIndex={-1}
+                                                    startIcon={<CloudUploadIcon />}
+                                                    onClick={handleClickImportFile}
+                                                    sx={{
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                >
+                                                    Upload&nbsp;
+                                                    <u>f</u>
+                                                    ile
+                                                </Button>
+                                                <LoadingButton
+                                                    startIcon={<AddBoxIcon />}
+                                                    variant="contained"
+                                                    color="success"
+                                                    onClick={handleOnClickNew}
+                                                    loading={valueNewButton}
+                                                    loadingPosition="start"
+                                                >
+                                                    <u>N</u>ew
+                                                </LoadingButton>
+
+                                                <LoadingButton
+                                                    startIcon={<SystemUpdateAltIcon />}
+                                                    variant="contained"
+                                                    color="warning"
+                                                    onClick={handleOnClickUpdate}
+                                                    loading={valueUpdateButton}
+                                                    loadingPosition="start"
+                                                >
+                                                    <u>U</u>pdate
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    startIcon={<SaveIcon />}
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={handleClickSave}
+                                                    disabled={valueDisableSaveButton}
+                                                >
+                                                    <u>S</u>ave
+                                                </LoadingButton>
+                                            </Stack>
                                         </Stack>
-                                    </Stack>
-                                </Grid>
-                                <Item sx={{ width: '100%' }}>
-                                    <Stack spacing={0}>
+                                    </Grid>
+
+                                    <Grid container xs={12} md={12} spacing={2}>
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="div-h5">
-                                                    <h6>Account Code:</h6>
-                                                </div>
-                                                <TextField
-                                                    id="field-code-main"
+                                                <div className="form-title">Account Code:</div>
+
+                                                <Input
+                                                    variant="borderless"
+                                                    size="large"
+                                                    value={valueCode}
+                                                    placeholder="xxxxx xxx"
+                                                    readOnly
+                                                />
+                                                {/* <TextField
                                                     variant="outlined"
                                                     fullWidth
                                                     size="small"
-                                                    type="number"
+                                                    type="text"
                                                     value={valueCode}
                                                     placeholder="xxxxx xxx"
                                                     disabled
-                                                />
+                                                /> */}
                                             </Stack>
                                         </Grid>
 
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="div-h5">
-                                                    <h6>Main Account:</h6>
+                                                <div className="form-title">
+                                                    <div>Main Account:</div>
                                                 </div>
-                                                <TextField
+                                                <Input
+                                                    variant="outlined"
+                                                    size="large"
+                                                    type="number"
+                                                    status={!valueCodeMain ? 'error' : ''}
+                                                    count={{
+                                                        show: !valueReadonlyCode,
+                                                        max: 5,
+                                                        // strategy: (txt) => txt.length,
+                                                        // exceedFormatter: (txt, { max }) => txt.slice(0, max),
+                                                    }}
+                                                    disabled={valueReadonlyCode}
+                                                    placeholder="xxxxx"
+                                                    value={valueCodeMain}
+                                                    onChange={(event) =>
+                                                        event.target.value.length <= 5 &&
+                                                        handleOnChangeValueCodeMain(event)
+                                                    }
+                                                />
+                                                {/* <TextField
                                                     id="field-code-main"
                                                     variant="outlined"
                                                     fullWidth
@@ -595,15 +664,34 @@ function Account({ title }) {
                                                             .slice(0, 5);
                                                     }}
                                                     min={0}
-                                                />
+                                                /> */}
                                             </Stack>
                                         </Grid>
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="div-h5">
-                                                    <h6>Sub Account:</h6>
+                                                <div className="form-title">
+                                                    <div>Sub Account:</div>
                                                 </div>
-                                                <TextField
+                                                <Input
+                                                    variant="outlined"
+                                                    size="large"
+                                                    type="number"
+                                                    status={!valueCodeSub ? 'error' : ''}
+                                                    count={{
+                                                        show: !valueReadonlyCode,
+                                                        max: 3,
+                                                        // strategy: (txt) => txt.length,
+                                                        // exceedFormatter: (txt, { max }) => txt.slice(0, max),
+                                                    }}
+                                                    value={valueCodeSub}
+                                                    onChange={(event) =>
+                                                        event.target.value.length <= 3 &&
+                                                        handleOnChangeValueCodeSub(event)
+                                                    }
+                                                    placeholder="xxx"
+                                                    disabled={valueReadonlyCode}
+                                                />
+                                                {/* <TextField
                                                     id="field-code-sub"
                                                     variant="outlined"
                                                     fullWidth
@@ -619,37 +707,45 @@ function Account({ title }) {
                                                             .slice(0, 3);
                                                     }}
                                                     min={0}
-                                                />
+                                                /> */}
                                             </Stack>
                                         </Grid>
 
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="div-h5">
-                                                    <h6>Account Name:</h6>
+                                                <div className="form-title">
+                                                    <div>Account Name:</div>
                                                 </div>
-                                                <TextField
-                                                    id="field-name"
+                                                <Input
                                                     variant="outlined"
-                                                    fullWidth
-                                                    size="small"
-                                                    type="text"
+                                                    size="large"
+                                                    status={!valueName ? 'error' : ''}
                                                     value={valueName}
                                                     onChange={(event) => handleOnChangeValueName(event)}
                                                     placeholder="name..."
                                                     disabled={valueReadonly}
                                                 />
+                                                {/* <TextField
+                                                    id="field-name"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    size="medium"
+                                                    type="text"
+                                                    value={valueName}
+                                                    onChange={(event) => handleOnChangeValueName(event)}
+                                                    placeholder="name..."
+                                                    disabled={valueReadonly}
+                                                /> */}
                                             </Stack>
                                         </Grid>
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="div-h5">
-                                                    <h6>Description:</h6>
+                                                <div className="form-title">
+                                                    <p>Description:</p>
                                                 </div>
-                                                <Form.Control
-                                                    id="field-description"
-                                                    type="text"
-                                                    as="textarea"
+                                                <Input.TextArea
+                                                    size="large"
+                                                    maxLength={250}
                                                     value={valueDescription}
                                                     onChange={(event) => handleOnChangeValueDescription(event)}
                                                     rows={2}
@@ -658,93 +754,92 @@ function Account({ title }) {
                                                 />
                                             </Stack>
                                         </Grid>
-                                        <Grid container direction={'row'} xs={12} md={12}>
-                                            <Grid xs={12} md={4}>
-                                                <Stack direction={'row'} spacing={0}>
-                                                    <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                        <h6>Expense group:</h6>
-                                                    </div>
-                                                    <FormControl sx={{ m: 1, maxWidth: 250 }} size="small">
-                                                        <Select
-                                                            labelId="demo-simple-select-helper-label"
-                                                            id="group-cost"
-                                                            value={valueGroupCost}
-                                                            displayEmpty
-                                                            onChange={handleChangeGroupCost}
-                                                            sx={{ minWidth: 150 }}
-                                                            disabled={valueReadonly}
-                                                        >
-                                                            {dataGroupCost.map((data) => {
-                                                                return (
-                                                                    <MenuItem
-                                                                        key={data.gr_expense_ids}
-                                                                        value={data.code}
-                                                                    >
-                                                                        {data.name}
-                                                                    </MenuItem>
-                                                                );
-                                                            })}
-                                                        </Select>
-                                                    </FormControl>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid xs={12} md={4}>
-                                                <Stack direction={'row'} spacing={0}>
-                                                    <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                        <h6>Expense:</h6>
-                                                    </div>
-                                                    <FormControl sx={{ m: 1, maxWidth: 250 }} size="small">
-                                                        <Select
-                                                            labelId="demo-simple-select-helper-label"
-                                                            id="type-cost"
-                                                            value={valueTypeCost}
-                                                            displayEmpty
-                                                            onChange={handleChangeTypeCost}
-                                                            sx={{ minWidth: 150 }}
-                                                            disabled={valueReadonly}
-                                                        >
-                                                            {dataTypeCost.map((data) => {
-                                                                return (
-                                                                    <MenuItem
-                                                                        key={data.type_expense_id}
-                                                                        value={data.code}
-                                                                    >
-                                                                        {data.name}
-                                                                    </MenuItem>
-                                                                );
-                                                            })}
-                                                        </Select>
-                                                    </FormControl>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid
-                                                xs={12}
-                                                md={4}
-                                                sx={{ display: 'flex', marginTop: 0, alignItems: 'center' }}
-                                            >
-                                                <Stack direction={'row'} spacing={0}>
-                                                    <div className="div-h5" style={{ marginLeft: 8 }}>
-                                                        <h6>General Account:</h6>
-                                                    </div>
-                                                    <Checkbox
-                                                        checked={checked}
-                                                        onChange={handleChangeChecked}
-                                                        inputProps={{ 'aria-label': 'controlled' }}
-                                                        color="success"
-                                                        size="medium"
-                                                        disabled={valueReadonly}
-                                                    />
-                                                </Stack>
-                                            </Grid>
+                                        <Grid xs={12} md={12}>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Cost center:</div>
+                                                </div>
+
+                                                <Select
+                                                    labelId="demo-simple-select-helper-label"
+                                                    id="group-cost"
+                                                    value={valueCostCenter}
+                                                    displayEmpty
+                                                    fullWidth
+                                                    onChange={(event) => setValueCostCenter(event.target.value)}
+                                                    // sx={{ width: 250 }}
+                                                    disabled={valueReadonly}
+                                                    size="small"
+                                                >
+                                                    {dataCostCenter.map((data) => {
+                                                        return (
+                                                            <MenuItem key={data.code} value={data.code}>
+                                                                {data.name}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </Stack>
                                         </Grid>
-                                    </Stack>
-                                </Item>
-                            </Grid>
-                        </Item>
+                                        <Grid xs={12} md={12}>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Expense group:</div>
+                                                </div>
+
+                                                <Select
+                                                    labelId="demo-simple-select-helper-label"
+                                                    id="group-cost"
+                                                    value={valueGroupCost}
+                                                    displayEmpty
+                                                    fullWidth
+                                                    onChange={handleChangeGroupCost}
+                                                    // sx={{ width: 250 }}
+                                                    disabled={valueReadonly}
+                                                    size="small"
+                                                >
+                                                    {dataGroupCost.map((data) => {
+                                                        return (
+                                                            <MenuItem key={data.gr_expense_ids} value={data.code}>
+                                                                {data.name}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </Stack>
+                                        </Grid>
+                                        <Grid xs={12} md={12} paddingBottom={4}>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Expense:</div>
+                                                </div>
+                                                <Select
+                                                    labelId="demo-simple-select-helper-label"
+                                                    size="small"
+                                                    fullWidth
+                                                    value={valueTypeCost}
+                                                    displayEmpty
+                                                    onChange={handleChangeTypeCost}
+                                                    disabled={valueReadonly}
+                                                >
+                                                    {dataTypeCost.map((data) => {
+                                                        return (
+                                                            <MenuItem key={data.type_expense_id} value={data.code}>
+                                                                {data.name}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </Stack>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Item>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
-        </div>
+                </Box>
+            </div>
+        </Spin>
     );
 }
 

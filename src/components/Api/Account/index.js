@@ -23,7 +23,7 @@ export async function ApiCreateAccount(
     valueDescription,
     valueGroupCost,
     valueTypeCost,
-    checked,
+    valueCostCenter,
 ) {
     if (valueCodeMain && valueCodeSub && valueName) {
         try {
@@ -38,9 +38,8 @@ export async function ApiCreateAccount(
                 description: valueDescription,
                 expense_acc: valueGroupCost,
                 expense_type: valueTypeCost,
-                is_shared: checked,
                 sub_unit: '',
-                cost_center: '',
+                cost_center: valueCostCenter,
             };
             const response = await DomainApi.post(
                 `master/chart-of-account/new?username=${localStorage.getItem(
@@ -72,7 +71,7 @@ export async function ApiUpdateAccount(
     valueDescription,
     valueGroupCost,
     valueTypeCost,
-    checked,
+    valueCostCenter,
 ) {
     if (valueCodeMain && valueCodeSub && valueName) {
         try {
@@ -88,9 +87,8 @@ export async function ApiUpdateAccount(
                 description: valueDescription,
                 expense_acc: valueGroupCost,
                 expense_type: valueTypeCost,
-                is_shared: checked,
                 sub_unit: '',
-                cost_center: '',
+                cost_center: valueCostCenter,
             };
             const response = await DomainApi.put(
                 `/master/chart-of-account/update?username=${localStorage.getItem(

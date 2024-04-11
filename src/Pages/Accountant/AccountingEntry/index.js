@@ -72,6 +72,11 @@ import CancelIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import { ApiAccountList } from '~/components/Api/Account';
 import { useSelector, useDispatch } from 'react-redux';
+import DialogDetail from './DialogDetail';
+import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
+import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
+import { Input, Spin } from 'antd';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 var utc = require('dayjs/plugin/utc');
 dayjs.extend(utc);
@@ -118,7 +123,7 @@ const columnsDataAeHeader = [
     {
         field: 'import_code',
         headerName: 'Import Code',
-        width: 130,
+        width: 150,
         headerClassName: 'super-app-theme--header',
     },
 ];
@@ -140,7 +145,7 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 function AccountingEntry({ title }) {
-    const access_token = ApiToken();
+    const access_token = useSelector((s) => s.FetchApi.token);
     const [buttonSelectMode, setButtonSelectMode] = React.useState(false);
     const [valueReadonly, setValueReadonly] = React.useState(true);
     const [valueReadonlyPostingDate, setValueReadonlyPostingDate] = React.useState(true);
@@ -151,6 +156,8 @@ function AccountingEntry({ title }) {
         setValueSearchAccountingEntry(event.target.value);
     };
     const [valueEditGrid, setValueEditGrid] = React.useState(false);
+
+    //! visibility column in datagrid
     const columnVisibilityModel = React.useMemo(() => {
         if (valueEditGrid) {
             return {
@@ -189,6 +196,17 @@ function AccountingEntry({ title }) {
     };
     /* #endregion */
 
+    //! get data period from redux
+    const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
+    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
+    useEffect(() => {
+        setValueDateAccountPeriod(dayjs(dataPeriod_From_Redux));
+    }, [dataPeriod_From_Redux]);
+    const handleOnChangeDateAccountPeriod = (event) => {
+        setValueDateAccountPeriod(event);
+    };
+
+    //todo call api get data list header entry
     const [dataListAEHeader, setDataAEListHeader] = useState([]);
     const [dataList, setDataList] = useState([]);
     useEffect(() => {
@@ -203,11 +221,13 @@ function AccountingEntry({ title }) {
                 );
             }
         };
-
+        callApiDataListHeader();
         setIsLoading(false);
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [reloadListAccountingEntryHeader]);
+    }, [reloadListAccountingEntryHeader, valueDateAccountPeriod]);
+
+    //! select row datagrid header entry
     const [selectedRows, setValueSelectedRows] = useState([]);
     const onHandleRowsSelectionAeHeader = (ids) => {
         const selectedRowsData = ids.map((id) => dataListAEHeader.find((row) => row.doc_code === id));
@@ -238,31 +258,29 @@ function AccountingEntry({ title }) {
 
     const [valueAccountGroupMemo, setValueAccountGroupMemo] = useState('');
 
+    //! get data acc group from redux
     /* #region  call api account group */
     const [valueAccountGroupAE, setValueAccountGroupAE] = useState(9000);
-    const [dataListAccountGroup, setDataListAccountGroup] = useState([]);
+    const dataListAccountGroup = useSelector((s) => s.FetchApi.listData_AccountGroup);
     const handleChangeAccountGroupAE = (event) => {
         setValueAccountGroupAE(event.target.value);
     };
     const handleChangeAccountGroupMemo = (event) => {
         setValueAccountGroupMemo(event.target.value);
     };
-    useEffect(() => {
-        ApiListAccountGroup('', setDataListAccountGroup);
-    }, []);
     /* #endregion */
 
+    //! get data currency from redux
     /* #region  call api currency */
-    const [dataListCurrency, setDataListCurrency] = React.useState([]);
+    const dataListCurrency = useSelector((s) => s.FetchApi.listData_Currency);
     const [valueCurrency, setValueCurrency] = useState('VND');
     const handleChangeCurren = (event) => {
         setValueCurrency(event.target.value);
     };
-    useEffect(() => {
-        ApiCurrency(setDataListCurrency);
-    }, []);
+
     /* #endregion */
 
+    //todo: call api new Entry
     /* #region  call api new */
     const [valueNewButton, setValueNewButton] = React.useState(false);
     const [dialogIsOpenNewAeHeader, setDialogIsOpenNewAeHeader] = React.useState(false);
@@ -290,10 +308,10 @@ function AccountingEntry({ title }) {
         setValueTotalCreditAe(0);
         setDataListAccountEntryDetail([]);
         setDataList([]);
-        setValueId(1);
         setValueEditGrid(true);
         setValueReadonly(false);
         setValueReadonlyPostingDate(false);
+        setValueSelectedRows([]);
     };
 
     const apiNewAeHeader = async () => {
@@ -314,7 +332,6 @@ function AccountingEntry({ title }) {
             setValueAccountGroupAE('');
             setValueTotalDebitAe(0);
             setValueTotalCreditAe(0);
-            setValueId(1);
             setValueNewButton(false);
             setValueDisableSaveButton(true);
             setDataListAccountEntryDetail([]);
@@ -326,10 +343,13 @@ function AccountingEntry({ title }) {
         setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
     };
     useEffect(() => {
+        setIsLoading(true);
         apiNewAeHeader();
+        setIsLoading(false);
     }, [callApiNewAeHeader]);
     /* #endregion */
 
+    //todo: call api update header entry
     /* #region  call api update */
     const [valueUpdateButton, setValueUpdateButton] = React.useState(false);
     const [dialogIsOpenUpdateAeHeader, setDialogIsOpenUpdateAeHeader] = React.useState(false);
@@ -340,7 +360,7 @@ function AccountingEntry({ title }) {
     };
     const closeDialogUpdateAeHeader = () => {
         setDialogIsOpenUpdateAeHeader(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(' Cancel update!');
     };
     const handleOnClickUpdateAeHeader = () => {
         setValueNewButton(false);
@@ -376,10 +396,13 @@ function AccountingEntry({ title }) {
         setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
     };
     useEffect(() => {
+        setIsLoading(true);
         callApiUpdate();
+        setIsLoading(false);
     }, [callApiUpdateAeHeader]);
     /* #endregion */
 
+    //! handle click save
     const [valueDisableSaveButton, setValueDisableSaveButton] = React.useState(true);
     const handleClickSave = (event) => {
         if (valueDescriptionAe && valueAccountGroupAE) {
@@ -394,6 +417,7 @@ function AccountingEntry({ title }) {
         }
     };
 
+    //todo: call api delete header entry
     /* #region  call api delete */
     const [dialogIsOpenDeleteAeHeader, setDialogIsOpenDeleteAeHeader] = React.useState(false);
     const [callApiDeleteAeHeader, setCallApiDeleteAeHeader] = React.useState(false);
@@ -425,11 +449,13 @@ function AccountingEntry({ title }) {
         setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
     };
     useEffect(() => {
+        setIsLoading(true);
         apiDeleteAeHeader();
+        setIsLoading(false);
     }, [callApiDeleteAeHeader]);
     /* #endregion */
 
-    const [valueDescriptionDetail, setValueDescriptionDetail] = useState('');
+    //todo: call api get data detail
     const [dataListAccountEntryDetail, setDataListAccountEntryDetail] = useState([]);
     const [reloadListAeDetail, setReloadListAeDetail] = useState([]);
     useEffect(() => {
@@ -443,128 +469,33 @@ function AccountingEntry({ title }) {
         process();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reloadListAeDetail]);
-    useEffect(() => {
-        if (dataListAccountEntryDetail.length !== 0) {
-            dataListAccountEntryDetail.forEach((element) => {
-                const filter = dataListAccount.filter((data) => data.account_code === element.acc_code);
-                setValueAccountCode((old) => {
-                    return {
-                        ...old,
-                        [element.detail_ids]: filter[0],
-                    };
-                });
-            });
-        }
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dataListAccountEntryDetail]);
-
-    const [valueId, setValueId] = React.useState(0);
-    const handleOnClickNewAeDetail = () => {
-        // const id = dataListAccountEntryDetail.sort((a, b) => parseFloat(b.detail_ids) - parseFloat(a.detail_ids));
-        setValueId(valueId + 1);
-        setDataListAccountEntryDetail((oldRows) => [
-            ...oldRows,
-            {
-                id: oldRows.length + 1,
-                detail_ids: valueId,
-                doc_code: '',
-                unitcode: '',
-                acc_code: '',
-                description: valueDescriptionDetail,
-                cost_center: '',
-                credit_amount: null,
-                debit_amount: null,
-                isactive: true,
-                updated_user: localStorage.getItem('UserName'),
-                updated_date: new Date(),
-                is_new_item: true,
-                isNew: true,
-            },
-        ]);
-        setRowModesModel((oldModel) => ({
-            ...oldModel,
-            [valueId]: { mode: GridRowModes.Edit, fieldToFocus: 'cost_center' },
-        }));
-    };
 
     const [valueTab, setValueTab] = React.useState('Manage Accounting Entry');
 
     const handleChangeTab = (event, newValue) => {
         setValueTab(newValue);
     };
-    const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
-    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
-    useEffect(() => {
-        setValueDateAccountPeriod(dayjs(dataPeriod_From_Redux));
-    }, [dataPeriod_From_Redux]);
-    console.log(valueDateAccountPeriod);
-    const handleOnChangeDateAccountPeriod = (event) => {
-        setValueDateAccountPeriod(event);
-    };
-    /* #region  select debit and creedit list */
-    const [valueDebitEntry, setValueDebitEntry] = React.useState(0);
-    const [dataListAccount, setDataListAccount] = useState([]);
 
-    useEffect(() => {
-        ApiAccountList('', setDataListAccount);
-    }, []);
+    /* #region  select debit and creedit list */
+    const dataListAccount = useSelector((s) => s.FetchApi.listData_Account);
+
     /* #endregion */
 
     /* #region  call api cost center */
-    const [dataListCostCenter, setDataListCostCenter] = useState([]);
+    const dataListCostCenter = useSelector((s) => s.FetchApi.listData_CostCenter);
 
-    useEffect(() => {
-        ApiCostCenter(setDataListCostCenter);
-    }, []);
     /* #endregion */
-    const [valueAccountCode, setValueAccountCode] = React.useState({});
 
     const columnsDataAeDetail = [
-        {
-            field: 'id',
-            headerName: 'No.',
-            width: 50,
-            headerClassName: 'super-app-theme--header',
-        },
         {
             field: 'actions',
             type: 'actions',
             headerName: 'Actions',
-            width: 100,
+            width: 70,
             cellClassName: 'actions',
             headerClassName: 'super-app-theme--header',
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveIcon />}
-                            label="Save"
-                            sx={{
-                                color: 'primary.main',
-                            }}
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem
-                            icon={<CancelIcon />}
-                            label="Cancel"
-                            className="textPrimary"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                        />,
-                    ];
-                }
-
                 return [
-                    <GridActionsCellItem
-                        icon={<EditIcon />}
-                        label="Edit"
-                        className="textPrimary"
-                        onClick={handleEditClick(id)}
-                        color="inherit"
-                    />,
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
@@ -575,10 +506,17 @@ function AccountingEntry({ title }) {
             },
         },
         {
+            field: 'id',
+            headerName: 'No.',
+            width: 50,
+            headerClassName: 'super-app-theme--header',
+        },
+
+        {
             field: 'cost_center',
             headerName: 'Cost center',
             width: 150,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'singleSelect',
             getOptionValue: (value) => value.code,
             getOptionLabel: (value) => value.name,
@@ -590,11 +528,11 @@ function AccountingEntry({ title }) {
             field: 'acc_code',
             headerName: 'Account code.',
             width: 200,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'singleSelect',
             getOptionValue: (value) => value.account_code,
             getOptionLabel: (value) => `${value.account_code_display} - ${value.account_name}`,
-            valueOptions: dataListAccount.sort((a, b) => parseFloat(a.account_code) - parseFloat(b.account_code)),
+            valueOptions: dataListAccount,
             PaperProps: {
                 sx: { maxHeight: 200 },
             },
@@ -605,7 +543,7 @@ function AccountingEntry({ title }) {
             field: 'debit_amount',
             headerName: 'Debit',
             width: 150,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'number',
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -615,7 +553,7 @@ function AccountingEntry({ title }) {
             field: 'credit_amount',
             headerName: 'Credit',
             width: 150,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'number',
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -625,29 +563,23 @@ function AccountingEntry({ title }) {
             field: 'description',
             headerName: 'Description',
             minWidth: 400,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             flex: 1,
             headerClassName: 'super-app-theme--header',
         },
     ];
+
+    //! set data list detail
     useEffect(() => {
         if (dataListAccountEntryDetail.length !== 0) {
             const newData = dataListAccountEntryDetail.map((data) => {
-                return { ...data, is_new_item: 'is_new_item' in data, is_delete_item: 'is_delete_item' in data };
+                return { ...data, is_new_item: 'is_new_item' in data };
             });
             setDataList(newData);
         }
     }, [dataListAccountEntryDetail]);
 
-    const [rowModesModel, setRowModesModel] = React.useState({});
-    const handleEditClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-    };
-
-    const handleSaveClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    };
-
+    //! handle click delete detail
     const handleDeleteClick = (id) => () => {
         // setDataListAccountEntryDetail(dataListAccountEntryDetail.filter((row) => row.detail_ids !== id));
         const row = {
@@ -663,51 +595,7 @@ function AccountingEntry({ title }) {
         );
     };
 
-    const handleCancelClick = (id) => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
-        });
-        const editedRow = dataListAccountEntryDetail.find((row) => row.detail_ids === id);
-        if (editedRow.isNew) {
-            setDataListAccountEntryDetail(dataListAccountEntryDetail.filter((row) => row.detail_ids !== id));
-        }
-    };
-
-    const handleRowModesModelChange = (newRowModesModel) => {
-        setRowModesModel(newRowModesModel);
-    };
-    const handleRowEditStop = (params, event) => {
-        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-            event.defaultMuiPrevented = true;
-        }
-        if (event.code === 'Tab') {
-            setRowModesModel({ ...rowModesModel, [params.id]: { mode: GridRowModes.View } });
-        }
-    };
-    const processRowUpdate = (newRow) => {
-        const updatedRow = { ...newRow, isNew: false };
-        setDataListAccountEntryDetail(
-            dataListAccountEntryDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)),
-        );
-        if (!valueDescriptionAe) {
-            setValueDescriptionAe(newRow.description);
-        }
-        setValueDescriptionDetail(newRow.description);
-        // if (valueAccountCode.length !== 0) {
-        //     const rowEdit = valueAccountCode[newRow.detail_ids];
-        //     if (rowEdit) {
-        //         const updatedRow = {
-        //             ...newRow,
-        //             acc_code: rowEdit.account_code,
-        //         };
-        //         setDataListAccountEntryDetail(
-        //             dataListAccountEntryDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)),
-        //         );
-        //     }
-        // }
-        return updatedRow;
-    };
+    //! handle lick import file
     const [fileExcel, setFileExcell] = React.useState(null);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
@@ -746,1110 +634,333 @@ function AccountingEntry({ title }) {
         }
     };
 
+    const [isNew, setIsNew] = React.useState(false);
+    const [dataUpdate, setDataUpdate] = React.useState([]);
+    const [openDialogDetail, setOpenDialogDetail] = React.useState(false);
+    const handleClickOpenDialogDetail = (isnew) => {
+        setOpenDialogDetail(true);
+        setIsNew(isnew);
+        setValueDisableSaveButton(true);
+    };
+
+    const handleCloseDialogDetail = () => {
+        setOpenDialogDetail(false);
+        setValueDisableSaveButton(false);
+    };
+
+    //! on key event
+    OnKeyEvent(() => setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader), 'Enter');
+    OnMultiKeyEvent(handleOnClickNewAeHeader, valueNewButton ? '' : 'n');
+    OnMultiKeyEvent(handleOnClickUpdateAeHeader, valueUpdateButton ? '' : 'u');
+    OnMultiKeyEvent(handleClickSave, valueDisableSaveButton ? '' : 's');
+    OnMultiKeyEvent(handleOnClickDeleteAeHeader, 'd');
+    OnMultiKeyEvent(() => handleClickOpenDialogDetail(true), !valueEditGrid ? '' : 'a');
+    OnMultiKeyEvent(handleClickImportFile, 'f');
+
     return (
-        <div className="main">
-            <ToastContainer />
-            <AlertDialog
-                title={'Create a new accounting entry header?'}
-                content={
-                    <>
-                        Description: {valueDescriptionAe}
-                        <br /> Currency: {valueCurrency}
-                        <br /> Account group: {valueAccountGroupAE}
-                    </>
-                }
-                onOpen={dialogIsOpenNewAeHeader}
-                onClose={closeDialogNewAeHeader}
-                onAgree={agreeDialogNewAeHeader}
-            />
-            <AlertDialog
-                title={'Update accounting entry header?'}
-                content={
-                    <>
-                        Document no: {valueCodeAe}
-                        <br /> Description: {valueDescriptionAe}
-                        <br /> Currency: {valueCurrency}
-                        <br /> Account group: {valueAccountGroupAE}
-                    </>
-                }
-                onOpen={dialogIsOpenUpdateAeHeader}
-                onClose={closeDialogUpdateAeHeader}
-                onAgree={agreeDialogUpdateAeHeader}
-            />
-            <AlertDialog
-                title={'Delete accounting entry header?'}
-                content={
-                    <>
-                        Document no: {valueCodeAe}
-                        <br /> Description: {valueDescriptionAe}
-                        <br /> Currency: {valueCurrency}
-                        <br /> Account group: {valueAccountGroupAE}
-                    </>
-                }
-                onOpen={dialogIsOpenDeleteAeHeader}
-                onClose={closeDialogDeleteAeHeader}
-                onAgree={agreeDialogDeleteAeHeader}
-            />
-            <AlertDialog
-                title={'Import file accounting entry?'}
-                content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
-                onOpen={dialogIsOpenImportFile}
-                onClose={closeDialogImportFile}
-                onAgree={agreeDialogImportFile}
-            />
-            <div role="presentation">
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
-                    <Typography color="text.primary">{title}</Typography>
-                    <Typography color="text.primary">{valueTab}</Typography>
-                </Breadcrumbs>
-            </div>
-            <Box
-                sx={{
-                    width: '100%',
-                    typography: 'body1',
-                    '& .super-app-theme--header': {
-                        backgroundColor: '#ffc696',
-                    },
-                }}
-            >
-                <Item>
-                    <TabContext value={valueTab}>
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <TabList
-                                onChange={handleChangeTab}
-                                aria-label="lab API tabs example"
-                                TabIndicatorProps={{
-                                    style: {
-                                        backgroundColor: '#ed6c02',
-                                    },
-                                }}
-                                textColor="inherit"
-                                sx={{
-                                    '.Mui-selected': {
-                                        color: '#ed6c02',
-                                        backgroundColor: '#f5e1d0',
-                                    },
-                                }}
-                                variant="fullWidth"
-                            >
-                                <Tab label="Manage Accounting Entry" value="Manage Accounting Entry" />
-                                <Tab label="Transfer Memo" value="Transfer Memo" />
-                            </TabList>
-                        </Box>
-                        <TabPanel value="Manage Accounting Entry" sx={{ padding: 0 }}>
-                            <Box
-                                sx={{
-                                    flexGrow: 1,
-                                }}
-                            >
-                                <Grid container direction={'row'} spacing={1}>
-                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                        <Item>
-                                            <Grid container xs={12} md={12} spacing={1}>
-                                                <Grid xs={12} md={6}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6 style={{ width: '40%' }}>Accounting period:</h6>
-                                                        <div style={{ width: '100%' }}>
-                                                            <LocalizationProvider
-                                                                dateAdapter={AdapterDayjs}
-                                                                sx={{ width: '100%' }}
-                                                            >
-                                                                <DatePicker
-                                                                    // label={'"month" and "year"'}
-                                                                    views={['month', 'year']}
-                                                                    value={valueDateAccountPeriod}
-                                                                    slotProps={{
-                                                                        textField: { size: 'small' },
-                                                                    }}
-                                                                    formatDensity="spacious"
-                                                                    format="MM-YYYY"
-                                                                    onChange={(e) => handleOnChangeDateAccountPeriod(e)}
-                                                                />
-                                                            </LocalizationProvider>
-                                                        </div>
-                                                    </Stack>
-                                                </Grid>
-
-                                                <Grid xs={12} md={6}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6 style={{ width: '40%' }}>Memo:</h6>
-                                                        <FormControl
-                                                            sx={{
-                                                                m: 1,
-                                                                width: '100%',
-                                                                // minWidth: 100,
-                                                                // maxWidth: 200,
-                                                            }}
-                                                            size="small"
+        <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
+            <div className="main">
+                <ToastContainer />
+                {dialogIsOpenNewAeHeader && (
+                    <AlertDialog
+                        title={'Create a new accounting entry header?'}
+                        content={
+                            <>
+                                Description: {valueDescriptionAe}
+                                <br /> Currency: {valueCurrency}
+                                <br /> Account group: {valueAccountGroupAE}
+                            </>
+                        }
+                        onOpen={dialogIsOpenNewAeHeader}
+                        onClose={closeDialogNewAeHeader}
+                        onAgree={agreeDialogNewAeHeader}
+                    />
+                )}
+                {dialogIsOpenUpdateAeHeader && (
+                    <AlertDialog
+                        title={'Update accounting entry header?'}
+                        content={
+                            <>
+                                Document no: {valueCodeAe}
+                                <br /> Description: {valueDescriptionAe}
+                                <br /> Currency: {valueCurrency}
+                                <br /> Account group: {valueAccountGroupAE}
+                            </>
+                        }
+                        onOpen={dialogIsOpenUpdateAeHeader}
+                        onClose={closeDialogUpdateAeHeader}
+                        onAgree={agreeDialogUpdateAeHeader}
+                    />
+                )}
+                {dialogIsOpenDeleteAeHeader && (
+                    <AlertDialog
+                        title={'Delete accounting entry header?'}
+                        content={
+                            <>
+                                Document no: {selectedRows}
+                                <br /> Description: {valueDescriptionAe}
+                                <br /> Currency: {valueCurrency}
+                                <br /> Account group: {valueAccountGroupAE}
+                            </>
+                        }
+                        onOpen={dialogIsOpenDeleteAeHeader}
+                        onClose={closeDialogDeleteAeHeader}
+                        onAgree={agreeDialogDeleteAeHeader}
+                    />
+                )}
+                {dialogIsOpenImportFile && (
+                    <AlertDialog
+                        title={'Import file accounting entry?'}
+                        content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
+                        onOpen={dialogIsOpenImportFile}
+                        onClose={closeDialogImportFile}
+                        onAgree={agreeDialogImportFile}
+                    />
+                )}
+                {openDialogDetail && (
+                    <DialogDetail
+                        isNew={isNew}
+                        onOpen={openDialogDetail}
+                        onClose={handleCloseDialogDetail}
+                        setDataListAccountEntryDetail={setDataListAccountEntryDetail}
+                        dataList={dataList}
+                        dataUpdate={dataUpdate}
+                        setValueDescriptionAe={setValueDescriptionAe}
+                        description={valueDescriptionAe}
+                    />
+                )}
+                <div role="presentation">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            href="/material-ui/getting-started/installation/"
+                        ></Link>
+                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{valueTab}</Typography>
+                    </Breadcrumbs>
+                </div>
+                <Box
+                    sx={{
+                        width: '100%',
+                        typography: 'body1',
+                        '& .super-app-theme--header': {
+                            backgroundColor: '#ffc696',
+                        },
+                    }}
+                >
+                    <Item>
+                        <TabContext value={valueTab}>
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                                <TabList
+                                    onChange={handleChangeTab}
+                                    aria-label="lab API tabs example"
+                                    TabIndicatorProps={{
+                                        style: {
+                                            backgroundColor: '#ed6c02',
+                                        },
+                                    }}
+                                    textColor="inherit"
+                                    sx={{
+                                        '.Mui-selected': {
+                                            color: '#ed6c02',
+                                            backgroundColor: '#f5e1d0',
+                                        },
+                                    }}
+                                    variant="fullWidth"
+                                >
+                                    <Tab label="Manage Accounting Entry" value="Manage Accounting Entry" />
+                                    <Tab label="Transfer Memo" value="Transfer Memo" />
+                                </TabList>
+                            </Box>
+                            <TabPanel value="Manage Accounting Entry" sx={{ padding: 0 }}>
+                                <Box
+                                    sx={{
+                                        flexGrow: 1,
+                                    }}
+                                >
+                                    <Grid container direction={'row'} spacing={1}>
+                                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                            <Item>
+                                                <Grid container xs={12} md={12} spacing={1}>
+                                                    <Grid xs={12} md={6}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
                                                         >
-                                                            <Select
-                                                                // value={age}
-                                                                // label="Age"
-                                                                displayEmpty
-                                                                // onChange={handleChange}
-                                                            >
-                                                                {/* <MenuItem value={''}>Group 1</MenuItem> */}
-                                                            </Select>
-                                                        </FormControl>
-                                                        <div>
-                                                            <LoadingButton
-                                                                startIcon={<YoutubeSearchedForIcon />}
-                                                                variant="contained"
-                                                                color="warning"
-                                                                onClick={() =>
-                                                                    setReloadListAccountingEntryHeader(
-                                                                        !reloadListAccountingEntryHeader,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Load
-                                                            </LoadingButton>
-                                                        </div>
-                                                    </Stack>
-                                                </Grid>
-
-                                                <Grid xs={12} md={6}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <TextField
-                                                            variant="outlined"
-                                                            fullWidth
-                                                            label="Search"
-                                                            size="small"
-                                                            value={valueSearchAccountingEntry}
-                                                            onChange={(event) => handleOnChangeValueSearch(event)}
-                                                        />
-                                                        <div>
-                                                            <LoadingButton
-                                                                startIcon={<SearchIcon />}
-                                                                variant="contained"
-                                                                color="warning"
-                                                                onClick={() =>
-                                                                    setReloadListAccountingEntryHeader(
-                                                                        !reloadListAccountingEntryHeader,
-                                                                    )
-                                                                }
-                                                            >
-                                                                Search
-                                                            </LoadingButton>
-                                                        </div>
-                                                    </Stack>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                        <Item>
-                                            <Grid container>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack
-                                                        width={'100%'}
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                        height={50}
-                                                    >
-                                                        <>
-                                                            <h5
-                                                                style={{
-                                                                    fontWeight: 'bold',
-                                                                }}
-                                                            >
-                                                                Accounting Entry List
-                                                            </h5>
-                                                        </>
-                                                        <Button
-                                                            component="label"
-                                                            role={undefined}
-                                                            variant="outlined"
-                                                            onClick={() => setButtonSelectMode(!buttonSelectMode)}
-                                                        >
-                                                            Select Mode
-                                                        </Button>
-                                                        <input type="file" required onChange={handleClickChoseFile} />
-                                                        <Button
-                                                            component="label"
-                                                            role={undefined}
-                                                            variant="contained"
-                                                            tabIndex={-1}
-                                                            startIcon={<PostAddIcon />}
-                                                            onClick={handleClickImportFile}
-                                                        >
-                                                            Import file
-                                                            {/* <VisuallyHiddenInput type="file" /> */}
-                                                        </Button>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack spacing={0}>
-                                                        <div style={{ width: '100%' }}>
-                                                            <DataGrid
-                                                                rows={dataListAEHeader}
-                                                                columns={columnsDataAeHeader}
-                                                                initialState={{
-                                                                    pagination: {
-                                                                        paginationModel: { page: 0, pageSize: 5 },
-                                                                    },
-                                                                }}
-                                                                pageSizeOptions={[5, 10, 15]}
-                                                                autoHeight
-                                                                showCellVerticalBorder
-                                                                showColumnVerticalBorder
-                                                                getRowId={(id) => id.doc_code}
-                                                                loading={isLoading}
-                                                                onRowSelectionModelChange={(ids) =>
-                                                                    onHandleRowsSelectionAeHeader(ids)
-                                                                }
-                                                                checkboxSelection={buttonSelectMode}
-                                                            />
-                                                        </div>
-                                                    </Stack>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12}>
-                                        <Item>
-                                            <Grid>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack
-                                                        width={'100%'}
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-end'}
-                                                        height={50}
-                                                    >
-                                                        <h5
-                                                            style={{
-                                                                fontWeight: 'bold',
-                                                                textAlign: 'left',
-                                                                width: '100%',
-                                                            }}
-                                                        >
-                                                            1. Accounting entry information
-                                                        </h5>
-
-                                                        <Stack direction={'row'} spacing={1}>
-                                                            <LoadingButton
-                                                                startIcon={<AddBoxIcon />}
-                                                                variant="contained"
-                                                                color="success"
-                                                                onClick={handleOnClickNewAeHeader}
-                                                                loading={valueNewButton}
-                                                                loadingPosition="start"
-                                                            >
-                                                                New
-                                                            </LoadingButton>
-                                                            <LoadingButton
-                                                                startIcon={<SystemUpdateAltIcon />}
-                                                                variant="contained"
-                                                                color="warning"
-                                                                onClick={handleOnClickUpdateAeHeader}
-                                                                loading={valueUpdateButton}
-                                                                loadingPosition="start"
-                                                            >
-                                                                Update
-                                                            </LoadingButton>
-                                                            <LoadingButton
-                                                                startIcon={<SaveIcon />}
-                                                                variant="contained"
-                                                                color="primary"
-                                                                onClick={handleClickSave}
-                                                                disabled={valueDisableSaveButton}
-                                                            >
-                                                                Save
-                                                            </LoadingButton>
-                                                            <LoadingButton
-                                                                startIcon={<DeleteOutlineIcon />}
-                                                                variant="contained"
-                                                                color="error"
-                                                                onClick={handleOnClickDeleteAeHeader}
-                                                            >
-                                                                Delete
-                                                            </LoadingButton>
-                                                        </Stack>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                                    <Item>
-                                                        <Grid container xs={12} md={12} spacing={1}>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
+                                                            <h6 style={{ width: '40%' }}>Accounting period:</h6>
+                                                            <div style={{ width: '100%' }}>
+                                                                <LocalizationProvider
+                                                                    dateAdapter={AdapterDayjs}
+                                                                    sx={{ width: '100%' }}
                                                                 >
-                                                                    <h6 style={{ width: '40%' }}>Document no:</h6>
-                                                                    <TextField
-                                                                        variant="outlined"
-                                                                        fullWidth
-                                                                        size="small"
-                                                                        placeholder="xxxxxxxxx"
-                                                                        value={valueCodeAe}
-                                                                        onChange={handleChangeValueCodeAe}
-                                                                        disabled
+                                                                    <DatePicker
+                                                                        // label={'"month" and "year"'}
+                                                                        views={['month', 'year']}
+                                                                        value={valueDateAccountPeriod}
+                                                                        slotProps={{
+                                                                            textField: { size: 'small' },
+                                                                        }}
+                                                                        formatDensity="spacious"
+                                                                        format="MM-YYYY"
+                                                                        onChange={(e) =>
+                                                                            handleOnChangeDateAccountPeriod(e)
+                                                                        }
                                                                     />
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Posting date:</h6>
-                                                                    <div style={{ width: '100%' }}>
-                                                                        <LocalizationProvider
-                                                                            dateAdapter={AdapterDayjs}
-                                                                            sx={{ width: '100%' }}
-                                                                        >
-                                                                            <DatePicker
-                                                                                // label={'"month" and "year"'}
-                                                                                // views={['month', 'year']}
-                                                                                value={valueDocsDateAe}
-                                                                                // sx={{ width: 300 }}
-                                                                                slotProps={{
-                                                                                    textField: { size: 'small' },
-                                                                                }}
-                                                                                formatDensity="spacious"
-                                                                                format="DD-MM-YYYY"
-                                                                                onChange={(e) =>
-                                                                                    handleChangeValueDocsDateAe(e)
-                                                                                }
-                                                                                disabled={valueReadonly}
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </div>
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>User:</h6>
-                                                                    <TextField
-                                                                        variant="outlined"
-                                                                        fullWidth
-                                                                        size="small"
-                                                                        placeholder="name..."
-                                                                        value={valueUserAe}
-                                                                        onChange={handleChangeValueUserAe}
-                                                                        disabled
-                                                                    />
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Entry date:</h6>
-                                                                    <div style={{ width: '100%' }}>
-                                                                        <LocalizationProvider
-                                                                            dateAdapter={AdapterDayjs}
-                                                                            sx={{ width: '100%' }}
-                                                                        >
-                                                                            <DatePicker
-                                                                                // label={'"month" and "year"'}
-                                                                                // views={['month', 'year']}
-                                                                                value={valueDateAe}
-                                                                                // sx={{ width: 300 }}
-                                                                                slotProps={{
-                                                                                    textField: { size: 'small' },
-                                                                                }}
-                                                                                formatDensity="spacious"
-                                                                                format="DD-MM-YYYY"
-                                                                                onChange={(e) =>
-                                                                                    handleChangeValueDateAe(e)
-                                                                                }
-                                                                                disabled
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </div>
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Description:</h6>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        as="textarea"
-                                                                        rows={3}
-                                                                        placeholder="..."
-                                                                        value={valueDescriptionAe}
-                                                                        onChange={handleChangeValueDescriptionAe}
-                                                                        disabled={valueReadonly}
-                                                                    />
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack spacing={1}>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Account group:</h6>
-                                                                        <FormControl
-                                                                            sx={{
-                                                                                m: 1,
-                                                                                width: '100%',
-                                                                                // minWidth: 100,
-                                                                                // maxWidth: 200,
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <Select
-                                                                                value={valueAccountGroupAE}
-                                                                                displayEmpty
-                                                                                onChange={handleChangeAccountGroupAE}
-                                                                                disabled={valueReadonly}
-                                                                            >
-                                                                                {dataListAccountGroup
-                                                                                    .sort(
-                                                                                        (a, b) =>
-                                                                                            parseFloat(a.gr_acc_code) -
-                                                                                            parseFloat(b.gr_acc_code),
-                                                                                    )
-
-                                                                                    .map((data) => {
-                                                                                        return (
-                                                                                            <MenuItem
-                                                                                                key={data.gr_acc_code}
-                                                                                                value={data.gr_acc_code}
-                                                                                            >
-                                                                                                {data.gr_acc_code} -{' '}
-                                                                                                {data.gr_acc_name}
-                                                                                            </MenuItem>
-                                                                                        );
-                                                                                    })}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Stack>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Currency:</h6>
-                                                                        <FormControl
-                                                                            sx={{
-                                                                                m: 1,
-                                                                                width: '100%',
-                                                                                // minWidth: 100,
-                                                                                // maxWidth: 200,
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <Select
-                                                                                value={valueCurrency}
-                                                                                // label="Age"
-                                                                                displayEmpty
-                                                                                onChange={handleChangeCurren}
-                                                                                disabled={valueReadonly}
-                                                                            >
-                                                                                {dataListCurrency.map((data) => {
-                                                                                    return (
-                                                                                        <MenuItem
-                                                                                            key={data.code}
-                                                                                            value={data.code}
-                                                                                        >
-                                                                                            {data.name}
-                                                                                        </MenuItem>
-                                                                                    );
-                                                                                })}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Stack>
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack spacing={1}>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Total debit:</h6>
-                                                                        <h6
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                textAlign: 'left',
-                                                                                color: 'red',
-                                                                                fontWeight: 'bold',
-                                                                            }}
-                                                                        >
-                                                                            {valueTotalDebitAe.toLocaleString(
-                                                                                undefined,
-                                                                                {
-                                                                                    maximumFractionDigits: 2,
-                                                                                },
-                                                                            )}
-                                                                        </h6>
-                                                                    </Stack>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Total credit:</h6>
-                                                                        <h6
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                textAlign: 'left',
-                                                                                color: 'green',
-                                                                                fontWeight: 'bold',
-                                                                            }}
-                                                                        >
-                                                                            {valueTotalCreditAe.toLocaleString(
-                                                                                undefined,
-                                                                                {
-                                                                                    maximumFractionDigits: 2,
-                                                                                },
-                                                                            )}
-                                                                        </h6>
-                                                                    </Stack>
-                                                                </Stack>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Item>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12}>
-                                        <Item>
-                                            <Grid>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack
-                                                        width={'100%'}
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-end'}
-                                                        height={50}
-                                                    >
-                                                        <>
-                                                            <h5
-                                                                style={{
-                                                                    fontWeight: 'bold',
-                                                                    textAlign: 'left',
-                                                                    width: '100%',
-                                                                }}
-                                                            >
-                                                                2. Detail
-                                                            </h5>
-                                                        </>
-
-                                                        <Stack direction={'row'} spacing={1}>
-                                                            <LoadingButton
-                                                                startIcon={<AddBoxIcon />}
-                                                                variant="contained"
-                                                                color="success"
-                                                                onClick={handleOnClickNewAeDetail}
-                                                                sx={{ alignItems: 'left' }}
-                                                                disabled={!valueEditGrid}
-                                                            >
-                                                                Detail
-                                                            </LoadingButton>
-                                                        </Stack>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                                    <Item>
-                                                        <Stack spacing={0}>
-                                                            <div style={{ width: '100%', minHeight: 500 }}>
-                                                                <DataGrid
-                                                                    columnVisibilityModel={columnVisibilityModel}
-                                                                    rows={dataListAccountEntryDetail.filter(
-                                                                        (data) =>
-                                                                            data.isactive === true &&
-                                                                            data.is_delete_item !== true,
-                                                                    )}
-                                                                    columns={columnsDataAeDetail}
-                                                                    autoHeight
-                                                                    showCellVerticalBorder
-                                                                    showColumnVerticalBorder
-                                                                    getRowId={(id) => id.detail_ids}
-                                                                    loading={isLoading}
-                                                                    editMode="row"
-                                                                    rowModesModel={rowModesModel}
-                                                                    onRowModesModelChange={handleRowModesModelChange}
-                                                                    onRowEditStop={handleRowEditStop}
-                                                                    processRowUpdate={processRowUpdate}
-                                                                    slotProps={{
-                                                                        baseSelect: {
-                                                                            MenuProps: {
-                                                                                PaperProps: {
-                                                                                    sx: {
-                                                                                        maxHeight: 250,
-                                                                                    },
-                                                                                },
-                                                                            },
-                                                                        },
-                                                                    }}
-                                                                />
+                                                                </LocalizationProvider>
                                                             </div>
                                                         </Stack>
-                                                    </Item>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                </Grid>
-                            </Box>
-                        </TabPanel>
+                                                    </Grid>
 
-                        <TabPanel value="Transfer Memo" sx={{ padding: 0 }}>
-                            <Box sx={{ flexGrow: 1 }}>
-                                <Grid container direction={'row'} spacing={1}>
-                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                        <Item>
-                                            <Grid container xs={12} md={12}>
-                                                <Grid xs={12} md={6}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6>Accounting period:</h6>
-                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                            <DatePicker
-                                                                // label={'"month" and "year"'}
-                                                                views={['month', 'year']}
-                                                                // value={value}
-                                                                sx={{ width: 100 }}
-                                                                slotProps={{
-                                                                    textField: { size: 'small' },
-                                                                    paddingTop: 0,
-                                                                }}
-                                                            />
-                                                        </LocalizationProvider>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={5}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6>From memo:</h6>
-                                                        <FormControl
-                                                            sx={{
-                                                                m: 1,
-                                                                minWidth: 100,
-                                                                maxWidth: 200,
-                                                                height: 48,
-                                                                paddingTop: 1,
-                                                            }}
-                                                            size="small"
+                                                    <Grid xs={12} md={6}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
                                                         >
-                                                            <Select
-                                                                // value={age}
-                                                                // label="Age"
-                                                                displayEmpty
-                                                                // onChange={handleChange}
-                                                            >
-                                                                {/* <MenuItem value={''}>Group 1</MenuItem> */}
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={1}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        // justifyContent={'flex-end'}
-                                                        sx={{
-                                                            height: 48,
-                                                            display: { xs: 'flex', sm: 'flex' },
-                                                            justifyContent: { xs: 'center', sm: 'flex-end' },
-                                                        }}
-                                                    >
-                                                        <Button variant="contained" color="warning">
-                                                            Load
-                                                        </Button>
-                                                    </Stack>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                        <Item>
-                                            {' '}
-                                            <Stack spacing={0}>
-                                                <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Memo List</h5>
-                                                <div style={{ width: '100%' }}>
-                                                    {/* <DataGrid
-                                                        // rows={data}
-                                                        columns={columns}
-                                                        initialState={{
-                                                            pagination: {
-                                                                paginationModel: { page: 0, pageSize: 5 },
-                                                            },
-                                                        }}
-                                                        pageSizeOptions={[5, 10, 15]}
-                                                        autoHeight
-                                                    /> */}
-                                                </div>
-                                            </Stack>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12}>
-                                        <Item>
-                                            <Grid container spacing={2}>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack
-                                                        width={'100%'}
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-end'}
-                                                        height={50}
-                                                    >
-                                                        <>
-                                                            <h5
-                                                                style={{
-                                                                    fontWeight: 'bold',
-                                                                    textAlign: 'left',
+                                                            <h6 style={{ width: '40%' }}>Memo:</h6>
+                                                            <FormControl
+                                                                sx={{
+                                                                    m: 1,
                                                                     width: '100%',
+                                                                    // minWidth: 100,
+                                                                    // maxWidth: 200,
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                <Select
+                                                                    // value={age}
+                                                                    // label="Age"
+                                                                    displayEmpty
+                                                                    // onChange={handleChange}
+                                                                >
+                                                                    {/* <MenuItem value={''}>Group 1</MenuItem> */}
+                                                                </Select>
+                                                            </FormControl>
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<YoutubeSearchedForIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                    onClick={() =>
+                                                                        setReloadListAccountingEntryHeader(
+                                                                            !reloadListAccountingEntryHeader,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Load
+                                                                </LoadingButton>
+                                                            </div>
+                                                        </Stack>
+                                                    </Grid>
+
+                                                    <Grid xs={12} md={6}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <TextField
+                                                                variant="outlined"
+                                                                fullWidth
+                                                                label="Search"
+                                                                size="small"
+                                                                value={valueSearchAccountingEntry}
+                                                                onChange={(event) => handleOnChangeValueSearch(event)}
+                                                            />
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<SearchIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                    onClick={() =>
+                                                                        setReloadListAccountingEntryHeader(
+                                                                            !reloadListAccountingEntryHeader,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Search
+                                                                </LoadingButton>
+                                                            </div>
+                                                        </Stack>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                            <Item>
+                                                <Grid container>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                            height={50}
+                                                        >
+                                                            <>
+                                                                <h5
+                                                                    style={{
+                                                                        fontWeight: 'bold',
+                                                                    }}
+                                                                >
+                                                                    Accounting Entry List
+                                                                </h5>
+                                                            </>
+                                                            <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="outlined"
+                                                                onClick={() => setButtonSelectMode(!buttonSelectMode)}
+                                                            >
+                                                                Select Mode
+                                                            </Button>
+                                                            <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="outlined"
+                                                                tabIndex={-1}
+                                                                startIcon={<PostAddIcon />}
+                                                                sx={{
+                                                                    width: 300,
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
                                                                 }}
                                                             >
-                                                                1. Memo Information
-                                                            </h5>
-                                                        </>
-
-                                                        <Button variant="contained" color="warning">
-                                                            Delete
-                                                        </Button>
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                                    <Item>
-                                                        <Grid container xs={12} md={12} spacing={1}>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Document no:</h6>
-                                                                    <TextField
-                                                                        variant="outlined"
-                                                                        fullWidth
-                                                                        size="small"
-                                                                        placeholder="name..."
-                                                                    />
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Doc date:</h6>
-                                                                    <div style={{ width: '100%' }}>
-                                                                        <LocalizationProvider
-                                                                            dateAdapter={AdapterDayjs}
-                                                                            sx={{ width: '100%' }}
-                                                                        >
-                                                                            <DatePicker
-                                                                                // label={'"month" and "year"'}
-                                                                                views={['month', 'year']}
-                                                                                // value={value}
-                                                                                // sx={{ width: 300 }}
-                                                                                slotProps={{
-                                                                                    textField: { size: 'small' },
-                                                                                }}
-                                                                                formatDensity="spacious"
-                                                                                format="DD/MM/YYYY"
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </div>
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>User:</h6>
-                                                                    <TextField
-                                                                        variant="outlined"
-                                                                        fullWidth
-                                                                        size="small"
-                                                                        placeholder="name..."
-                                                                    />
-                                                                </Stack>
-                                                            </Grid>
-
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Date:</h6>
-                                                                    <div style={{ width: '100%' }}>
-                                                                        <LocalizationProvider
-                                                                            dateAdapter={AdapterDayjs}
-                                                                            sx={{ width: '100%' }}
-                                                                        >
-                                                                            <DatePicker
-                                                                                // label={'"month" and "year"'}
-                                                                                views={['month', 'year']}
-                                                                                // value={value}
-                                                                                // sx={{ width: 300 }}
-                                                                                slotProps={{
-                                                                                    textField: { size: 'small' },
-                                                                                }}
-                                                                                formatDensity="spacious"
-                                                                                format="DD/MM/YYYY"
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </div>
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack
-                                                                    direction={'row'}
-                                                                    spacing={2}
-                                                                    alignItems={'center'}
-                                                                    justifyContent={'flex-start'}
-                                                                >
-                                                                    <h6 style={{ width: '40%' }}>Description:</h6>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        as="textarea"
-                                                                        rows={3}
-                                                                        placeholder="..."
-                                                                    />
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack spacing={1}>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Account group:</h6>
-                                                                        <FormControl
-                                                                            sx={{
-                                                                                m: 1,
-                                                                                width: '100%',
-                                                                                // minWidth: 100,
-                                                                                // maxWidth: 200,
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <Select
-                                                                                value={valueAccountGroupMemo}
-                                                                                displayEmpty
-                                                                                onChange={handleChangeAccountGroupMemo}
-                                                                            >
-                                                                                {dataListAccountGroup
-                                                                                    .sort(
-                                                                                        (a, b) =>
-                                                                                            parseFloat(a.gr_acc_code) -
-                                                                                            parseFloat(b.gr_acc_code),
-                                                                                    )
-                                                                                    .map((data) => {
-                                                                                        return (
-                                                                                            <MenuItem
-                                                                                                key={data.gr_acc_code}
-                                                                                                value={data.gr_acc_code}
-                                                                                            >
-                                                                                                {data.gr_acc_name}
-                                                                                            </MenuItem>
-                                                                                        );
-                                                                                    })}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Stack>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Currency:</h6>
-                                                                        <FormControl
-                                                                            sx={{
-                                                                                m: 1,
-                                                                                width: '100%',
-                                                                                // minWidth: 100,
-                                                                                // maxWidth: 200,
-                                                                            }}
-                                                                            size="small"
-                                                                        >
-                                                                            <Select
-                                                                                value={valueCurrency}
-                                                                                // label="Age"
-                                                                                displayEmpty
-                                                                                onChange={handleChangeCurren}
-                                                                            >
-                                                                                {dataListCurrency.map((data) => {
-                                                                                    return (
-                                                                                        <MenuItem
-                                                                                            key={data.code}
-                                                                                            value={data.code}
-                                                                                        >
-                                                                                            {data.name}
-                                                                                        </MenuItem>
-                                                                                    );
-                                                                                })}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Stack>
-                                                                </Stack>
-                                                            </Grid>
-                                                            <Grid xs={12} md={6}>
-                                                                <Stack spacing={1}>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Total debit:</h6>
-                                                                        <h6
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                textAlign: 'left',
-                                                                                color: 'red',
-                                                                                fontWeight: 'bold',
-                                                                            }}
-                                                                        >
-                                                                            {valueTotalDebitMemo.toLocaleString(
-                                                                                undefined,
-                                                                                {
-                                                                                    maximumFractionDigits: 2,
-                                                                                },
-                                                                            )}
-                                                                        </h6>
-                                                                    </Stack>
-                                                                    <Stack
-                                                                        direction={'row'}
-                                                                        spacing={2}
-                                                                        alignItems={'center'}
-                                                                        justifyContent={'flex-start'}
-                                                                    >
-                                                                        <h6 style={{ width: '40%' }}>Total credit:</h6>
-                                                                        <h6
-                                                                            style={{
-                                                                                width: '100%',
-                                                                                textAlign: 'left',
-                                                                                color: 'green',
-                                                                                fontWeight: 'bold',
-                                                                            }}
-                                                                        >
-                                                                            {valueTotalCreditMemo.toLocaleString(
-                                                                                undefined,
-                                                                                {
-                                                                                    maximumFractionDigits: 2,
-                                                                                },
-                                                                            )}
-                                                                        </h6>
-                                                                    </Stack>
-                                                                </Stack>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Item>
-                                                </Grid>
-                                            </Grid>
-                                        </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={12}>
-                                        <Item>
-                                            <Grid>
-                                                <Grid xs={12} md={12}>
-                                                    <Stack
-                                                        width={'100%'}
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-end'}
-                                                        height={50}
-                                                    >
-                                                        <>
-                                                            <h5
-                                                                style={{
-                                                                    fontWeight: 'bold',
-                                                                    textAlign: 'left',
-                                                                    width: '100%',
-                                                                }}
+                                                                {fileExcel
+                                                                    ? fileExcel[0].name.slice(0, 25) + '...'
+                                                                    : 'Import File'}
+                                                                <VisuallyHiddenInput
+                                                                    type="file"
+                                                                    onChange={handleClickChoseFile}
+                                                                />
+                                                            </Button>
+                                                            <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="contained"
+                                                                tabIndex={-1}
+                                                                startIcon={<CloudUploadIcon />}
+                                                                onClick={handleClickImportFile}
                                                             >
-                                                                2. Detail
-                                                            </h5>
-                                                        </>
-
-                                                        {/* <Button variant="contained" color="warning">
-                                                            New
-                                                        </Button>
-                                                        <Button variant="contained" color="warning">
-                                                            Update
-                                                        </Button>
-                                                        <Button variant="contained" color="warning">
-                                                            Delete
-                                                        </Button> */}
-                                                    </Stack>
-                                                </Grid>
-                                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                                    <Item>
+                                                                Upload&nbsp;
+                                                                <u>f</u>
+                                                                ile
+                                                            </Button>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12}>
                                                         <Stack spacing={0}>
                                                             <div style={{ width: '100%' }}>
-                                                                {/* <DataGrid
-                                                                    // rows={data}
-                                                                    columns={columns}
+                                                                <DataGrid
+                                                                    rows={dataListAEHeader}
+                                                                    columns={columnsDataAeHeader}
                                                                     initialState={{
                                                                         pagination: {
                                                                             paginationModel: { page: 0, pageSize: 5 },
@@ -1857,21 +968,891 @@ function AccountingEntry({ title }) {
                                                                     }}
                                                                     pageSizeOptions={[5, 10, 15]}
                                                                     autoHeight
-                                                                /> */}
+                                                                    showCellVerticalBorder
+                                                                    showColumnVerticalBorder
+                                                                    getRowId={(id) => id.doc_code}
+                                                                    loading={isLoading}
+                                                                    onRowSelectionModelChange={(ids) =>
+                                                                        onHandleRowsSelectionAeHeader(ids)
+                                                                    }
+                                                                    checkboxSelection={buttonSelectMode}
+                                                                />
                                                             </div>
                                                         </Stack>
-                                                    </Item>
+                                                    </Grid>
                                                 </Grid>
-                                            </Grid>
-                                        </Item>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12}>
+                                            <Item>
+                                                <Grid>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-end'}
+                                                            height={50}
+                                                        >
+                                                            <h5
+                                                                style={{
+                                                                    fontWeight: 'bold',
+                                                                    textAlign: 'left',
+                                                                    width: '100%',
+                                                                }}
+                                                            >
+                                                                1. Accounting entry information
+                                                            </h5>
+
+                                                            <Stack direction={'row'} spacing={1}>
+                                                                <LoadingButton
+                                                                    startIcon={<AddBoxIcon />}
+                                                                    variant="contained"
+                                                                    color="success"
+                                                                    onClick={handleOnClickNewAeHeader}
+                                                                    loading={valueNewButton}
+                                                                    loadingPosition="start"
+                                                                >
+                                                                    <u>N</u>ew
+                                                                </LoadingButton>
+                                                                <LoadingButton
+                                                                    startIcon={<SystemUpdateAltIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                    onClick={handleOnClickUpdateAeHeader}
+                                                                    loading={valueUpdateButton}
+                                                                    loadingPosition="start"
+                                                                >
+                                                                    <u>U</u>pdate
+                                                                </LoadingButton>
+                                                                <LoadingButton
+                                                                    startIcon={<SaveIcon />}
+                                                                    variant="contained"
+                                                                    color="primary"
+                                                                    onClick={handleClickSave}
+                                                                    disabled={valueDisableSaveButton}
+                                                                >
+                                                                    <u>S</u>ave
+                                                                </LoadingButton>
+                                                                <LoadingButton
+                                                                    startIcon={<DeleteOutlineIcon />}
+                                                                    variant="contained"
+                                                                    color="error"
+                                                                    onClick={handleOnClickDeleteAeHeader}
+                                                                >
+                                                                    <u>D</u>elete
+                                                                </LoadingButton>
+                                                            </Stack>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                                        <Item>
+                                                            <Grid container xs={12} md={12} spacing={1}>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Document no:</h6>
+                                                                        <Input
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            size="large"
+                                                                            placeholder="xxxxxxxxx"
+                                                                            value={valueCodeAe}
+                                                                            onChange={handleChangeValueCodeAe}
+                                                                            disabled
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Posting date:</h6>
+                                                                        <div style={{ width: '100%' }}>
+                                                                            <LocalizationProvider
+                                                                                dateAdapter={AdapterDayjs}
+                                                                                sx={{ width: '100%' }}
+                                                                            >
+                                                                                <DatePicker
+                                                                                    // label={'"month" and "year"'}
+                                                                                    // views={['month', 'year']}
+                                                                                    value={valueDocsDateAe}
+                                                                                    // sx={{ width: 300 }}
+                                                                                    slotProps={{
+                                                                                        textField: { size: 'small' },
+                                                                                    }}
+                                                                                    formatDensity="spacious"
+                                                                                    format="DD-MM-YYYY"
+                                                                                    onChange={(e) =>
+                                                                                        handleChangeValueDocsDateAe(e)
+                                                                                    }
+                                                                                    disabled={valueReadonly}
+                                                                                />
+                                                                            </LocalizationProvider>
+                                                                        </div>
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                                        <Input
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            size="large"
+                                                                            placeholder="name..."
+                                                                            value={valueUserAe}
+                                                                            onChange={handleChangeValueUserAe}
+                                                                            disabled
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Entry date:</h6>
+                                                                        <div style={{ width: '100%' }}>
+                                                                            <LocalizationProvider
+                                                                                dateAdapter={AdapterDayjs}
+                                                                                sx={{ width: '100%' }}
+                                                                            >
+                                                                                <DatePicker
+                                                                                    // label={'"month" and "year"'}
+                                                                                    // views={['month', 'year']}
+                                                                                    value={valueDateAe}
+                                                                                    // sx={{ width: 300 }}
+                                                                                    slotProps={{
+                                                                                        textField: { size: 'small' },
+                                                                                    }}
+                                                                                    formatDensity="spacious"
+                                                                                    format="DD-MM-YYYY"
+                                                                                    onChange={(e) =>
+                                                                                        handleChangeValueDateAe(e)
+                                                                                    }
+                                                                                    disabled
+                                                                                />
+                                                                            </LocalizationProvider>
+                                                                        </div>
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Description:</h6>
+                                                                        <Input.TextArea
+                                                                            size="large"
+                                                                            maxLength={250}
+                                                                            rows={3}
+                                                                            placeholder="..."
+                                                                            value={valueDescriptionAe}
+                                                                            onChange={handleChangeValueDescriptionAe}
+                                                                            disabled={valueReadonly}
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack spacing={1}>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Account group:
+                                                                            </h6>
+                                                                            <FormControl
+                                                                                sx={{
+                                                                                    m: 1,
+                                                                                    width: '100%',
+                                                                                    // minWidth: 100,
+                                                                                    // maxWidth: 200,
+                                                                                }}
+                                                                                size="small"
+                                                                            >
+                                                                                <Select
+                                                                                    value={valueAccountGroupAE}
+                                                                                    displayEmpty
+                                                                                    onChange={
+                                                                                        handleChangeAccountGroupAE
+                                                                                    }
+                                                                                    disabled={valueReadonly}
+                                                                                >
+                                                                                    {dataListAccountGroup.map(
+                                                                                        (data) => {
+                                                                                            return (
+                                                                                                <MenuItem
+                                                                                                    key={
+                                                                                                        data.gr_acc_code
+                                                                                                    }
+                                                                                                    value={
+                                                                                                        data.gr_acc_code
+                                                                                                    }
+                                                                                                >
+                                                                                                    {data.gr_acc_code} -{' '}
+                                                                                                    {data.gr_acc_name}
+                                                                                                </MenuItem>
+                                                                                            );
+                                                                                        },
+                                                                                    )}
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                        </Stack>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                                            <FormControl
+                                                                                sx={{
+                                                                                    m: 1,
+                                                                                    width: '100%',
+                                                                                    // minWidth: 100,
+                                                                                    // maxWidth: 200,
+                                                                                }}
+                                                                                size="small"
+                                                                            >
+                                                                                <Select
+                                                                                    value={valueCurrency}
+                                                                                    // label="Age"
+                                                                                    displayEmpty
+                                                                                    onChange={handleChangeCurren}
+                                                                                    disabled={valueReadonly}
+                                                                                >
+                                                                                    {dataListCurrency.map((data) => {
+                                                                                        return (
+                                                                                            <MenuItem
+                                                                                                key={data.code}
+                                                                                                value={data.code}
+                                                                                            >
+                                                                                                {data.name}
+                                                                                            </MenuItem>
+                                                                                        );
+                                                                                    })}
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                        </Stack>
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack spacing={1}>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Total debit:
+                                                                            </h6>
+                                                                            <h6
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    textAlign: 'left',
+                                                                                    color: 'red',
+                                                                                    fontWeight: 'bold',
+                                                                                }}
+                                                                            >
+                                                                                {valueTotalDebitAe.toLocaleString(
+                                                                                    undefined,
+                                                                                    {
+                                                                                        maximumFractionDigits: 2,
+                                                                                    },
+                                                                                )}
+                                                                            </h6>
+                                                                        </Stack>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Total credit:
+                                                                            </h6>
+                                                                            <h6
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    textAlign: 'left',
+                                                                                    color: 'green',
+                                                                                    fontWeight: 'bold',
+                                                                                }}
+                                                                            >
+                                                                                {valueTotalCreditAe.toLocaleString(
+                                                                                    undefined,
+                                                                                    {
+                                                                                        maximumFractionDigits: 2,
+                                                                                    },
+                                                                                )}
+                                                                            </h6>
+                                                                        </Stack>
+                                                                    </Stack>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Item>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12}>
+                                            <Item>
+                                                <Grid>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-end'}
+                                                            height={50}
+                                                        >
+                                                            <>
+                                                                <h5
+                                                                    style={{
+                                                                        fontWeight: 'bold',
+                                                                        textAlign: 'left',
+                                                                        width: '100%',
+                                                                    }}
+                                                                >
+                                                                    2. Detail
+                                                                </h5>
+                                                            </>
+
+                                                            <Stack direction={'row'} spacing={1}>
+                                                                <LoadingButton
+                                                                    startIcon={<AddBoxIcon />}
+                                                                    variant="contained"
+                                                                    color="success"
+                                                                    onClick={() => handleClickOpenDialogDetail(true)}
+                                                                    // onClick={handleOnClickNewAeDetail}
+                                                                    sx={{ alignItems: 'left' }}
+                                                                    disabled={!valueEditGrid}
+                                                                >
+                                                                    Det<u>a</u>il
+                                                                </LoadingButton>
+                                                            </Stack>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                                        <Item>
+                                                            <Stack spacing={0}>
+                                                                <div style={{ width: '100%', minHeight: 500 }}>
+                                                                    <DataGrid
+                                                                        columnVisibilityModel={columnVisibilityModel}
+                                                                        rows={dataListAccountEntryDetail.filter(
+                                                                            (data) =>
+                                                                                data.isactive === true &&
+                                                                                data.is_delete_item !== true,
+                                                                        )}
+                                                                        columns={columnsDataAeDetail}
+                                                                        autoHeight
+                                                                        showCellVerticalBorder
+                                                                        showColumnVerticalBorder
+                                                                        getRowId={(id) => id.detail_ids}
+                                                                        loading={isLoading}
+                                                                        // editMode="row"
+                                                                        // rowModesModel={rowModesModel}
+                                                                        // onRowModesModelChange={handleRowModesModelChange}
+                                                                        // onRowEditStop={handleRowEditStop}
+                                                                        // processRowUpdate={processRowUpdate}
+                                                                        onRowDoubleClick={(params) => {
+                                                                            valueEditGrid &&
+                                                                                handleClickOpenDialogDetail(false);
+                                                                            setDataUpdate(params.row);
+                                                                        }}
+                                                                        slotProps={{
+                                                                            baseSelect: {
+                                                                                MenuProps: {
+                                                                                    PaperProps: {
+                                                                                        sx: {
+                                                                                            maxHeight: 250,
+                                                                                        },
+                                                                                    },
+                                                                                },
+                                                                            },
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            </Stack>
+                                                        </Item>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            </Box>
-                        </TabPanel>
-                    </TabContext>
-                </Item>
-            </Box>
-        </div>
+                                </Box>
+                            </TabPanel>
+
+                            <TabPanel value="Transfer Memo" sx={{ padding: 0 }}>
+                                <Box sx={{ flexGrow: 1 }}>
+                                    <Grid container direction={'row'} spacing={1}>
+                                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                            <Item>
+                                                <Grid container xs={12} md={12}>
+                                                    <Grid xs={12} md={6}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <h6>Accounting period:</h6>
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    // label={'"month" and "year"'}
+                                                                    views={['month', 'year']}
+                                                                    // value={value}
+                                                                    sx={{ width: 100 }}
+                                                                    slotProps={{
+                                                                        textField: { size: 'small' },
+                                                                        paddingTop: 0,
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={5}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <h6>From memo:</h6>
+                                                            <FormControl
+                                                                sx={{
+                                                                    m: 1,
+                                                                    minWidth: 100,
+                                                                    maxWidth: 200,
+                                                                    height: 48,
+                                                                    paddingTop: 1,
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                <Select
+                                                                    // value={age}
+                                                                    // label="Age"
+                                                                    displayEmpty
+                                                                    // onChange={handleChange}
+                                                                >
+                                                                    {/* <MenuItem value={''}>Group 1</MenuItem> */}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={1}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            // justifyContent={'flex-end'}
+                                                            sx={{
+                                                                height: 48,
+                                                                display: { xs: 'flex', sm: 'flex' },
+                                                                justifyContent: { xs: 'center', sm: 'flex-end' },
+                                                            }}
+                                                        >
+                                                            <Button variant="contained" color="warning">
+                                                                Load
+                                                            </Button>
+                                                        </Stack>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                            <Item>
+                                                {' '}
+                                                <Stack spacing={0}>
+                                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Memo List</h5>
+                                                    <div style={{ width: '100%' }}>
+                                                        {/* <DataGrid
+                                                            // rows={data}
+                                                            columns={columns}
+                                                            initialState={{
+                                                                pagination: {
+                                                                    paginationModel: { page: 0, pageSize: 5 },
+                                                                },
+                                                            }}
+                                                            pageSizeOptions={[5, 10, 15]}
+                                                            autoHeight
+                                                        /> */}
+                                                    </div>
+                                                </Stack>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12}>
+                                            <Item>
+                                                <Grid container spacing={2}>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-end'}
+                                                            height={50}
+                                                        >
+                                                            <>
+                                                                <h5
+                                                                    style={{
+                                                                        fontWeight: 'bold',
+                                                                        textAlign: 'left',
+                                                                        width: '100%',
+                                                                    }}
+                                                                >
+                                                                    1. Memo Information
+                                                                </h5>
+                                                            </>
+
+                                                            <Button variant="contained" color="warning">
+                                                                Delete
+                                                            </Button>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                                        <Item>
+                                                            <Grid container xs={12} md={12} spacing={1}>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Document no:</h6>
+                                                                        <TextField
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            size="small"
+                                                                            placeholder="name..."
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Doc date:</h6>
+                                                                        <div style={{ width: '100%' }}>
+                                                                            <LocalizationProvider
+                                                                                dateAdapter={AdapterDayjs}
+                                                                                sx={{ width: '100%' }}
+                                                                            >
+                                                                                <DatePicker
+                                                                                    // label={'"month" and "year"'}
+                                                                                    views={['month', 'year']}
+                                                                                    // value={value}
+                                                                                    // sx={{ width: 300 }}
+                                                                                    slotProps={{
+                                                                                        textField: { size: 'small' },
+                                                                                    }}
+                                                                                    formatDensity="spacious"
+                                                                                    format="DD/MM/YYYY"
+                                                                                />
+                                                                            </LocalizationProvider>
+                                                                        </div>
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                                        <TextField
+                                                                            variant="outlined"
+                                                                            fullWidth
+                                                                            size="small"
+                                                                            placeholder="name..."
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Date:</h6>
+                                                                        <div style={{ width: '100%' }}>
+                                                                            <LocalizationProvider
+                                                                                dateAdapter={AdapterDayjs}
+                                                                                sx={{ width: '100%' }}
+                                                                            >
+                                                                                <DatePicker
+                                                                                    // label={'"month" and "year"'}
+                                                                                    views={['month', 'year']}
+                                                                                    // value={value}
+                                                                                    // sx={{ width: 300 }}
+                                                                                    slotProps={{
+                                                                                        textField: { size: 'small' },
+                                                                                    }}
+                                                                                    formatDensity="spacious"
+                                                                                    format="DD/MM/YYYY"
+                                                                                />
+                                                                            </LocalizationProvider>
+                                                                        </div>
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack
+                                                                        direction={'row'}
+                                                                        spacing={2}
+                                                                        alignItems={'center'}
+                                                                        justifyContent={'flex-start'}
+                                                                    >
+                                                                        <h6 style={{ width: '40%' }}>Description:</h6>
+                                                                        <Form.Control
+                                                                            type="text"
+                                                                            as="textarea"
+                                                                            rows={3}
+                                                                            placeholder="..."
+                                                                        />
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack spacing={1}>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Account group:
+                                                                            </h6>
+                                                                            <FormControl
+                                                                                sx={{
+                                                                                    m: 1,
+                                                                                    width: '100%',
+                                                                                    // minWidth: 100,
+                                                                                    // maxWidth: 200,
+                                                                                }}
+                                                                                size="small"
+                                                                            >
+                                                                                <Select
+                                                                                    value={valueAccountGroupMemo}
+                                                                                    displayEmpty
+                                                                                    onChange={
+                                                                                        handleChangeAccountGroupMemo
+                                                                                    }
+                                                                                >
+                                                                                    {dataListAccountGroup.map(
+                                                                                        (data) => {
+                                                                                            return (
+                                                                                                <MenuItem
+                                                                                                    key={
+                                                                                                        data.gr_acc_code
+                                                                                                    }
+                                                                                                    value={
+                                                                                                        data.gr_acc_code
+                                                                                                    }
+                                                                                                >
+                                                                                                    {data.gr_acc_name}
+                                                                                                </MenuItem>
+                                                                                            );
+                                                                                        },
+                                                                                    )}
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                        </Stack>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                                            <FormControl
+                                                                                sx={{
+                                                                                    m: 1,
+                                                                                    width: '100%',
+                                                                                    // minWidth: 100,
+                                                                                    // maxWidth: 200,
+                                                                                }}
+                                                                                size="small"
+                                                                            >
+                                                                                <Select
+                                                                                    value={valueCurrency}
+                                                                                    // label="Age"
+                                                                                    displayEmpty
+                                                                                    onChange={handleChangeCurren}
+                                                                                >
+                                                                                    {dataListCurrency.map((data) => {
+                                                                                        return (
+                                                                                            <MenuItem
+                                                                                                key={data.code}
+                                                                                                value={data.code}
+                                                                                            >
+                                                                                                {data.name}
+                                                                                            </MenuItem>
+                                                                                        );
+                                                                                    })}
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                        </Stack>
+                                                                    </Stack>
+                                                                </Grid>
+                                                                <Grid xs={12} md={6}>
+                                                                    <Stack spacing={1}>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Total debit:
+                                                                            </h6>
+                                                                            <h6
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    textAlign: 'left',
+                                                                                    color: 'red',
+                                                                                    fontWeight: 'bold',
+                                                                                }}
+                                                                            >
+                                                                                {valueTotalDebitMemo.toLocaleString(
+                                                                                    undefined,
+                                                                                    {
+                                                                                        maximumFractionDigits: 2,
+                                                                                    },
+                                                                                )}
+                                                                            </h6>
+                                                                        </Stack>
+                                                                        <Stack
+                                                                            direction={'row'}
+                                                                            spacing={2}
+                                                                            alignItems={'center'}
+                                                                            justifyContent={'flex-start'}
+                                                                        >
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                Total credit:
+                                                                            </h6>
+                                                                            <h6
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    textAlign: 'left',
+                                                                                    color: 'green',
+                                                                                    fontWeight: 'bold',
+                                                                                }}
+                                                                            >
+                                                                                {valueTotalCreditMemo.toLocaleString(
+                                                                                    undefined,
+                                                                                    {
+                                                                                        maximumFractionDigits: 2,
+                                                                                    },
+                                                                                )}
+                                                                            </h6>
+                                                                        </Stack>
+                                                                    </Stack>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Item>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
+                                        <Grid xs={12} md={12}>
+                                            <Item>
+                                                <Grid>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-end'}
+                                                            height={50}
+                                                        >
+                                                            <>
+                                                                <h5
+                                                                    style={{
+                                                                        fontWeight: 'bold',
+                                                                        textAlign: 'left',
+                                                                        width: '100%',
+                                                                    }}
+                                                                >
+                                                                    2. Detail
+                                                                </h5>
+                                                            </>
+
+                                                            {/* <Button variant="contained" color="warning">
+                                                                New
+                                                            </Button>
+                                                            <Button variant="contained" color="warning">
+                                                                Update
+                                                            </Button>
+                                                            <Button variant="contained" color="warning">
+                                                                Delete
+                                                            </Button> */}
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                                        <Item>
+                                                            <Stack spacing={0}>
+                                                                <div style={{ width: '100%' }}>
+                                                                    {/* <DataGrid
+                                                                        // rows={data}
+                                                                        columns={columns}
+                                                                        initialState={{
+                                                                            pagination: {
+                                                                                paginationModel: { page: 0, pageSize: 5 },
+                                                                            },
+                                                                        }}
+                                                                        pageSizeOptions={[5, 10, 15]}
+                                                                        autoHeight
+                                                                    /> */}
+                                                                </div>
+                                                            </Stack>
+                                                        </Item>
+                                                    </Grid>
+                                                </Grid>
+                                            </Item>
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            </TabPanel>
+                        </TabContext>
+                    </Item>
+                </Box>
+            </div>
+        </Spin>
     );
 }
 

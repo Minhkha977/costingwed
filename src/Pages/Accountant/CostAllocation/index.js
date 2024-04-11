@@ -10,28 +10,11 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Form from 'react-bootstrap/Form';
-import axios from 'axios';
-import {
-    GridRowModes,
-    DataGrid,
-    GridActionsCellItem,
-    GridToolbarContainer,
-    GridRowEditStopReasons,
-} from '@mui/x-data-grid';
-import InputLabel from '@mui/material/InputLabel';
+import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid';
 import MenuItem from '@mui/material/MenuItem';
-import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-import Checkbox from '@mui/material/Checkbox';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -51,26 +34,27 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import SearchIcon from '@mui/icons-material/Search';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
-import YoutubeSearchedForIcon from '@mui/icons-material/YoutubeSearchedFor';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import PlaylistAddCheckCircleIcon from '@mui/icons-material/PlaylistAddCheckCircle';
 import SaveIcon from '@mui/icons-material/Save';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
 import TextField from '@mui/material/TextField';
 import { toast, ToastContainer } from 'react-toastify';
 import AlertDialog from '~/components/AlertDialog';
-import { AssignmentReturnedSharp } from '@mui/icons-material';
 import { ApiAccountList } from '~/components/Api/Account';
 import { ApiListAccountGroup } from '~/components/Api/AccountGroup';
-import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutlined';
-import CancelIcon from '@mui/icons-material/Close';
 import Autocomplete from '@mui/material/Autocomplete';
-import { NumericFormat } from 'react-number-format';
-import { type } from '@testing-library/user-event/dist/type';
 import * as xlsx from 'xlsx';
+import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
+import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
+import { Excel } from 'antd-table-saveas-excel';
+import { Api_Export_CostAllocation } from '~/components/Api/Report';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import DialogDetailAllocation from './DialogDetailAllocation';
+import { useSelector } from 'react-redux';
+import { Spin } from 'antd';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -165,6 +149,8 @@ function CostAllocation({ title }) {
     const [valueUpdateDate, setValueUpdateDate] = React.useState(dayjs());
     const [valueDescription, setValueDescription] = React.useState('');
     const [valueEditGrid, setValueEditGrid] = React.useState(false);
+
+    //! visibility column data grid
     const columnVisibilityModel = React.useMemo(() => {
         if (valueEditGrid) {
             return {
@@ -176,6 +162,7 @@ function CostAllocation({ title }) {
         };
     }, [valueEditGrid]);
 
+    //! handler filter status search
     /* #region  button status */
     const status = Enum_Status_CostAllocation();
     const [valueStatus, setValueStatus] = React.useState('');
@@ -185,35 +172,30 @@ function CostAllocation({ title }) {
     };
     /* #endregion */
 
+    //! get data currency from redux
     /* #region  button currency */
-    const [dataListCurrency, setDataListCurrency] = React.useState([]);
+    const dataListCurrency = useSelector((s) => s.FetchApi.listData_Currency);
     const [valueCurrency, setValueCurrency] = useState('VND');
 
-    useEffect(() => {
-        ApiCurrency(setDataListCurrency);
-    }, []);
     /* #endregion */
 
+    //! get data account group from redux
     /* #region  button account list */
     const [valueAccountGroup, setValueAccountGroup] = useState('');
-    const [dataListAccountGroup, setDataListAccountGroup] = useState([]);
-    useEffect(() => {
-        ApiListAccountGroup('', setDataListAccountGroup);
-    }, []);
+    const dataListAccountGroup = useSelector((s) => s.FetchApi.listData_AccountGroup);
     /* #endregion */
 
+    //! get data account from redux
     /* #region  select debit and creedit list */
     const [valueCreditEntry, setValueCreditEntry] = React.useState(0);
     const [valueCreditAuto, setValueCreditAuto] = React.useState({});
     const [valueDebitEntry, setValueDebitEntry] = React.useState(0);
     const [valueDebitAuto, setValueDebitAuto] = React.useState({});
-    const [dataListAccount, setDataListAccount] = useState([]);
+    const dataListAccount = useSelector((s) => s.FetchApi.listData_Account);
 
-    useEffect(() => {
-        ApiAccountList('', setDataListAccount);
-    }, []);
     /* #endregion */
 
+    //todo: call api get data header
     /* #region data list header */
     const [dataListHeader, setDataListHeader] = useState([]);
     const [reloadListHeader, setReloadListHeader] = useState([]);
@@ -226,6 +208,7 @@ function CostAllocation({ title }) {
         setIsLoading(false);
     }, [reloadListHeader]);
 
+    //! select row header in datagrid
     const onHandleRowsSelectionHeader = (ids) => {
         const selectedRowsData = ids.map((id) => dataListHeader.find((row) => row.ids === id));
         if (selectedRowsData) {
@@ -268,6 +251,7 @@ function CostAllocation({ title }) {
     // const [valueReadonlyDocdate, setValueReadonlyDocdate] = React.useState(true);
     const [valueDisabledSaveButton, setValueDisabledSaveButton] = React.useState(true);
 
+    //! handler click button new
     /* #region button new header */
     const [valueButtonNew, setValueButtonNew] = React.useState(false);
 
@@ -294,6 +278,7 @@ function CostAllocation({ title }) {
     };
     /* #endregion */
 
+    //! handler click button update
     /* #region button update header */
     const [valueButtonUpdate, setValueButtonUpdate] = React.useState(false);
     const handleClickUpdateHeader = (event) => {
@@ -307,6 +292,7 @@ function CostAllocation({ title }) {
     };
     /* #endregion */
 
+    //! handler click button save
     /* #region button save header */
     const handleClickSaveHeader = (event) => {
         if (valueDescription && valueAccountGroup) {
@@ -322,6 +308,7 @@ function CostAllocation({ title }) {
     };
     /* #endregion */
 
+    //todo: call api process
     /* #region button Process */
     const [valueButtonProcess, setValueButtonProcess] = React.useState(false);
     const handleClickButtonProcess = (event) => {
@@ -335,17 +322,21 @@ function CostAllocation({ title }) {
     const [callApiProcess, setCallApiProcess] = React.useState(false);
     useEffect(() => {
         const apiProcess = async () => {
+            setIsLoading(true);
             const statusCode = await ApiProcessCostAllocation(access_token, valueAllocationCode);
             if (statusCode) {
                 setValueButtonProcess(true);
                 setValueButtonPause(false);
                 setReloadListHeader(!reloadListHeader);
             }
+            setIsLoading(false);
         };
+
         apiProcess();
     }, [callApiProcess]);
     /* #endregion */
 
+    //todo: call api pause
     /* #region button Pause */
     const [valueButtonPause, setValueButtonPause] = React.useState(false);
     const handleClickButtonPause = (event) => {
@@ -358,17 +349,21 @@ function CostAllocation({ title }) {
     const [callApiPause, setCallApiPause] = React.useState(false);
     useEffect(() => {
         const apiPause = async () => {
+            setIsLoading(true);
             const statusCode = await ApiPauseCostAllocation(access_token, valueAllocationCode);
             if (statusCode) {
                 setValueButtonProcess(false);
                 setValueButtonPause(true);
                 setReloadListHeader(!reloadListHeader);
             }
+            setIsLoading(false);
         };
+
         apiPause();
     }, [callApiPause]);
     /* #endregion */
 
+    //todo: call api new header
     /* #region  call api new */
     const [dialogIsOpenNewHeader, setDialogIsOpenNewHeader] = React.useState(false);
     const [callApiNewHeader, setCallApiNewHeader] = React.useState(false);
@@ -383,6 +378,7 @@ function CostAllocation({ title }) {
 
     useEffect(() => {
         const apiNewHeader = async () => {
+            setIsLoading(true);
             const statusCode = await ApiCreateCostAllocationHeader(
                 access_token,
                 valueDocDate,
@@ -409,13 +405,15 @@ function CostAllocation({ title }) {
                 // setValueReadonlyDocdate(true);
                 setValueEditGrid(false);
             }
-
+            setIsLoading(false);
             setReloadListHeader(!reloadListHeader);
         };
+
         apiNewHeader();
     }, [callApiNewHeader]);
     /* #endregion */
 
+    //todo: call api update header
     /* #region  call api update */
     const [dialogIsOpenUpdate, setDialogIsOpenUpdate] = React.useState(false);
     const [callApiUpdate, setCallApiUpdate] = React.useState(false);
@@ -430,6 +428,7 @@ function CostAllocation({ title }) {
 
     useEffect(() => {
         const apiUpdate = async () => {
+            setIsLoading(true);
             const statusCode = await ApiUpdateCostAllocationHeader(
                 access_token,
                 valueDocDate,
@@ -448,12 +447,14 @@ function CostAllocation({ title }) {
                 setValueReadonly(true);
                 setValueEditGrid(false);
             }
+            setIsLoading(false);
             setReloadListHeader(!reloadListHeader);
         };
         apiUpdate();
     }, [callApiUpdate]);
     /* #endregion */
 
+    //todo: call api get data detail
     /* #region  call api detail list */
     const [dataListDetail, setDataListDetail] = useState([]);
     const [reloadListDetail, setReloadListDetail] = useState([]);
@@ -468,6 +469,122 @@ function CostAllocation({ title }) {
         process();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reloadListDetail]);
+    /* #endregion */
+
+    //todo: call api export file
+    /* #region  call api export list */
+    const [dataListExport, setDataListExport] = useState([]);
+    const [buttonExport, setButtonExport] = useState(true);
+    useEffect(() => {
+        const process = async () => {
+            setIsLoading(true);
+            setButtonExport(true);
+            await Api_Export_CostAllocation(setDataListExport);
+            setIsLoading(false);
+            setButtonExport(false);
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataListHeader]);
+
+    const columnsExport = [
+        {
+            title: 'Allocation Code',
+            dataIndex: 'doc_code',
+            key: 'doc_code',
+        },
+        {
+            title: 'Date',
+            dataIndex: 'doc_date',
+            key: 'doc_date',
+        },
+        {
+            title: 'Allocation Desc',
+            width: 300,
+            dataIndex: 'desc_header',
+            key: 'desc_header',
+        },
+        {
+            title: 'Acc Group',
+            dataIndex: 'acc_group',
+            key: 'acc_group',
+        },
+        {
+            title: 'Cost Center',
+            dataIndex: 'cost_center',
+            key: 'cost_center',
+        },
+        {
+            title: 'Debit Acc',
+            dataIndex: 'debit_acc',
+            key: 'debit_acc',
+        },
+        {
+            title: 'Credit Acc',
+            dataIndex: 'credit_acc',
+            key: 'credit_acc',
+        },
+        {
+            title: 'Detail Date',
+            dataIndex: 'allcation_date',
+            key: 'allcation_date',
+        },
+        {
+            title: 'Detail Desc',
+            width: 300,
+            dataIndex: 'desc_detail',
+            key: 'desc_detail',
+        },
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            key: 'amount',
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status_display',
+            key: 'status_display',
+        },
+        {
+            title: 'Entry Doc',
+            dataIndex: 'entry_doc',
+            key: 'entry_doc',
+        },
+    ];
+
+    //! handler click export file
+    const handleClickExport = () => {
+        const data = dataListExport.map((el) => {
+            let doc_date = dayjs(el.doc_date);
+            let allcation_date = dayjs(el.allcation_date);
+            el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
+            el.allcation_date =
+                allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
+            return el;
+        });
+
+        const excel = new Excel();
+        excel
+            .addSheet('Allocation List')
+            .addColumns(columnsExport)
+            .addDataSource(
+                data.sort(function (a, b) {
+                    return (
+                        a.doc_code.localeCompare(b.doc_code) ||
+                        a.allcation_date
+                            .split('/')
+                            .reverse()
+                            .join()
+                            .localeCompare(b.allcation_date.split('/').reverse().join())
+                    );
+                }),
+
+                {
+                    str2Percent: true,
+                },
+            )
+            .saveAs('Allocation List.xlsx');
+    };
     /* #endregion */
 
     const columnsDataDetail = [
@@ -485,36 +602,7 @@ function CostAllocation({ title }) {
             cellClassName: 'actions',
             headerClassName: 'super-app-theme--header',
             getActions: ({ id }) => {
-                const isInEditMode = rowModesModel[id]?.mode === GridRowModes.Edit;
-
-                if (isInEditMode) {
-                    return [
-                        <GridActionsCellItem
-                            icon={<SaveIcon />}
-                            label="Save"
-                            sx={{
-                                color: 'primary.main',
-                            }}
-                            onClick={handleSaveClick(id)}
-                        />,
-                        <GridActionsCellItem
-                            icon={<CancelIcon />}
-                            label="Cancel"
-                            className="textPrimary"
-                            onClick={handleCancelClick(id)}
-                            color="inherit"
-                        />,
-                    ];
-                }
-
                 return [
-                    <GridActionsCellItem
-                        icon={<EditIcon />}
-                        label="Edit"
-                        className="textPrimary"
-                        onClick={handleEditClick(id)}
-                        color="inherit"
-                    />,
                     <GridActionsCellItem
                         icon={<DeleteIcon />}
                         label="Delete"
@@ -528,7 +616,7 @@ function CostAllocation({ title }) {
             field: 'doc_date',
             headerName: 'Doc date',
             width: 150,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'date',
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -538,7 +626,7 @@ function CostAllocation({ title }) {
             field: 'description',
             headerName: 'Description',
             minWidth: 400,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             flex: 1,
             headerClassName: 'super-app-theme--header',
         },
@@ -546,7 +634,7 @@ function CostAllocation({ title }) {
             field: 'amount',
             headerName: 'Amount',
             width: 150,
-            editable: valueEditGrid,
+            // editable: valueEditGrid,
             type: 'number',
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -560,7 +648,7 @@ function CostAllocation({ title }) {
         },
         {
             field: 'entry_doc_code',
-            headerName: 'Doc code',
+            headerName: 'Entry code',
             width: 100,
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -569,34 +657,8 @@ function CostAllocation({ title }) {
     const [dataList, setDataList] = useState([]);
 
     /* #region  handle click edit detail */
-    const [valueId, setValueId] = React.useState(1);
-    const handleOnClickNewAeDetail = () => {
-        setValueId(valueId + 1);
-        setDataListDetail((oldRows) => [
-            ...oldRows,
-            {
-                id: oldRows.length + 1,
-                detail_ids: valueId,
-                doc_code: '',
-                doc_date: dayjs().utc(),
-                unitcode: '',
-                acc_code: '',
-                description: '',
-                cost_center: '',
-                credit_amount: null,
-                debit_amount: null,
-                isactive: true,
-                updated_user: localStorage.getItem('UserName'),
-                updated_date: new Date(),
-                is_new_item: true,
-                isNew: true,
-            },
-        ]);
-        setRowModesModel((oldModel) => ({
-            ...oldModel,
-            [valueId]: { mode: GridRowModes.Edit, fieldToFocus: 'cost_center' },
-        }));
-    };
+
+    //todo: set data list detail
     useEffect(() => {
         if (dataListDetail.length !== 0) {
             const newData = dataListDetail.map((data) => {
@@ -606,15 +668,7 @@ function CostAllocation({ title }) {
         }
     }, [dataListDetail]);
 
-    const [rowModesModel, setRowModesModel] = React.useState({});
-    const handleEditClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.Edit } });
-    };
-
-    const handleSaveClick = (id) => () => {
-        setRowModesModel({ ...rowModesModel, [id]: { mode: GridRowModes.View } });
-    };
-
+    //! handler click delete detail
     const handleDeleteClick = (id) => () => {
         // setDataListAccountEntryDetail(dataListAccountEntryDetail.filter((row) => row.detail_ids !== id));
         const row = {
@@ -628,37 +682,11 @@ function CostAllocation({ title }) {
         setDataListDetail(dataListDetail.map((row) => (row.detail_ids === id ? updatedRow : row)));
     };
 
-    const handleCancelClick = (id) => () => {
-        setRowModesModel({
-            ...rowModesModel,
-            [id]: { mode: GridRowModes.View, ignoreModifications: true },
-        });
-
-        const editedRow = dataListDetail.find((row) => row.detail_ids === id);
-        if (editedRow.isNew) {
-            setDataListDetail(dataListDetail.filter((row) => row.detail_ids !== id));
-        }
-    };
     /* #endregion */
 
-    const handleRowModesModelChange = (newRowModesModel) => {
-        setRowModesModel(newRowModesModel);
-    };
-    const handleRowEditStop = (params, event) => {
-        if (params.reason === GridRowEditStopReasons.rowFocusOut) {
-            event.defaultMuiPrevented = true;
-        }
-        if (event.code === 'Tab') {
-            setRowModesModel({ ...rowModesModel, [params.id]: { mode: GridRowModes.View } });
-        }
-    };
-    const processRowUpdate = (newRow) => {
-        const updatedRow = { ...newRow, isNew: false };
-        setDataListDetail(dataListDetail.map((row) => (row.detail_ids === newRow.detail_ids ? updatedRow : row)));
-        return updatedRow;
-    };
-
     let number = 0;
+
+    //! handler click import file
     const [fileExcel, setFileExcell] = React.useState(null);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
@@ -694,187 +722,614 @@ function CostAllocation({ title }) {
             }
         }
     };
-    console.log(dataListDetail);
+
+    //! on key event
+    OnKeyEvent(() => setReloadListHeader(!reloadListHeader), 'Enter');
+    OnMultiKeyEvent(handleClickNewHeader, valueButtonNew ? '' : 'n');
+    OnMultiKeyEvent(handleClickUpdateHeader, valueButtonUpdate ? '' : 'u');
+    OnMultiKeyEvent(handleClickSaveHeader, valueDisabledSaveButton ? '' : 's');
+    OnMultiKeyEvent(handleClickButtonProcess, valueButtonProcess ? '' : 'r');
+    OnMultiKeyEvent(handleClickButtonPause, valueButtonPause ? '' : 'p');
+    OnMultiKeyEvent(() => handleClickOpenDialogDetail(true), !valueEditGrid ? '' : 'a');
+    // OnMultiKeyEvent(handleOnClickNewAeDetail, !valueEditGrid ? '' : 'a');
+    OnMultiKeyEvent(handleClickImportFile, 'f');
+
+    const [isNew, setIsNew] = React.useState(false);
+    const [dataUpdate, setDataUpdate] = React.useState([]);
+    const [openDialogDetail, setOpenDialogDetail] = React.useState(false);
+    const handleClickOpenDialogDetail = (isnew) => {
+        setOpenDialogDetail(true);
+        setIsNew(isnew);
+        setValueDisabledSaveButton(true);
+    };
+
+    const handleCloseDialogDetail = () => {
+        setOpenDialogDetail(false);
+        setValueDisabledSaveButton(false);
+    };
+
     return (
-        <div className="main">
-            <ToastContainer />
-            <AlertDialog
-                title={'Create a new Allocation?'}
-                content={
-                    <>
-                        Description: {valueDescription}
-                        <br /> Account group: {valueAccountGroup}
-                        <br /> Debit entry: {valueDebitEntry}
-                        <br /> Credit entry: {valueCreditEntry}
-                    </>
-                }
-                onOpen={dialogIsOpenNewHeader}
-                onClose={closeDialogNewHeader}
-                onAgree={agreeDialogNewHeader}
-            />
-            <AlertDialog
-                title={'update Allocation?'}
-                content={
-                    <>
-                        Allocation code: {valueAllocationCode}
-                        <br /> Description: {valueDescription}
-                        <br /> Account group: {valueAccountGroup}
-                        <br /> Debit entry: {valueDebitEntry}
-                        <br /> Credit entry: {valueCreditEntry}
-                    </>
-                }
-                onOpen={dialogIsOpenUpdate}
-                onClose={closeDialogUpdate}
-                onAgree={agreeDialogUpdate}
-            />
-            <div role="presentation">
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
-                    <Typography color="text.primary">{title}</Typography>
-                </Breadcrumbs>
-            </div>
-            <Box
-                sx={{
-                    width: '100%',
-                    typography: 'body',
-                    '& .super-app-theme--header': {
-                        backgroundColor: '#ffc696',
-                    },
-                }}
-            >
-                <Grid container spacing={1}>
-                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                        <Item>
-                            <Grid container xs={12} md={12} spacing={1}>
-                                <Grid xs={12} md={6}>
-                                    <Stack
-                                        direction={'row'}
-                                        spacing={1}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-start'}
-                                    >
-                                        <h6>Status</h6>
-                                        <FormControl
-                                            sx={{
-                                                m: 1,
-                                                width: '100%',
-                                                // minWidth: 100,
-                                                // maxWidth: 200,
-                                            }}
-                                            size="small"
+        <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={valueIsLoading}>
+            <div className="main">
+                <ToastContainer />
+                {dialogIsOpenNewHeader && (
+                    <AlertDialog
+                        title={'Create a new Allocation?'}
+                        content={
+                            <>
+                                Description: {valueDescription}
+                                <br /> Account group: {valueAccountGroup}
+                                <br /> Debit entry: {valueDebitEntry}
+                                <br /> Credit entry: {valueCreditEntry}
+                            </>
+                        }
+                        onOpen={dialogIsOpenNewHeader}
+                        onClose={closeDialogNewHeader}
+                        onAgree={agreeDialogNewHeader}
+                    />
+                )}
+                {dialogIsOpenUpdate && (
+                    <AlertDialog
+                        title={'update Allocation?'}
+                        content={
+                            <>
+                                Allocation code: {valueAllocationCode}
+                                <br /> Description: {valueDescription}
+                                <br /> Account group: {valueAccountGroup}
+                                <br /> Debit entry: {valueDebitEntry}
+                                <br /> Credit entry: {valueCreditEntry}
+                            </>
+                        }
+                        onOpen={dialogIsOpenUpdate}
+                        onClose={closeDialogUpdate}
+                        onAgree={agreeDialogUpdate}
+                    />
+                )}
+                {openDialogDetail && (
+                    <DialogDetailAllocation
+                        isNew={isNew}
+                        onOpen={openDialogDetail}
+                        onClose={handleCloseDialogDetail}
+                        dataList={dataList}
+                        dataUpdate={dataUpdate}
+                        setDataListDetail={setDataListDetail}
+                    />
+                )}
+                <div role="presentation">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            href="/material-ui/getting-started/installation/"
+                        ></Link>
+                        <Typography color="text.primary">{title}</Typography>
+                    </Breadcrumbs>
+                </div>
+                <Box
+                    sx={{
+                        width: '100%',
+                        typography: 'body',
+                        '& .super-app-theme--header': {
+                            backgroundColor: '#ffc696',
+                        },
+                    }}
+                >
+                    <Grid container spacing={1}>
+                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                            <Item>
+                                <Grid container xs={12} md={12} spacing={1}>
+                                    <Grid xs={12} md={6}>
+                                        <Stack
+                                            direction={'row'}
+                                            spacing={1}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-start'}
                                         >
-                                            <Select
-                                                value={valueStatus}
-                                                displayEmpty
-                                                onChange={handleChangeStatus}
-                                                // onChange={(e) => setValueStatus(e.target.value)}
-                                            >
-                                                {status.map((data) => {
-                                                    return (
-                                                        <MenuItem key={data.code} value={data.code}>
-                                                            {data.name}
-                                                        </MenuItem>
-                                                    );
-                                                })}
-                                            </Select>
-                                        </FormControl>
-                                    </Stack>
-                                </Grid>
-                                <Grid xs={12} md={6}>
-                                    <Stack
-                                        direction={'row'}
-                                        spacing={1}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-start'}
-                                    >
-                                        <TextField
-                                            id="outlined-basic"
-                                            variant="outlined"
-                                            fullWidth
-                                            label="Search"
-                                            size="small"
-                                            value={valueSearch}
-                                            onChange={(event) => handleOnChangeValueSearch(event)}
-                                        />
-
-                                        <div>
-                                            <LoadingButton
-                                                startIcon={<SearchIcon />}
-                                                variant="contained"
-                                                color="warning"
-                                                onClick={() => setReloadListHeader(!reloadListHeader)}
-                                            >
-                                                Search
-                                            </LoadingButton>
-                                        </div>
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                        </Item>
-                    </Grid>
-
-                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                        <Item>
-                            <Grid container>
-                                <Grid xs={12} md={12}>
-                                    <Stack
-                                        width={'100%'}
-                                        direction={'row'}
-                                        spacing={2}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-start'}
-                                        height={50}
-                                    >
-                                        <>
-                                            <h5
-                                                style={{
-                                                    fontWeight: 'bold',
+                                            <h6>Status</h6>
+                                            <FormControl
+                                                sx={{
+                                                    m: 1,
+                                                    width: '100%',
+                                                    // minWidth: 100,
+                                                    // maxWidth: 200,
                                                 }}
+                                                size="small"
                                             >
-                                                Cost allocation list
-                                            </h5>
-                                        </>
-                                    </Stack>
-                                </Grid>
-                                <Grid xs={12} md={12}>
-                                    <Stack spacing={0}>
-                                        <div style={{ width: '100%' }}>
-                                            <DataGrid
-                                                rows={dataListHeader}
-                                                columns={columnsHeader}
-                                                initialState={{
-                                                    pagination: {
-                                                        paginationModel: { page: 0, pageSize: 5 },
-                                                    },
-                                                }}
-                                                pageSizeOptions={[5, 10, 15]}
-                                                autoHeight
-                                                getRowId={(row) => row.ids}
-                                                loading={valueIsLoading}
-                                                onRowSelectionModelChange={(ids) => onHandleRowsSelectionHeader(ids)}
-                                                showCellVerticalBorder
-                                                showColumnVerticalBorder
+                                                <Select
+                                                    value={valueStatus}
+                                                    displayEmpty
+                                                    onChange={handleChangeStatus}
+                                                    // onChange={(e) => setValueStatus(e.target.value)}
+                                                >
+                                                    {status.map((data) => {
+                                                        return (
+                                                            <MenuItem key={data.code} value={data.code}>
+                                                                {data.name}
+                                                            </MenuItem>
+                                                        );
+                                                    })}
+                                                </Select>
+                                            </FormControl>
+                                        </Stack>
+                                    </Grid>
+                                    <Grid xs={12} md={6}>
+                                        <Stack
+                                            direction={'row'}
+                                            spacing={1}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-start'}
+                                        >
+                                            <TextField
+                                                id="outlined-basic"
+                                                variant="outlined"
+                                                fullWidth
+                                                label="Search"
+                                                size="small"
+                                                value={valueSearch}
+                                                onChange={(event) => handleOnChangeValueSearch(event)}
                                             />
-                                        </div>
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                        </Item>
-                    </Grid>
 
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Grid>
-                                <Grid xs={12} md={12}>
-                                    <Stack
-                                        width={'100%'}
-                                        direction={'row'}
-                                        spacing={2}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-end'}
-                                        height={50}
-                                    >
-                                        <>
+                                            <div>
+                                                <LoadingButton
+                                                    startIcon={<SearchIcon />}
+                                                    variant="contained"
+                                                    color="warning"
+                                                    onClick={() => setReloadListHeader(!reloadListHeader)}
+                                                >
+                                                    Search
+                                                </LoadingButton>
+                                            </div>
+                                        </Stack>
+                                    </Grid>
+                                </Grid>
+                            </Item>
+                        </Grid>
+
+                        <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                            <Item>
+                                <Grid container>
+                                    <Grid xs={12} md={12}>
+                                        <Stack
+                                            width={'100%'}
+                                            direction={'row'}
+                                            spacing={2}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-start'}
+                                            height={50}
+                                        >
+                                            <>
+                                                <h5
+                                                    style={{
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                >
+                                                    Cost allocation list
+                                                </h5>
+                                                <LoadingButton
+                                                    startIcon={<FileDownloadIcon />}
+                                                    variant="contained"
+                                                    color="info"
+                                                    onClick={handleClickExport}
+                                                    loading={buttonExport}
+                                                    loadingPosition="start"
+                                                >
+                                                    Export excel
+                                                </LoadingButton>
+                                            </>
+                                        </Stack>
+                                    </Grid>
+                                    <Grid xs={12} md={12}>
+                                        <Stack spacing={0}>
+                                            <div style={{ width: '100%' }}>
+                                                <DataGrid
+                                                    rows={dataListHeader}
+                                                    columns={columnsHeader}
+                                                    initialState={{
+                                                        pagination: {
+                                                            paginationModel: { page: 0, pageSize: 5 },
+                                                        },
+                                                    }}
+                                                    pageSizeOptions={[5, 10, 15]}
+                                                    autoHeight
+                                                    getRowId={(row) => row.ids}
+                                                    loading={valueIsLoading}
+                                                    onRowSelectionModelChange={(ids) =>
+                                                        onHandleRowsSelectionHeader(ids)
+                                                    }
+                                                    showCellVerticalBorder
+                                                    showColumnVerticalBorder
+                                                />
+                                            </div>
+                                        </Stack>
+                                    </Grid>
+                                </Grid>
+                            </Item>
+                        </Grid>
+
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Grid>
+                                    <Grid xs={12} md={12}>
+                                        <Stack
+                                            width={'100%'}
+                                            direction={'row'}
+                                            spacing={2}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-end'}
+                                            height={50}
+                                        >
+                                            <>
+                                                <h5
+                                                    style={{
+                                                        fontWeight: 'bold',
+                                                        textAlign: 'left',
+                                                        width: '100%',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                >
+                                                    1. Cost allocation information
+                                                </h5>
+                                            </>
+                                            <Stack direction={'row'} spacing={1}>
+                                                <LoadingButton
+                                                    startIcon={<AddBoxIcon />}
+                                                    variant="contained"
+                                                    color="success"
+                                                    onClick={handleClickNewHeader}
+                                                    disabled={valueButtonNew}
+                                                    loading={valueButtonNew}
+                                                    loadingPosition="start"
+                                                >
+                                                    <u>N</u>ew
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    startIcon={<SystemUpdateAltIcon />}
+                                                    variant="contained"
+                                                    color="warning"
+                                                    onClick={handleClickUpdateHeader}
+                                                    disabled={valueButtonUpdate}
+                                                    loading={valueButtonUpdate}
+                                                    loadingPosition="start"
+                                                >
+                                                    <u>U</u>pdate
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    startIcon={<SaveIcon />}
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={handleClickSaveHeader}
+                                                    disabled={valueDisabledSaveButton}
+                                                >
+                                                    <u> S</u>ave
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    startIcon={<CurrencyExchangeIcon />}
+                                                    variant="contained"
+                                                    color="secondary"
+                                                    loading={valueButtonProcess}
+                                                    loadingPosition="start"
+                                                    disabled={valueButtonProcess}
+                                                    onClick={handleClickButtonProcess}
+                                                    sx={{ display: valueButtonProcess ? 'none' : null }}
+                                                >
+                                                    P<u>r</u>ocess
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    startIcon={<StopCircleIcon />}
+                                                    variant="contained"
+                                                    color="error"
+                                                    disabled={valueButtonPause}
+                                                    onClick={handleClickButtonPause}
+                                                    sx={{ display: valueButtonPause ? 'none' : null }}
+                                                >
+                                                    <u>P</u>ause
+                                                </LoadingButton>
+                                            </Stack>
+                                        </Stack>
+                                    </Grid>
+                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                        <Item>
+                                            <Grid container xs={12} md={12} spacing={1}>
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Allocation code:</h6>
+                                                        <TextField
+                                                            variant="outlined"
+                                                            fullWidth
+                                                            size="small"
+                                                            placeholder="xxxxxx"
+                                                            value={valueAllocationCode}
+                                                            onChange={(e) => setValueAllocationCode(e.target.value)}
+                                                            disabled
+                                                            // inputProps={{ readOnly: { valueDisabledText } }}
+                                                            // disabled={valueDisabledText}
+                                                        />
+                                                    </Stack>
+                                                </Grid>
+
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Doc date:</h6>
+                                                        <div style={{ width: '100%' }}>
+                                                            <LocalizationProvider
+                                                                dateAdapter={AdapterDayjs}
+                                                                sx={{ width: '100%' }}
+                                                            >
+                                                                <DemoContainer
+                                                                    components={['DatePicker']}
+                                                                    sx={{ paddingTop: 0 }}
+                                                                >
+                                                                    <DatePicker
+                                                                        // label={'"month" and "year"'}
+                                                                        // views={['month', 'year']}
+                                                                        value={valueDocDate}
+                                                                        // sx={{ width: 300 }}
+                                                                        slotProps={{
+                                                                            textField: { size: 'small' },
+                                                                        }}
+                                                                        formatDensity="spacious"
+                                                                        format="DD-MM-YYYY"
+                                                                        onChange={(e) => setValueDocDate(e)}
+                                                                        disabled={valueReadonly}
+                                                                    />
+                                                                </DemoContainer>
+                                                            </LocalizationProvider>
+                                                        </div>
+                                                    </Stack>
+                                                </Grid>
+
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                        <TextField
+                                                            variant="outlined"
+                                                            fullWidth
+                                                            size="small"
+                                                            placeholder="name"
+                                                            value={valueUser}
+                                                            onChange={(e) => setValueUser(e.target.value)}
+                                                            disabled
+                                                        />
+                                                    </Stack>
+                                                </Grid>
+
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Update date:</h6>
+                                                        <div style={{ width: '100%' }}>
+                                                            <LocalizationProvider
+                                                                dateAdapter={AdapterDayjs}
+                                                                sx={{ width: '100%' }}
+                                                            >
+                                                                <DemoContainer
+                                                                    components={['DatePicker']}
+                                                                    sx={{ paddingTop: 0 }}
+                                                                >
+                                                                    <DatePicker
+                                                                        // label={'"month" and "year"'}
+                                                                        // views={['month', 'year']}
+                                                                        value={valueUpdateDate}
+                                                                        // sx={{ width: 300 }}
+                                                                        slotProps={{
+                                                                            textField: { size: 'small' },
+                                                                        }}
+                                                                        formatDensity="spacious"
+                                                                        format="DD-MM-YYYY"
+                                                                        onChange={(e) => setValueUpdateDate(e)}
+                                                                        disabled
+                                                                    />
+                                                                </DemoContainer>
+                                                            </LocalizationProvider>
+                                                        </div>
+                                                    </Stack>
+                                                </Grid>
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Descriptiont:</h6>
+                                                        <Form.Control
+                                                            type="text"
+                                                            as="textarea"
+                                                            rows={3}
+                                                            placeholder="..."
+                                                            value={valueDescription}
+                                                            onChange={(e) => setValueDescription(e.target.value)}
+                                                            disabled={valueReadonly}
+                                                        />
+                                                    </Stack>
+                                                </Grid>
+                                                <Grid xs={12} md={6}>
+                                                    <Stack spacing={1}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <h6 style={{ width: '40%' }}>Account group:</h6>
+                                                            <FormControl
+                                                                sx={{
+                                                                    m: 1,
+                                                                    width: '100%',
+                                                                    // minWidth: 100,
+                                                                    // maxWidth: 200,
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                <Select
+                                                                    value={valueAccountGroup}
+                                                                    displayEmpty
+                                                                    onChange={(e) =>
+                                                                        setValueAccountGroup(e.target.value)
+                                                                    }
+                                                                    disabled={valueReadonly}
+                                                                >
+                                                                    {dataListAccountGroup.map((data) => {
+                                                                        return (
+                                                                            <MenuItem
+                                                                                key={data.gr_acc_code}
+                                                                                value={data.gr_acc_code}
+                                                                            >
+                                                                                {data.gr_acc_code} - {data.gr_acc_name}
+                                                                            </MenuItem>
+                                                                        );
+                                                                    })}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Stack>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                            <FormControl
+                                                                sx={{
+                                                                    m: 1,
+                                                                    width: '100%',
+                                                                    // minWidth: 100,
+                                                                    // maxWidth: 200,
+                                                                }}
+                                                                size="small"
+                                                            >
+                                                                <Select
+                                                                    value={valueCurrency}
+                                                                    displayEmpty
+                                                                    onChange={(e) => setValueCurrency(e.target.value)}
+                                                                    disabled={valueReadonly}
+                                                                >
+                                                                    {dataListCurrency.map((data) => {
+                                                                        return (
+                                                                            <MenuItem key={data.code} value={data.code}>
+                                                                                {data.name}
+                                                                            </MenuItem>
+                                                                        );
+                                                                    })}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Stack>
+                                                    </Stack>
+                                                </Grid>
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Debit entry:</h6>
+
+                                                        <div style={{ width: '100%' }}>
+                                                            <Autocomplete
+                                                                fullWidth
+                                                                componentsProps={{
+                                                                    popper: {
+                                                                        style: { width: 'fit-content' },
+                                                                    },
+                                                                }}
+                                                                size="small"
+                                                                disabled={valueReadonly}
+                                                                // freeSolo
+                                                                value={valueDebitAuto}
+                                                                onChange={(event, newValue) => {
+                                                                    setValueDebitEntry(
+                                                                        newValue ? newValue.account_code : '',
+                                                                    );
+                                                                    setValueDebitAuto(newValue);
+                                                                }}
+                                                                options={dataListAccount}
+                                                                getOptionLabel={(option) =>
+                                                                    `${option.account_code_display ?? ''} - ${
+                                                                        option.account_name ?? ''
+                                                                    }`
+                                                                }
+                                                                renderInput={(params) => <TextField {...params} />}
+                                                            />
+                                                        </div>
+                                                    </Stack>
+                                                </Grid>
+                                                <Grid xs={12} md={6}>
+                                                    <Stack
+                                                        direction={'row'}
+                                                        spacing={2}
+                                                        alignItems={'center'}
+                                                        justifyContent={'flex-start'}
+                                                    >
+                                                        <h6 style={{ width: '40%' }}>Credit entry:</h6>
+                                                        <div style={{ width: '100%' }}>
+                                                            <Autocomplete
+                                                                fullWidth
+                                                                componentsProps={{
+                                                                    popper: {
+                                                                        style: { width: 'fit-content' },
+                                                                    },
+                                                                }}
+                                                                size="small"
+                                                                disabled={valueReadonly}
+                                                                // freeSolo
+                                                                value={valueCreditAuto}
+                                                                onChange={(event, newValue) => {
+                                                                    setValueCreditEntry(
+                                                                        newValue ? newValue.account_code : '',
+                                                                    );
+                                                                    setValueCreditAuto(newValue);
+                                                                }}
+                                                                options={dataListAccount}
+                                                                getOptionLabel={(option) =>
+                                                                    `${option.account_code_display ?? ''} - ${
+                                                                        option.account_name ?? ''
+                                                                    }`
+                                                                }
+                                                                renderInput={(params) => <TextField {...params} />}
+                                                            />
+                                                        </div>
+                                                    </Stack>
+                                                </Grid>
+                                            </Grid>
+                                        </Item>
+                                    </Grid>
+                                </Grid>
+                            </Item>
+                        </Grid>
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Grid>
+                                    <Grid xs={12} md={12}>
+                                        <Stack
+                                            width={'100%'}
+                                            direction={'row'}
+                                            spacing={2}
+                                            alignItems={'center'}
+                                            justifyContent={'flex-end'}
+                                            height={50}
+                                        >
                                             <h5
                                                 style={{
                                                     fontWeight: 'bold',
@@ -885,507 +1340,143 @@ function CostAllocation({ title }) {
                                                     textOverflow: 'ellipsis',
                                                 }}
                                             >
-                                                1. Cost allocation information
+                                                2. Detail
                                             </h5>
-                                        </>
-                                        <Stack direction={'row'} spacing={1}>
-                                            <LoadingButton
-                                                startIcon={<AddBoxIcon />}
-                                                variant="contained"
-                                                color="success"
-                                                onClick={handleClickNewHeader}
-                                                disabled={valueButtonNew}
-                                                loading={valueButtonNew}
-                                                loadingPosition="start"
-                                            >
-                                                New
-                                            </LoadingButton>
-                                            <LoadingButton
-                                                startIcon={<SystemUpdateAltIcon />}
-                                                variant="contained"
-                                                color="warning"
-                                                onClick={handleClickUpdateHeader}
-                                                disabled={valueButtonUpdate}
-                                                loading={valueButtonUpdate}
-                                                loadingPosition="start"
-                                            >
-                                                Update
-                                            </LoadingButton>
-                                            <LoadingButton
-                                                startIcon={<SaveIcon />}
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={handleClickSaveHeader}
-                                                disabled={valueDisabledSaveButton}
-                                            >
-                                                Save
-                                            </LoadingButton>
-                                            <LoadingButton
-                                                startIcon={<CurrencyExchangeIcon />}
-                                                variant="contained"
-                                                color="secondary"
-                                                loading={valueButtonProcess}
-                                                loadingPosition="start"
-                                                disabled={valueButtonProcess}
-                                                onClick={handleClickButtonProcess}
-                                                sx={{ display: valueButtonProcess ? 'none' : null }}
-                                            >
-                                                Process
-                                            </LoadingButton>
-                                            <LoadingButton
-                                                startIcon={<StopCircleIcon />}
-                                                variant="contained"
-                                                color="error"
-                                                disabled={valueButtonPause}
-                                                onClick={handleClickButtonPause}
-                                                sx={{ display: valueButtonPause ? 'none' : null }}
-                                            >
-                                                Pause
-                                            </LoadingButton>
+                                            <Stack direction={'row'} spacing={1}>
+                                                <LoadingButton
+                                                    component="label"
+                                                    role={undefined}
+                                                    variant="outlined"
+                                                    tabIndex={-1}
+                                                    startIcon={<PostAddIcon />}
+                                                    sx={{
+                                                        width: 300,
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                    }}
+                                                >
+                                                    {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : 'Import File'}
+                                                    <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+                                                </LoadingButton>
+                                                <LoadingButton
+                                                    component="label"
+                                                    role={undefined}
+                                                    variant="contained"
+                                                    startIcon={<CloudUploadIcon />}
+                                                    onClick={handleClickImportFile}
+                                                    disabled={!valueEditGrid}
+                                                >
+                                                    Upload&nbsp;
+                                                    <u>f</u>
+                                                    ile
+                                                </LoadingButton>
+
+                                                <LoadingButton
+                                                    startIcon={<AddBoxIcon />}
+                                                    variant="contained"
+                                                    color="success"
+                                                    onClick={() => handleClickOpenDialogDetail(true)}
+                                                    // onClick={handleOnClickNewAeDetail}
+                                                    sx={{ alignItems: 'left' }}
+                                                    disabled={!valueEditGrid}
+                                                >
+                                                    Det<u>a</u>il
+                                                </LoadingButton>
+                                            </Stack>
                                         </Stack>
-                                    </Stack>
-                                </Grid>
-                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                    <Item>
-                                        <Grid container xs={12} md={12} spacing={1}>
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Allocation code:</h6>
-                                                    <TextField
-                                                        variant="outlined"
-                                                        fullWidth
-                                                        size="small"
-                                                        placeholder="xxxxxx"
-                                                        value={valueAllocationCode}
-                                                        onChange={(e) => setValueAllocationCode(e.target.value)}
-                                                        disabled
-                                                        // inputProps={{ readOnly: { valueDisabledText } }}
-                                                        // disabled={valueDisabledText}
-                                                    />
-                                                </Stack>
-                                            </Grid>
-
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Doc date:</h6>
-                                                    <div style={{ width: '100%' }}>
-                                                        <LocalizationProvider
-                                                            dateAdapter={AdapterDayjs}
-                                                            sx={{ width: '100%' }}
-                                                        >
-                                                            <DemoContainer
-                                                                components={['DatePicker']}
-                                                                sx={{ paddingTop: 0 }}
-                                                            >
-                                                                <DatePicker
-                                                                    // label={'"month" and "year"'}
-                                                                    // views={['month', 'year']}
-                                                                    value={valueDocDate}
-                                                                    // sx={{ width: 300 }}
-                                                                    slotProps={{
-                                                                        textField: { size: 'small' },
-                                                                    }}
-                                                                    formatDensity="spacious"
-                                                                    format="DD-MM-YYYY"
-                                                                    onChange={(e) => setValueDocDate(e)}
-                                                                    disabled={valueReadonly}
-                                                                />
-                                                            </DemoContainer>
-                                                        </LocalizationProvider>
-                                                    </div>
-                                                </Stack>
-                                            </Grid>
-
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>User:</h6>
-                                                    <TextField
-                                                        variant="outlined"
-                                                        fullWidth
-                                                        size="small"
-                                                        placeholder="name"
-                                                        value={valueUser}
-                                                        onChange={(e) => setValueUser(e.target.value)}
-                                                        disabled
-                                                    />
-                                                </Stack>
-                                            </Grid>
-
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Update date:</h6>
-                                                    <div style={{ width: '100%' }}>
-                                                        <LocalizationProvider
-                                                            dateAdapter={AdapterDayjs}
-                                                            sx={{ width: '100%' }}
-                                                        >
-                                                            <DemoContainer
-                                                                components={['DatePicker']}
-                                                                sx={{ paddingTop: 0 }}
-                                                            >
-                                                                <DatePicker
-                                                                    // label={'"month" and "year"'}
-                                                                    // views={['month', 'year']}
-                                                                    value={valueUpdateDate}
-                                                                    // sx={{ width: 300 }}
-                                                                    slotProps={{
-                                                                        textField: { size: 'small' },
-                                                                    }}
-                                                                    formatDensity="spacious"
-                                                                    format="DD-MM-YYYY"
-                                                                    onChange={(e) => setValueUpdateDate(e)}
-                                                                    disabled
-                                                                />
-                                                            </DemoContainer>
-                                                        </LocalizationProvider>
-                                                    </div>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Descriptiont:</h6>
-                                                    <Form.Control
-                                                        type="text"
-                                                        as="textarea"
-                                                        rows={3}
-                                                        placeholder="..."
-                                                        value={valueDescription}
-                                                        onChange={(e) => setValueDescription(e.target.value)}
-                                                        disabled={valueReadonly}
-                                                    />
-                                                </Stack>
-                                            </Grid>
-                                            <Grid xs={12} md={6}>
-                                                <Stack spacing={1}>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6 style={{ width: '40%' }}>Account group:</h6>
-                                                        <FormControl
-                                                            sx={{
-                                                                m: 1,
-                                                                width: '100%',
-                                                                // minWidth: 100,
-                                                                // maxWidth: 200,
-                                                            }}
-                                                            size="small"
-                                                        >
-                                                            <Select
-                                                                value={valueAccountGroup}
-                                                                displayEmpty
-                                                                onChange={(e) => setValueAccountGroup(e.target.value)}
-                                                                disabled={valueReadonly}
-                                                            >
-                                                                {dataListAccountGroup
-                                                                    .sort(
-                                                                        (a, b) =>
-                                                                            parseFloat(a.gr_acc_code) -
-                                                                            parseFloat(b.gr_acc_code),
-                                                                    )
-                                                                    .map((data) => {
-                                                                        return (
-                                                                            <MenuItem
-                                                                                key={data.gr_acc_code}
-                                                                                value={data.gr_acc_code}
-                                                                            >
-                                                                                {data.gr_acc_code} - {data.gr_acc_name}
-                                                                            </MenuItem>
-                                                                        );
-                                                                    })}
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Stack>
-                                                    <Stack
-                                                        direction={'row'}
-                                                        spacing={2}
-                                                        alignItems={'center'}
-                                                        justifyContent={'flex-start'}
-                                                    >
-                                                        <h6 style={{ width: '40%' }}>Currency:</h6>
-                                                        <FormControl
-                                                            sx={{
-                                                                m: 1,
-                                                                width: '100%',
-                                                                // minWidth: 100,
-                                                                // maxWidth: 200,
-                                                            }}
-                                                            size="small"
-                                                        >
-                                                            <Select
-                                                                value={valueCurrency}
-                                                                displayEmpty
-                                                                onChange={(e) => setValueCurrency(e.target.value)}
-                                                                disabled={valueReadonly}
-                                                            >
-                                                                {dataListCurrency.map((data) => {
-                                                                    return (
-                                                                        <MenuItem key={data.code} value={data.code}>
-                                                                            {data.name}
-                                                                        </MenuItem>
-                                                                    );
-                                                                })}
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Stack>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Debit entry:</h6>
-
-                                                    <div style={{ width: '100%' }}>
-                                                        <Autocomplete
-                                                            fullWidth
-                                                            componentsProps={{
-                                                                popper: {
-                                                                    style: { width: 'fit-content' },
-                                                                },
-                                                            }}
-                                                            size="small"
-                                                            disabled={valueReadonly}
-                                                            // freeSolo
-                                                            value={valueDebitAuto}
-                                                            onChange={(event, newValue) => {
-                                                                setValueDebitEntry(
-                                                                    newValue ? newValue.account_code : '',
-                                                                );
-                                                                setValueDebitAuto(newValue);
-                                                            }}
-                                                            options={dataListAccount.sort(
-                                                                (a, b) =>
-                                                                    parseFloat(a.account_code) -
-                                                                    parseFloat(b.account_code),
-                                                            )}
-                                                            getOptionLabel={(option) =>
-                                                                `${option.account_code_display ?? ''} - ${
-                                                                    option.account_name ?? ''
-                                                                }`
-                                                            }
-                                                            renderInput={(params) => <TextField {...params} />}
-                                                        />
-                                                    </div>
-                                                </Stack>
-                                            </Grid>
-                                            <Grid xs={12} md={6}>
-                                                <Stack
-                                                    direction={'row'}
-                                                    spacing={2}
-                                                    alignItems={'center'}
-                                                    justifyContent={'flex-start'}
-                                                >
-                                                    <h6 style={{ width: '40%' }}>Credit entry:</h6>
-                                                    <div style={{ width: '100%' }}>
-                                                        <Autocomplete
-                                                            fullWidth
-                                                            componentsProps={{
-                                                                popper: {
-                                                                    style: { width: 'fit-content' },
-                                                                },
-                                                            }}
-                                                            size="small"
-                                                            disabled={valueReadonly}
-                                                            // freeSolo
-                                                            value={valueCreditAuto}
-                                                            onChange={(event, newValue) => {
-                                                                setValueCreditEntry(
-                                                                    newValue ? newValue.account_code : '',
-                                                                );
-                                                                setValueCreditAuto(newValue);
-                                                            }}
-                                                            options={dataListAccount.sort(
-                                                                (a, b) =>
-                                                                    parseFloat(a.account_code) -
-                                                                    parseFloat(b.account_code),
-                                                            )}
-                                                            getOptionLabel={(option) =>
-                                                                `${option.account_code_display ?? ''} - ${
-                                                                    option.account_name ?? ''
-                                                                }`
-                                                            }
-                                                            renderInput={(params) => <TextField {...params} />}
-                                                        />
-                                                    </div>
-                                                </Stack>
-                                            </Grid>
-                                        </Grid>
-                                    </Item>
-                                </Grid>
-                            </Grid>
-                        </Item>
-                    </Grid>
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Grid>
-                                <Grid xs={12} md={12}>
-                                    <Stack
-                                        width={'100%'}
-                                        direction={'row'}
-                                        spacing={2}
-                                        alignItems={'center'}
-                                        justifyContent={'flex-end'}
-                                        height={50}
-                                    >
-                                        <h5
-                                            style={{
-                                                fontWeight: 'bold',
-                                                textAlign: 'left',
-                                                width: '100%',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                            }}
-                                        >
-                                            2. Detail
-                                        </h5>
-                                        <Stack direction={'row'} spacing={1}>
-                                            <input
-                                                type="file"
-                                                required
-                                                disabled={!valueEditGrid}
-                                                onChange={handleClickChoseFile}
-                                            />
-                                            <LoadingButton
-                                                component="label"
-                                                role={undefined}
-                                                variant="contained"
-                                                startIcon={<PostAddIcon />}
-                                                onClick={handleClickImportFile}
-                                                disabled={!valueEditGrid}
-                                            >
-                                                Import
-                                                {/* <VisuallyHiddenInput type="file" /> */}
-                                            </LoadingButton>
-
-                                            <LoadingButton
-                                                startIcon={<AddBoxIcon />}
-                                                variant="contained"
-                                                color="success"
-                                                onClick={handleOnClickNewAeDetail}
-                                                sx={{ alignItems: 'left' }}
-                                                disabled={!valueEditGrid}
-                                            >
-                                                Detail
-                                            </LoadingButton>
-                                        </Stack>
-                                    </Stack>
-                                </Grid>
-                                <Grid xs={12} md={12} sx={{ width: '100%' }}>
-                                    <Item>
-                                        <Stack spacing={0}>
-                                            <div style={{ width: '100%', minHeight: 500 }}>
-                                                <DataGrid
-                                                    columnVisibilityModel={columnVisibilityModel}
-                                                    rows={dataListDetail.filter((data) => data.is_delete_item !== true)}
-                                                    columns={columnsDataDetail}
-                                                    autoHeight
-                                                    showCellVerticalBorder
-                                                    showColumnVerticalBorder
-                                                    getRowId={(id) => id.detail_ids}
-                                                    loading={valueIsLoading}
-                                                    editMode="row"
-                                                    rowModesModel={rowModesModel}
-                                                    onRowModesModelChange={handleRowModesModelChange}
-                                                    onRowEditStop={handleRowEditStop}
-                                                    processRowUpdate={processRowUpdate}
-                                                    slotProps={{
-                                                        baseSelect: {
-                                                            MenuProps: {
-                                                                PaperProps: {
-                                                                    sx: {
-                                                                        maxHeight: 250,
+                                    </Grid>
+                                    <Grid xs={12} md={12} sx={{ width: '100%' }}>
+                                        <Item>
+                                            <Stack spacing={0}>
+                                                <div style={{ width: '100%', minHeight: 500 }}>
+                                                    <DataGrid
+                                                        columnVisibilityModel={columnVisibilityModel}
+                                                        rows={dataListDetail.filter(
+                                                            (data) => data.is_delete_item !== true,
+                                                        )}
+                                                        columns={columnsDataDetail}
+                                                        autoHeight
+                                                        showCellVerticalBorder
+                                                        showColumnVerticalBorder
+                                                        getRowId={(id) => id.detail_ids}
+                                                        loading={valueIsLoading}
+                                                        onRowDoubleClick={(params) => {
+                                                            valueEditGrid && handleClickOpenDialogDetail(false);
+                                                            setDataUpdate(params.row);
+                                                        }}
+                                                        // editMode="row"
+                                                        // rowModesModel={rowModesModel}
+                                                        // onRowModesModelChange={handleRowModesModelChange}
+                                                        // onRowEditStop={handleRowEditStop}
+                                                        // processRowUpdate={processRowUpdate}
+                                                        slotProps={{
+                                                            baseSelect: {
+                                                                MenuProps: {
+                                                                    PaperProps: {
+                                                                        sx: {
+                                                                            maxHeight: 250,
+                                                                        },
                                                                     },
                                                                 },
                                                             },
-                                                        },
+                                                        }}
+                                                    />
+                                                </div>
+                                            </Stack>
+                                        </Item>
+                                    </Grid>
+                                    <Grid xs={12} md={6}>
+                                        <Stack spacing={1}>
+                                            <Stack
+                                                direction={'row'}
+                                                spacing={2}
+                                                alignItems={'center'}
+                                                justifyContent={'flex-start'}
+                                            >
+                                                <h6 style={{ width: '40%' }}>Allocated costs:</h6>
+                                                <h6
+                                                    style={{
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        // color: 'red',
+                                                        fontWeight: 'bold',
                                                     }}
-                                                />
-                                            </div>
-                                        </Stack>
-                                    </Item>
-                                </Grid>
-                                <Grid xs={12} md={6}>
-                                    <Stack spacing={1}>
-                                        <Stack
-                                            direction={'row'}
-                                            spacing={2}
-                                            alignItems={'center'}
-                                            justifyContent={'flex-start'}
-                                        >
-                                            <h6 style={{ width: '40%' }}>Allocated costs:</h6>
-                                            <h6
-                                                style={{
-                                                    width: '100%',
-                                                    textAlign: 'left',
-                                                    // color: 'red',
-                                                    fontWeight: 'bold',
-                                                }}
+                                                >
+                                                    {number.toLocaleString(undefined, {
+                                                        maximumFractionDigits: 2,
+                                                    })}
+                                                </h6>
+                                            </Stack>
+                                            <Stack
+                                                direction={'row'}
+                                                spacing={2}
+                                                alignItems={'center'}
+                                                justifyContent={'flex-start'}
                                             >
-                                                {number.toLocaleString(undefined, {
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </h6>
+                                                <h6 style={{ width: '40%' }}>Remaining costs:</h6>
+                                                <h6
+                                                    style={{
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        color: 'red',
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                >
+                                                    {number.toLocaleString(undefined, {
+                                                        maximumFractionDigits: 2,
+                                                    })}
+                                                </h6>
+                                            </Stack>
                                         </Stack>
-                                        <Stack
-                                            direction={'row'}
-                                            spacing={2}
-                                            alignItems={'center'}
-                                            justifyContent={'flex-start'}
-                                        >
-                                            <h6 style={{ width: '40%' }}>Remaining costs:</h6>
-                                            <h6
-                                                style={{
-                                                    width: '100%',
-                                                    textAlign: 'left',
-                                                    color: 'red',
-                                                    fontWeight: 'bold',
-                                                }}
-                                            >
-                                                {number.toLocaleString(undefined, {
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </h6>
-                                        </Stack>
-                                    </Stack>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                        </Item>
+                            </Item>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
-        </div>
+                </Box>
+            </div>
+        </Spin>
     );
 }
 

@@ -42,7 +42,7 @@ export async function ApiCreateAccountEntryHeader(
                 desciption: valueDescription,
                 currency: valueCurrency,
                 grp_acc: valueAccountGroup,
-                detail: modelDetail,
+                detail: modelDetail.filter((data) => data.is_delete_item !== true),
             };
             let url = `journal/acc-entry/unitcode//${localStorage.getItem('Unit')}?username=${localStorage.getItem(
                 'UserName',
@@ -50,6 +50,7 @@ export async function ApiCreateAccountEntryHeader(
             const response = await DomainApi.post(url, model, { headers: header });
             // setDataAEListHeader(response.data);
             toast.success(' Success create new account entry header!');
+            console.log('>>>>api');
             statusCode = true;
         } catch (error) {
             console.log(error);

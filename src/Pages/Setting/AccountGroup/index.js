@@ -20,8 +20,12 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import ApiToken from '~/components/Api/ApiToken';
 import { ApiCreateAccountGroup, ApiListAccountGroup, ApiUpdateAccountGroup } from '~/components/Api/AccountGroup';
 import SaveIcon from '@mui/icons-material/Save';
-
+import '../../../Container.css';
 import TextField from '@mui/material/TextField';
+import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
+import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
+import { useSelector } from 'react-redux';
+import { Input, Spin } from 'antd';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -32,16 +36,11 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-// function TextField({ readOnly, ...props }) {
-//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
-// }
-
 const columns = [
-    { field: 'gr_acc_code', headerName: 'Group Code', minWidth: 120, headerClassName: 'super-app-theme--header' },
+    { field: 'gr_acc_code', headerName: 'Group Code', minWidth: 100, headerClassName: 'super-app-theme--header' },
     {
         field: 'gr_acc_name',
         headerName: 'Group Name',
-        flex: 0.5,
         minWidth: 200,
         headerClassName: 'super-app-theme--header',
     },
@@ -49,26 +48,33 @@ const columns = [
         field: 'description',
         headerName: 'Description',
         flex: 1,
-        minWidth: 200,
+        minWidth: 300,
         headerClassName: 'super-app-theme--header',
     },
 ];
 
 function Account({ title }) {
-    const access_token = ApiToken();
-
+    const access_token = useSelector((state) => state.FetchApi.token);
     const [isLoading, setIsLoading] = React.useState(false);
     const [valueSearch, setValueSearch] = React.useState('');
     const [reloadListAccGroup, setReloadListAccGroup] = React.useState(false);
     const [dataList, setDataList] = useState([]);
+
+    // TODO call api get data account group
     useEffect(() => {
-        setIsLoading(true);
-        ApiListAccountGroup(valueSearch, setDataList);
-        setIsLoading(false);
+        const fetchApiGetDataAccGroup = async () => {
+            setIsLoading(true);
+            await ApiListAccountGroup(valueSearch, setDataList);
+            setIsLoading(false);
+        };
+        fetchApiGetDataAccGroup();
     }, [reloadListAccGroup]);
+
     const [valueCode, setValueCode] = React.useState('');
     const [valueName, setValueName] = React.useState('');
     const [valueDescription, setValueDescription] = React.useState('');
+
+    //! select row in datagrid
     const onRowsSelectionHandler = (ids) => {
         const selectedRowsData = ids.map((id) => dataList.find((row) => row.gr_acc_code === id));
         if (selectedRowsData) {
@@ -87,6 +93,7 @@ function Account({ title }) {
         }
     };
 
+    // TODO call api new
     /* #region  call api new */
     const [dialogIsOpenNew, setDialogIsOpenNew] = React.useState(false);
     const [dialogIsOpenUpdate, setDialogIsOpenUpdate] = React.useState(false);
@@ -99,21 +106,24 @@ function Account({ title }) {
         setDialogIsOpenNew(false);
         toast.warning(' Cancel create new!');
     };
-    const asyncApiCreateAccountGroup = async () => {
-        setIsLoading(true);
-        const statusCode = await ApiCreateAccountGroup(access_token, valueCode, valueName, valueDescription);
-        if (statusCode) {
-            setValueCode('');
-            setValueName('');
-            setValueDescription('');
-            setIsLoading(false);
-            setValueNewButton(false);
-            setValueDisableSaveButton(true);
-        }
-        setReloadListAccGroup(!reloadListAccGroup);
-    };
 
     useEffect(() => {
+        const asyncApiCreateAccountGroup = async () => {
+            setIsLoading(true);
+            const statusCode = await ApiCreateAccountGroup(access_token, valueCode, valueName, valueDescription);
+            if (statusCode) {
+                setValueCode('');
+                setValueName('');
+                setValueDescription('');
+                setValueNewButton(false);
+                setValueDisableSaveButton(true);
+                setValueReadonly(true);
+                setValueReadonlyCode(true);
+            }
+            setIsLoading(false);
+
+            setReloadListAccGroup(!reloadListAccGroup);
+        };
         asyncApiCreateAccountGroup();
     }, [callApiNew]);
     /* #endregion */
@@ -128,6 +138,7 @@ function Account({ title }) {
         setValueDescription(event.target.value);
     };
 
+    // TODO call api update
     /* #region  call api update */
     const [callApiUpdate, setCallApiUpdate] = React.useState(false);
 
@@ -145,6 +156,7 @@ function Account({ title }) {
             setIsLoading(true);
             const statusCode = await ApiUpdateAccountGroup(access_token, valueCode, valueName, valueDescription);
             if (statusCode) {
+                setValueReadonly(true);
                 setValueUpdateButton(false);
                 setValueDisableSaveButton(true);
             }
@@ -153,9 +165,7 @@ function Account({ title }) {
         };
         asyncApiUpdateAccountGroup();
     }, [callApiUpdate]);
-    const handleOnChangeValueSearch = (event) => {
-        setValueSearch(event.target.value);
-    };
+
     /* #endregion */
 
     const [valueReadonly, setValueReadonly] = React.useState(true);
@@ -201,215 +211,275 @@ function Account({ title }) {
         }
     };
 
-    return (
-        <div className="main">
-            <ToastContainer />
-            <AlertDialog
-                title={'Create a new account group?'}
-                content={
-                    <>
-                        Group code: {valueCode} <br /> Group name: {valueName} <br /> Description: {valueDescription}
-                    </>
-                }
-                onOpen={dialogIsOpenNew}
-                onClose={closeDialogNew}
-                onAgree={agreeDialogNew}
-            />
-            <AlertDialog
-                title={'Update account group?'}
-                content={
-                    <>
-                        Group code: {valueCode} <br /> Group name: {valueName} <br /> Description: {valueDescription}
-                    </>
-                }
-                onOpen={dialogIsOpenUpdate}
-                onClose={closeDialogUpdate}
-                onAgree={agreeDialogUpdate}
-            />
-            <div role="presentation">
-                <Breadcrumbs aria-label="breadcrumb">
-                    <Link underline="hover" color="inherit" href="/material-ui/getting-started/installation/"></Link>
-                    <Typography color="text.primary">{title}</Typography>
-                </Breadcrumbs>
-            </div>
-            <Box
-                sx={{
-                    flexGrow: 1,
-                    '& .super-app-theme--header': {
-                        backgroundColor: '#ffc696',
-                    },
-                }}
+    //! on key event
+    OnKeyEvent(() => setReloadListAccGroup(!reloadListAccGroup), 'Enter');
+    OnMultiKeyEvent(handleOnClickNew, valueNewButton ? '' : 'n');
+    OnMultiKeyEvent(handleOnClickUpdate, valueUpdateButton ? '' : 'u');
+    OnMultiKeyEvent(handleClickSave, valueDisableSaveButton ? '' : 's');
+
+    //! mobile responsive
+    const mobileResponsive = (
+        <Stack
+            direction={'row'}
+            spacing={1}
+            sx={{ display: { xs: 'flex', md: 'none' } }}
+            justifyContent={'space-around'}
+            marginTop={1.5}
+        >
+            <LoadingButton
+                startIcon={<AddBoxIcon />}
+                variant="contained"
+                color="success"
+                onClick={handleOnClickNew}
+                loading={valueNewButton}
+                loadingPosition="start"
             >
-                <Grid container direction={'row'} spacing={1}>
-                    <Grid xs={12} md={6}>
-                        <Item>
-                            <Stack direction="row" spacing={2}>
-                                <TextField
-                                    id="outlined-basic"
-                                    variant="outlined"
-                                    fullWidth
-                                    label="Search"
-                                    size="small"
-                                    // type="number"
-                                    value={valueSearch}
-                                    onChange={(event) => handleOnChangeValueSearch(event)}
-                                />
-                                <div>
-                                    <LoadingButton
-                                        startIcon={<SearchIcon />}
-                                        variant="contained"
-                                        color="warning"
-                                        onClick={() => setReloadListAccGroup(!reloadListAccGroup)}
-                                    >
-                                        Search
-                                    </LoadingButton>
-                                </div>
-                            </Stack>
-                        </Item>
-                    </Grid>
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Stack spacing={0}>
-                                <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account Group List</h5>
-                                <div style={{ width: '100%' }}>
-                                    <DataGrid
-                                        rows={dataList}
-                                        columns={columns}
-                                        getRowId={(row) => row.gr_acc_code}
-                                        initialState={{
-                                            pagination: {
-                                                paginationModel: { page: 0, pageSize: 5 },
-                                            },
-                                        }}
-                                        pageSizeOptions={[5, 10, 15]}
-                                        autoHeight
-                                        showCellVerticalBorder
-                                        showColumnVerticalBorder
-                                        loading={isLoading}
-                                        onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
-                                        // checkboxSelection
+                <u>N</u>ew
+            </LoadingButton>
+            <LoadingButton
+                startIcon={<SystemUpdateAltIcon />}
+                variant="contained"
+                color="warning"
+                onClick={handleOnClickUpdate}
+                loading={valueUpdateButton}
+                loadingPosition="start"
+            >
+                <u>U</u>pdate
+            </LoadingButton>
+            <LoadingButton
+                startIcon={<SaveIcon />}
+                variant="contained"
+                color="primary"
+                onClick={handleClickSave}
+                disabled={valueDisableSaveButton}
+            >
+                <u>S</u>ave
+            </LoadingButton>
+        </Stack>
+    );
+
+    return (
+        <Spin size="large" tip={'Loading'} spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
+            <div className="main">
+                <ToastContainer />
+                {dialogIsOpenNew && (
+                    <AlertDialog
+                        title={'Create a new account group?'}
+                        content={
+                            <>
+                                Group code: {valueCode} <br /> Group name: {valueName} <br /> Description:{' '}
+                                {valueDescription}
+                            </>
+                        }
+                        onOpen={dialogIsOpenNew}
+                        onClose={closeDialogNew}
+                        onAgree={agreeDialogNew}
+                    />
+                )}
+                {dialogIsOpenUpdate && (
+                    <AlertDialog
+                        title={'Update account group?'}
+                        content={
+                            <>
+                                Group code: {valueCode} <br /> Group name: {valueName} <br /> Description:{' '}
+                                {valueDescription}
+                            </>
+                        }
+                        onOpen={dialogIsOpenUpdate}
+                        onClose={closeDialogUpdate}
+                        onAgree={agreeDialogUpdate}
+                    />
+                )}
+                <div role="presentation">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            href="/material-ui/getting-started/installation/"
+                        ></Link>
+                        <Typography color="text.primary">{title}</Typography>
+                    </Breadcrumbs>
+                </div>
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        '& .super-app-theme--header': {
+                            backgroundColor: '#ffc696',
+                        },
+                    }}
+                >
+                    <Grid container direction={'row'} spacing={1}>
+                        <Grid xs={12} md={6}>
+                            <Item>
+                                <Stack direction="row" spacing={2}>
+                                    <TextField
+                                        id="outlined-basic"
+                                        variant="outlined"
+                                        fullWidth
+                                        label="Search"
+                                        size="small"
+                                        // type="number"
+                                        value={valueSearch}
+                                        onChange={(event) => setValueSearch(event.target.value)}
                                     />
-                                </div>
-                            </Stack>
-                        </Item>
-                    </Grid>
-                    <Grid xs={12} md={12}>
-                        <Item>
-                            <Stack direction={'row'} spacing={2} alignItems={'center'}>
-                                <Stack
-                                    width={'100%'}
-                                    direction={'row'}
-                                    spacing={2}
-                                    alignItems={'center'}
-                                    justifyContent={'flex-end'}
-                                    height={50}
-                                >
-                                    <h5
-                                        style={{
-                                            fontWeight: 'bold',
-                                            textAlign: 'left',
-                                            width: '100%',
-                                        }}
-                                    >
-                                        Account Group Information
-                                    </h5>
+                                    <div>
+                                        <LoadingButton
+                                            startIcon={<SearchIcon />}
+                                            variant="contained"
+                                            color="warning"
+                                            onClick={() => setReloadListAccGroup(!reloadListAccGroup)}
+                                        >
+                                            Search
+                                        </LoadingButton>
+                                    </div>
                                 </Stack>
-                                <Stack direction={'row'} spacing={1}>
-                                    <LoadingButton
-                                        startIcon={<AddBoxIcon />}
-                                        variant="contained"
-                                        color="success"
-                                        onClick={handleOnClickNew}
-                                        loading={valueNewButton}
-                                        loadingPosition="start"
-                                    >
-                                        New
-                                    </LoadingButton>
-                                    <LoadingButton
-                                        startIcon={<SystemUpdateAltIcon />}
-                                        variant="contained"
-                                        color="warning"
-                                        onClick={handleOnClickUpdate}
-                                        loading={valueUpdateButton}
-                                        loadingPosition="start"
-                                    >
-                                        Update
-                                    </LoadingButton>
-                                    <LoadingButton
-                                        startIcon={<SaveIcon />}
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={handleClickSave}
-                                        disabled={valueDisableSaveButton}
-                                    >
-                                        Save
-                                    </LoadingButton>
+                            </Item>
+                        </Grid>
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Stack spacing={0}>
+                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account Group List</h5>
+                                    <div style={{ width: '100%' }}>
+                                        <DataGrid
+                                            rows={dataList}
+                                            columns={columns}
+                                            getRowId={(row) => row.gr_acc_code}
+                                            initialState={{
+                                                pagination: {
+                                                    paginationModel: { page: 0, pageSize: 5 },
+                                                },
+                                            }}
+                                            pageSizeOptions={[5, 10, 15]}
+                                            autoHeight
+                                            showCellVerticalBorder
+                                            showColumnVerticalBorder
+                                            loading={isLoading}
+                                            onRowSelectionModelChange={(ids) => onRowsSelectionHandler(ids)}
+                                            // checkboxSelection
+                                        />
+                                    </div>
                                 </Stack>
-                            </Stack>
-                            <Grid xs={12} md={12}>
-                                <Item>
-                                    <Stack spacing={3}>
-                                        <Stack direction={'row'} spacing={0}>
-                                            <div className="div-h5">
-                                                <h6>Group Code:</h6>
-                                            </div>
-                                            <TextField
-                                                id="field-code"
-                                                variant="outlined"
-                                                fullWidth
-                                                size="small"
-                                                type="number"
-                                                value={valueCode}
-                                                onChange={(event) => handleOnChangeValueCode(event)}
-                                                placeholder="xxxx"
-                                                disabled={valueReadonlyCode}
-                                                onInput={(e) => {
-                                                    e.target.value = Math.max(0, parseInt(e.target.value))
-                                                        .toString()
-                                                        .slice(0, 4);
-                                                }}
-                                                min={0}
-                                            />
-                                        </Stack>
-                                        <Stack direction={'row'} spacing={0}>
-                                            <div className="div-h5">
-                                                <h6>Group Name:</h6>
-                                            </div>
-                                            <TextField
-                                                id="field-name"
-                                                variant="outlined"
-                                                fullWidth
-                                                size="small"
-                                                type="text"
-                                                value={valueName}
-                                                onChange={(event) => handleOnChangeValueName(event)}
-                                                placeholder="name..."
-                                                disabled={valueReadonly}
-                                            />
-                                        </Stack>
-                                        <Stack direction={'row'} spacing={0}>
-                                            <div className="div-h5">
-                                                <h6>Description:</h6>
-                                            </div>
-                                            <Form.Control
-                                                id="field-description"
-                                                type="text"
-                                                as="textarea"
-                                                value={valueDescription}
-                                                onChange={(event) => handleOnChangeValueDescription(event)}
-                                                rows={2}
-                                                placeholder="..."
-                                                disabled={valueReadonly}
-                                            />
-                                        </Stack>
+                            </Item>
+                        </Grid>
+                        <Grid xs={12} md={12}>
+                            <Item>
+                                <Stack direction={'row'} spacing={2} alignItems={'center'}>
+                                    <Stack
+                                        width={'100%'}
+                                        direction={'row'}
+                                        spacing={2}
+                                        alignItems={'center'}
+                                        justifyContent={'flex-end'}
+                                        height={50}
+                                    >
+                                        <h5
+                                            style={{
+                                                fontWeight: 'bold',
+                                                textAlign: 'left',
+                                                width: '100%',
+                                            }}
+                                        >
+                                            Account Group Information
+                                        </h5>
                                     </Stack>
-                                </Item>
-                            </Grid>
-                        </Item>
+                                    <Stack direction={'row'} spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
+                                        <LoadingButton
+                                            startIcon={<AddBoxIcon />}
+                                            variant="contained"
+                                            color="success"
+                                            onClick={handleOnClickNew}
+                                            loading={valueNewButton}
+                                            loadingPosition="start"
+                                        >
+                                            <u>N</u>ew
+                                        </LoadingButton>
+                                        <LoadingButton
+                                            startIcon={<SystemUpdateAltIcon />}
+                                            variant="contained"
+                                            color="warning"
+                                            onClick={handleOnClickUpdate}
+                                            loading={valueUpdateButton}
+                                            loadingPosition="start"
+                                        >
+                                            <u>U</u>pdate
+                                        </LoadingButton>
+                                        <LoadingButton
+                                            startIcon={<SaveIcon />}
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleClickSave}
+                                            disabled={valueDisableSaveButton}
+                                        >
+                                            <u>S</u>ave
+                                        </LoadingButton>
+                                    </Stack>
+                                </Stack>
+                                <Grid xs={12} md={12}>
+                                    <Item>
+                                        <Stack spacing={3}>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Group Code:</div>
+                                                </div>
+                                                <Input
+                                                    variant="outlined"
+                                                    type="number"
+                                                    fullWidth
+                                                    size="large"
+                                                    status={!valueCode ? 'error' : ''}
+                                                    count={{
+                                                        show: !valueReadonlyCode,
+                                                        max: 4,
+                                                        // strategy: (txt) => txt.length,
+                                                        // exceedFormatter: (txt, { max }) => txt.slice(0, max),
+                                                    }}
+                                                    value={valueCode}
+                                                    onChange={(event) =>
+                                                        event.target.value.length <= 4 && handleOnChangeValueCode(event)
+                                                    }
+                                                    placeholder="xxxx"
+                                                    disabled={valueReadonlyCode}
+                                                />
+                                            </Stack>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Group Name:</div>
+                                                </div>
+                                                <Input
+                                                    variant="outlined"
+                                                    size="large"
+                                                    status={!valueName ? 'error' : ''}
+                                                    value={valueName}
+                                                    onChange={(event) => handleOnChangeValueName(event)}
+                                                    placeholder="name..."
+                                                    disabled={valueReadonly}
+                                                />
+                                            </Stack>
+                                            <Stack direction={'row'} spacing={2}>
+                                                <div className="form-title">
+                                                    <div>Description:</div>
+                                                </div>
+                                                <Input.TextArea
+                                                    size="large"
+                                                    status={!valueDescription ? 'error' : ''}
+                                                    maxLength={250}
+                                                    value={valueDescription}
+                                                    onChange={(event) => handleOnChangeValueDescription(event)}
+                                                    rows={2}
+                                                    placeholder="..."
+                                                    disabled={valueReadonly}
+                                                />
+                                            </Stack>
+                                        </Stack>
+                                    </Item>
+                                </Grid>
+                                {mobileResponsive}
+                            </Item>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
-        </div>
+                </Box>
+            </div>
+        </Spin>
     );
 }
 

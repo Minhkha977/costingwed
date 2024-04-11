@@ -25,14 +25,13 @@ pca.addEventCallback(
         console.log('error', error);
     },
 );
-// console.log('get active account', pca.getActiveAccount());
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <Provider store={store}>
-        {/* <React.StrictMode> */}
-        <App msalInstance={pca} />
-        {/* </React.StrictMode> */}
+        <React.StrictMode>
+            <App msalInstance={pca} />
+        </React.StrictMode>
     </Provider>,
 );
 
