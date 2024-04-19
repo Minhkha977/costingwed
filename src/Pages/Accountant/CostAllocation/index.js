@@ -137,7 +137,7 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 function CostAllocation({ title }) {
-    const access_token = ApiToken();
+    const access_token = useSelector((s) => s.FetchApi.token);
     const [valueIsLoading, setIsLoading] = React.useState(false);
     const [valueSearch, setValueSearch] = React.useState('');
     const handleOnChangeValueSearch = (event) => {
@@ -687,13 +687,13 @@ function CostAllocation({ title }) {
     let number = 0;
 
     //! handler click import file
-    const [fileExcel, setFileExcell] = React.useState(null);
+    const [fileExcel, setFileExcell] = React.useState([]);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
     };
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
-        if (!fileExcel) {
+        if (fileExcel.length === 0) {
             toast.error('No file chosen!');
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
@@ -1356,7 +1356,11 @@ function CostAllocation({ title }) {
                                                         textOverflow: 'ellipsis',
                                                     }}
                                                 >
-                                                    {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : 'Import File'}
+                                                    {fileExcel
+                                                        ? fileExcel.length > 0
+                                                            ? fileExcel[0].name.slice(0, 25) + '...'
+                                                            : 'Import File'
+                                                        : 'Import File'}
                                                     <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
                                                 </LoadingButton>
                                                 <LoadingButton

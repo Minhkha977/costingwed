@@ -58,6 +58,7 @@ import {
     ApiDeleteAccountEntryDetail,
     ApiDeleteAccountEntryHeader,
     ApiImportAccountEntry,
+    ApiMemoListHeader,
     ApiUpdateAccountEntryDetail,
     ApiUpdateAccountEntryHeader,
 } from '~/components/Api/AccountingEntryApi';
@@ -77,6 +78,7 @@ import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
 import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
 import { Input, Spin } from 'antd';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useTranslation } from 'react-i18next';
 
 var utc = require('dayjs/plugin/utc');
 dayjs.extend(utc);
@@ -89,48 +91,6 @@ const Item = styled(Paper)(({ theme }) => ({
     direction: 'row',
     color: theme.palette.text.secondary,
 }));
-const singleSelect = [
-    { code: 'BS067', name: 'CH NVT' },
-    { code: 'BS009', name: 'SH BP' },
-];
-const columnsDataAeHeader = [
-    {
-        field: 'doc_code',
-        headerName: 'Document Code',
-        width: 150,
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'doc_date',
-        headerName: 'Posting Date',
-        width: 150,
-        valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'grp_acc',
-        headerName: 'Account group',
-        width: 120,
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'description',
-        headerName: 'Description',
-        minWidth: 400,
-        flex: 1,
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'import_code',
-        headerName: 'Import Code',
-        width: 150,
-        headerClassName: 'super-app-theme--header',
-    },
-];
-
-// function TextField({ readOnly, ...props }) {
-//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
-// }
 
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -152,10 +112,47 @@ function AccountingEntry({ title }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const [valueSearchAccountingEntry, setValueSearchAccountingEntry] = React.useState('');
     const [reloadListAccountingEntryHeader, setReloadListAccountingEntryHeader] = React.useState(false);
+    const { t } = useTranslation();
     const handleOnChangeValueSearch = (event) => {
         setValueSearchAccountingEntry(event.target.value);
     };
     const [valueEditGrid, setValueEditGrid] = React.useState(false);
+
+    //! column header datagrid
+    const columnsDataAeHeader = [
+        {
+            field: 'doc_code',
+            headerName: t('entry-code'),
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'doc_date',
+            headerName: t('entry-posting-date'),
+            width: 150,
+            valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'grp_acc',
+            headerName: t('account-group'),
+            width: 120,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'description',
+            headerName: t('description'),
+            minWidth: 400,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'import_code',
+            headerName: t('entry-import-code'),
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+        },
+    ];
 
     //! visibility column in datagrid
     const columnVisibilityModel = React.useMemo(() => {
@@ -177,8 +174,6 @@ function AccountingEntry({ title }) {
     const [valueCostCenterAe, setValueCostCenterAe] = useState('');
     const [valueTotalDebitAe, setValueTotalDebitAe] = useState(0);
     const [valueTotalCreditAe, setValueTotalCreditAe] = useState(0);
-    const [valueTotalDebitMemo, setValueTotalDebitMemo] = useState(0);
-    const [valueTotalCreditMemo, setValueTotalCreditMemo] = useState(0);
     const handleChangeValueCodeAe = (event) => {
         setValueCodeAe(event.target.value);
     };
@@ -255,8 +250,6 @@ function AccountingEntry({ title }) {
             }
         }
     };
-
-    const [valueAccountGroupMemo, setValueAccountGroupMemo] = useState('');
 
     //! get data acc group from redux
     /* #region  call api account group */
@@ -430,23 +423,47 @@ function AccountingEntry({ title }) {
         toast.warning(' Cancel delete!');
     };
     const handleOnClickDeleteAeHeader = () => {
-        if (!access_token || selectedRows.length === 0) {
-            toast.error('Document no is empty!');
-            return;
+        if (valueTab === 'entry') {
+            if (!access_token || selectedRows.length === 0) {
+                toast.error('Document no is empty!');
+                return;
+            }
+        }
+        if (valueTab === 'memo') {
+            if (!access_token || !valueCodeMemo) {
+                toast.error('Document no is empty!');
+                return;
+            }
         }
         setDialogIsOpenDeleteAeHeader(true);
     };
     const apiDeleteAeHeader = async () => {
-        await ApiDeleteAccountEntryHeader(access_token, selectedRows);
-        setValueCodeAe('');
-        setValueDocsDateAe(dayjs());
-        setValueUserAe('');
-        setValueDateAe(dayjs());
-        setValueDescriptionAe('');
-        setValueAccountGroupAE('');
-        setValueTotalDebitAe(0);
-        setValueTotalCreditAe(0);
-        setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
+        if (valueTab === 'entry') {
+            await ApiDeleteAccountEntryHeader(access_token, selectedRows);
+            setValueCodeAe('');
+            setValueDocsDateAe(dayjs());
+            setValueUserAe('');
+            setValueDateAe(dayjs());
+            setValueDescriptionAe('');
+            setValueAccountGroupAE('');
+            setValueTotalDebitAe(0);
+            setValueTotalCreditAe(0);
+            setReloadListAccountingEntryHeader(!reloadListAccountingEntryHeader);
+            setDataListAccountEntryDetail([]);
+        }
+        if (valueTab === 'memo') {
+            await ApiDeleteAccountEntryHeader(access_token, selectedRowsMemo);
+            setValueCodeMemo('');
+            setValuePostingDateMemo(dayjs());
+            setValueUserMemo('');
+            setValueDateMemo(dayjs());
+            setValueDescriptionMemo('');
+            setValueAccountGroupMemo('');
+            setValueTotalDebitMemo(0);
+            setValueTotalCreditMemo(0);
+            setReloadListMemoHeader(!reloadListMemoHeader);
+            setDataListDetailMemo([]);
+        }
     };
     useEffect(() => {
         setIsLoading(true);
@@ -457,7 +474,7 @@ function AccountingEntry({ title }) {
 
     //todo: call api get data detail
     const [dataListAccountEntryDetail, setDataListAccountEntryDetail] = useState([]);
-    const [reloadListAeDetail, setReloadListAeDetail] = useState([]);
+    const [reloadListAeDetail, setReloadListAeDetail] = useState(false);
     useEffect(() => {
         const process = async () => {
             setIsLoading(true);
@@ -470,7 +487,7 @@ function AccountingEntry({ title }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reloadListAeDetail]);
 
-    const [valueTab, setValueTab] = React.useState('Manage Accounting Entry');
+    const [valueTab, setValueTab] = React.useState('entry');
 
     const handleChangeTab = (event, newValue) => {
         setValueTab(newValue);
@@ -596,7 +613,7 @@ function AccountingEntry({ title }) {
     };
 
     //! handle lick import file
-    const [fileExcel, setFileExcell] = React.useState(null);
+    const [fileExcel, setFileExcell] = React.useState([]);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
     };
@@ -622,7 +639,7 @@ function AccountingEntry({ title }) {
     }, [callApiImportFile]);
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
-        if (!fileExcel) {
+        if (fileExcel.length === 0) {
             toast.error('No file chosen!');
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
@@ -657,6 +674,182 @@ function AccountingEntry({ title }) {
     OnMultiKeyEvent(() => handleClickOpenDialogDetail(true), !valueEditGrid ? '' : 'a');
     OnMultiKeyEvent(handleClickImportFile, 'f');
 
+    //? ---------------------Tab Memo------------------------------------------------
+    const [valueCodeMemo, setValueCodeMemo] = useState('');
+    const [valueUserMemo, setValueUserMemo] = useState('');
+    const [valueDescriptionMemo, setValueDescriptionMemo] = useState('');
+    const [valuePostingDateMemo, setValuePostingDateMemo] = useState(dayjs());
+    const [valueDateMemo, setValueDateMemo] = useState(dayjs());
+    const [valueAccountGroupMemo, setValueAccountGroupMemo] = useState(null);
+    const [valueCurrencyMemo, setValueCurrencyMemo] = useState(null);
+    const [valueCostCenterMemo, setValueCostCenterMemo] = useState('');
+    const [valueTotalDebitMemo, setValueTotalDebitMemo] = useState(0);
+    const [valueTotalCreditMemo, setValueTotalCreditMemo] = useState(0);
+
+    const [reloadListMemoHeader, setReloadListMemoHeader] = React.useState(false);
+    const [valueSearchMemo, setValueSearchMemo] = React.useState('');
+    //todo call api get data list header entry
+    const [dataListMemoHeader, setDataListMemoHeader] = useState([]);
+    useEffect(() => {
+        setIsLoading(true);
+        const callApiDataListHeaderMemo = async () => {
+            if (dataPeriod_From_Redux) {
+                await ApiMemoListHeader(
+                    valueDateAccountPeriod.month() + 1,
+                    valueDateAccountPeriod.year(),
+                    valueSearchMemo,
+                    setDataListMemoHeader,
+                );
+            }
+        };
+        callApiDataListHeaderMemo();
+        setIsLoading(false);
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reloadListMemoHeader, valueDateAccountPeriod]);
+
+    const columnsDataMemoHeader = [
+        {
+            field: 'trans_ids',
+            headerName: 'Transfer id',
+            width: 100,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'doc_code',
+            headerName: 'Document Code',
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'doc_date',
+            headerName: 'Posting Date',
+            width: 150,
+            valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'description',
+            headerName: 'Description',
+            minWidth: 400,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        // {
+        //     field: 'cost_center',
+        //     headerName: 'Cost center',
+        //     width: 150,
+        //     // editable: valueEditGrid,
+        //     type: 'singleSelect',
+        //     getOptionValue: (value) => value.code,
+        //     getOptionLabel: (value) => value.name,
+        //     valueOptions: dataListCostCenter,
+        //     headerAlign: 'center',
+        //     headerClassName: 'super-app-theme--header',
+        // },
+    ];
+    //! select row datagrid header entry
+    const [selectedRowsMemo, setValueSelectedRowsMemo] = useState([]);
+    const onHandleRowsSelectionMemo = (ids) => {
+        const selectedRowsData = ids.map((id) => dataListMemoHeader.find((row) => row.doc_code === id));
+        if (selectedRowsData) {
+            {
+                setValueSelectedRowsMemo(ids);
+                selectedRowsData.map((key) => {
+                    setValueCodeMemo(key.doc_code);
+                    setValueUserMemo(key.updated_by);
+                    setValueDescriptionMemo(key.description);
+                    setValuePostingDateMemo(dayjs(key.doc_date));
+                    setValueDateMemo(dayjs(key.updated_date));
+                    setValueAccountGroupMemo(key.grp_acc);
+                    setValueCurrencyMemo(key.currency);
+                    setValueTotalDebitMemo(key.total_debit);
+                    setValueTotalCreditMemo(key.total_credit);
+                });
+                setReloadListDetailMemo(!reloadListDetailMemo);
+            }
+        }
+    };
+
+    const columnsDataMemoDetail = [
+        {
+            field: 'id',
+            headerName: 'No.',
+            width: 50,
+            headerClassName: 'super-app-theme--header',
+        },
+
+        {
+            field: 'cost_center',
+            headerName: 'Cost center',
+            width: 150,
+            // editable: valueEditGrid,
+            type: 'singleSelect',
+            getOptionValue: (value) => value.code,
+            getOptionLabel: (value) => value.name,
+            valueOptions: dataListCostCenter,
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'acc_code',
+            headerName: 'Account code.',
+            width: 200,
+            // editable: valueEditGrid,
+            type: 'singleSelect',
+            getOptionValue: (value) => value.account_code,
+            getOptionLabel: (value) => `${value.account_code_display} - ${value.account_name}`,
+            valueOptions: dataListAccount,
+            PaperProps: {
+                sx: { maxHeight: 200 },
+            },
+            headerClassName: 'super-app-theme--header',
+        },
+
+        {
+            field: 'debit_amount',
+            headerName: 'Debit',
+            width: 150,
+            // editable: valueEditGrid,
+            type: 'number',
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            // valueFormatter: (params) => dayjs(params.value).format('DD/ MM/ YYYY'),
+        },
+        {
+            field: 'credit_amount',
+            headerName: 'Credit',
+            width: 150,
+            // editable: valueEditGrid,
+            type: 'number',
+            headerAlign: 'center',
+            headerClassName: 'super-app-theme--header',
+            // valueFormatter: (params) => dayjs(params.value).format('DD/ MM/ YYYY'),
+        },
+        {
+            field: 'description',
+            headerName: 'Description',
+            minWidth: 400,
+            // editable: valueEditGrid,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+    ];
+
+    //todo: call api get data detail memo
+    const [dataListDetailMemo, setDataListDetailMemo] = useState([]);
+    const [reloadListDetailMemo, setReloadListDetailMemo] = useState(false);
+    useEffect(() => {
+        const process = async () => {
+            setIsLoading(true);
+            if (valueCodeMemo) {
+                await ApiAccountEntryListDetail(valueCodeMemo, valueSearchMemo, setDataListDetailMemo);
+            }
+            setIsLoading(false);
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reloadListDetailMemo]);
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">
@@ -694,14 +887,25 @@ function AccountingEntry({ title }) {
                 )}
                 {dialogIsOpenDeleteAeHeader && (
                     <AlertDialog
-                        title={'Delete accounting entry header?'}
+                        title={
+                            valueTab === 'entry' ? 'Delete accounting entry header?' : 'Delete transfer memo header?'
+                        }
                         content={
-                            <>
-                                Document no: {selectedRows}
-                                <br /> Description: {valueDescriptionAe}
-                                <br /> Currency: {valueCurrency}
-                                <br /> Account group: {valueAccountGroupAE}
-                            </>
+                            valueTab === 'entry' ? (
+                                <>
+                                    Document no: {selectedRows}
+                                    <br /> Description: {valueDescriptionAe}
+                                    <br /> Currency: {valueCurrency}
+                                    <br /> Account group: {valueAccountGroupAE}
+                                </>
+                            ) : (
+                                <>
+                                    Document no: {valueCodeMemo}
+                                    <br /> Description: {valueDescriptionMemo}
+                                    <br /> Currency: {valueCurrencyMemo}
+                                    <br /> Account group: {valueAccountGroupMemo}
+                                </>
+                            )
                         }
                         onOpen={dialogIsOpenDeleteAeHeader}
                         onClose={closeDialogDeleteAeHeader}
@@ -736,8 +940,8 @@ function AccountingEntry({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
-                        <Typography color="text.primary">{valueTab}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
+                        <Typography color="text.primary">{t(valueTab)}</Typography>
                     </Breadcrumbs>
                 </div>
                 <Box
@@ -769,11 +973,11 @@ function AccountingEntry({ title }) {
                                     }}
                                     variant="fullWidth"
                                 >
-                                    <Tab label="Manage Accounting Entry" value="Manage Accounting Entry" />
-                                    <Tab label="Transfer Memo" value="Transfer Memo" />
+                                    <Tab label={t('entry')} value="entry" />
+                                    <Tab label={t('memo')} value="memo" />
                                 </TabList>
                             </Box>
-                            <TabPanel value="Manage Accounting Entry" sx={{ padding: 0 }}>
+                            <TabPanel value="entry" sx={{ padding: 0 }}>
                                 <Box
                                     sx={{
                                         flexGrow: 1,
@@ -790,7 +994,7 @@ function AccountingEntry({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6 style={{ width: '40%' }}>Accounting period:</h6>
+                                                            <h6 style={{ width: '40%' }}>{t('entry-period')}</h6>
                                                             <div style={{ width: '100%' }}>
                                                                 <LocalizationProvider
                                                                     dateAdapter={AdapterDayjs}
@@ -867,7 +1071,7 @@ function AccountingEntry({ title }) {
                                                             <TextField
                                                                 variant="outlined"
                                                                 fullWidth
-                                                                label="Search"
+                                                                label={t('button-search')}
                                                                 size="small"
                                                                 value={valueSearchAccountingEntry}
                                                                 onChange={(event) => handleOnChangeValueSearch(event)}
@@ -882,8 +1086,9 @@ function AccountingEntry({ title }) {
                                                                             !reloadListAccountingEntryHeader,
                                                                         )
                                                                     }
+                                                                    sx={{ whiteSpace: 'nowrap' }}
                                                                 >
-                                                                    Search
+                                                                    {t('button-search')}
                                                                 </LoadingButton>
                                                             </div>
                                                         </Stack>
@@ -909,7 +1114,7 @@ function AccountingEntry({ title }) {
                                                                         fontWeight: 'bold',
                                                                     }}
                                                                 >
-                                                                    Accounting Entry List
+                                                                    {t('entry-title-list')}
                                                                 </h5>
                                                             </>
                                                             <Button
@@ -918,7 +1123,7 @@ function AccountingEntry({ title }) {
                                                                 variant="outlined"
                                                                 onClick={() => setButtonSelectMode(!buttonSelectMode)}
                                                             >
-                                                                Select Mode
+                                                                {t('button-select-mode')}
                                                             </Button>
                                                             <Button
                                                                 component="label"
@@ -934,8 +1139,10 @@ function AccountingEntry({ title }) {
                                                                 }}
                                                             >
                                                                 {fileExcel
-                                                                    ? fileExcel[0].name.slice(0, 25) + '...'
-                                                                    : 'Import File'}
+                                                                    ? fileExcel.length > 0
+                                                                        ? fileExcel[0].name.slice(0, 25) + '...'
+                                                                        : t('button-import')
+                                                                    : t('button-import')}
                                                                 <VisuallyHiddenInput
                                                                     type="file"
                                                                     onChange={handleClickChoseFile}
@@ -949,9 +1156,7 @@ function AccountingEntry({ title }) {
                                                                 startIcon={<CloudUploadIcon />}
                                                                 onClick={handleClickImportFile}
                                                             >
-                                                                Upload&nbsp;
-                                                                <u>f</u>
-                                                                ile
+                                                                {t('button-upload')}
                                                             </Button>
                                                         </Stack>
                                                     </Grid>
@@ -1002,7 +1207,7 @@ function AccountingEntry({ title }) {
                                                                     width: '100%',
                                                                 }}
                                                             >
-                                                                1. Accounting entry information
+                                                                {t('entry-title-infor')}
                                                             </h5>
 
                                                             <Stack direction={'row'} spacing={1}>
@@ -1013,8 +1218,9 @@ function AccountingEntry({ title }) {
                                                                     onClick={handleOnClickNewAeHeader}
                                                                     loading={valueNewButton}
                                                                     loadingPosition="start"
+                                                                    sx={{ whiteSpace: 'nowrap' }}
                                                                 >
-                                                                    <u>N</u>ew
+                                                                    {t('button-new')}
                                                                 </LoadingButton>
                                                                 <LoadingButton
                                                                     startIcon={<SystemUpdateAltIcon />}
@@ -1023,8 +1229,9 @@ function AccountingEntry({ title }) {
                                                                     onClick={handleOnClickUpdateAeHeader}
                                                                     loading={valueUpdateButton}
                                                                     loadingPosition="start"
+                                                                    sx={{ whiteSpace: 'nowrap' }}
                                                                 >
-                                                                    <u>U</u>pdate
+                                                                    {t('button-update')}
                                                                 </LoadingButton>
                                                                 <LoadingButton
                                                                     startIcon={<SaveIcon />}
@@ -1033,7 +1240,7 @@ function AccountingEntry({ title }) {
                                                                     onClick={handleClickSave}
                                                                     disabled={valueDisableSaveButton}
                                                                 >
-                                                                    <u>S</u>ave
+                                                                    {t('button-save')}
                                                                 </LoadingButton>
                                                                 <LoadingButton
                                                                     startIcon={<DeleteOutlineIcon />}
@@ -1041,7 +1248,7 @@ function AccountingEntry({ title }) {
                                                                     color="error"
                                                                     onClick={handleOnClickDeleteAeHeader}
                                                                 >
-                                                                    <u>D</u>elete
+                                                                    {t('button-delete')}
                                                                 </LoadingButton>
                                                             </Stack>
                                                         </Stack>
@@ -1056,7 +1263,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Document no:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-code')}
+                                                                        </h6>
                                                                         <Input
                                                                             variant="outlined"
                                                                             fullWidth
@@ -1076,7 +1285,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Posting date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-posting-date')}
+                                                                        </h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
@@ -1109,7 +1320,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-user')}
+                                                                        </h6>
                                                                         <Input
                                                                             variant="outlined"
                                                                             fullWidth
@@ -1129,7 +1342,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Entry date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-date')}
+                                                                        </h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
@@ -1161,7 +1376,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Description:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('description')}
+                                                                        </h6>
                                                                         <Input.TextArea
                                                                             size="large"
                                                                             maxLength={250}
@@ -1182,7 +1399,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Account group:
+                                                                                {t('account-group')}
                                                                             </h6>
                                                                             <FormControl
                                                                                 sx={{
@@ -1227,7 +1444,9 @@ function AccountingEntry({ title }) {
                                                                             alignItems={'center'}
                                                                             justifyContent={'flex-start'}
                                                                         >
-                                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                {t('currency')}
+                                                                            </h6>
                                                                             <FormControl
                                                                                 sx={{
                                                                                     m: 1,
@@ -1268,7 +1487,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Total debit:
+                                                                                {t('total-debit')}
                                                                             </h6>
                                                                             <h6
                                                                                 style={{
@@ -1293,7 +1512,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Total credit:
+                                                                                {t('total-crebit')}
                                                                             </h6>
                                                                             <h6
                                                                                 style={{
@@ -1408,12 +1627,12 @@ function AccountingEntry({ title }) {
                                 </Box>
                             </TabPanel>
 
-                            <TabPanel value="Transfer Memo" sx={{ padding: 0 }}>
+                            <TabPanel value="memo" sx={{ padding: 0 }}>
                                 <Box sx={{ flexGrow: 1 }}>
                                     <Grid container direction={'row'} spacing={1}>
                                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                             <Item>
-                                                <Grid container xs={12} md={12}>
+                                                <Grid container xs={12} md={12} spacing={1}>
                                                     <Grid xs={12} md={6}>
                                                         <Stack
                                                             direction={'row'}
@@ -1421,36 +1640,43 @@ function AccountingEntry({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6>Accounting period:</h6>
-                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                                <DatePicker
-                                                                    // label={'"month" and "year"'}
-                                                                    views={['month', 'year']}
-                                                                    // value={value}
-                                                                    sx={{ width: 100 }}
-                                                                    slotProps={{
-                                                                        textField: { size: 'small' },
-                                                                        paddingTop: 0,
-                                                                    }}
-                                                                />
-                                                            </LocalizationProvider>
+                                                            <h6 style={{ width: '40%' }}>Accounting period:</h6>
+                                                            <div style={{ width: '100%' }}>
+                                                                <LocalizationProvider
+                                                                    dateAdapter={AdapterDayjs}
+                                                                    sx={{ width: '100%' }}
+                                                                >
+                                                                    <DatePicker
+                                                                        // label={'"month" and "year"'}
+                                                                        views={['month', 'year']}
+                                                                        value={valueDateAccountPeriod}
+                                                                        slotProps={{
+                                                                            textField: { size: 'small' },
+                                                                        }}
+                                                                        formatDensity="spacious"
+                                                                        format="MM-YYYY"
+                                                                        onChange={(e) =>
+                                                                            handleOnChangeDateAccountPeriod(e)
+                                                                        }
+                                                                    />
+                                                                </LocalizationProvider>
+                                                            </div>
                                                         </Stack>
                                                     </Grid>
-                                                    <Grid xs={12} md={5}>
+                                                    <Grid xs={12} md={6}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6>From memo:</h6>
+                                                            <h6 style={{ width: '40%' }}>From memo:</h6>
                                                             <FormControl
                                                                 sx={{
                                                                     m: 1,
-                                                                    minWidth: 100,
-                                                                    maxWidth: 200,
-                                                                    height: 48,
-                                                                    paddingTop: 1,
+                                                                    width: '100%',
+                                                                    // minWidth: 100,
+                                                                    // maxWidth: 200,
                                                                 }}
                                                                 size="small"
                                                             >
@@ -1463,23 +1689,46 @@ function AccountingEntry({ title }) {
                                                                     {/* <MenuItem value={''}>Group 1</MenuItem> */}
                                                                 </Select>
                                                             </FormControl>
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<YoutubeSearchedForIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                >
+                                                                    Load
+                                                                </LoadingButton>
+                                                            </div>
                                                         </Stack>
                                                     </Grid>
-                                                    <Grid xs={12} md={1}>
+                                                    <Grid xs={12} md={6}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
                                                             alignItems={'center'}
-                                                            // justifyContent={'flex-end'}
-                                                            sx={{
-                                                                height: 48,
-                                                                display: { xs: 'flex', sm: 'flex' },
-                                                                justifyContent: { xs: 'center', sm: 'flex-end' },
-                                                            }}
+                                                            justifyContent={'flex-start'}
                                                         >
-                                                            <Button variant="contained" color="warning">
-                                                                Load
-                                                            </Button>
+                                                            <TextField
+                                                                variant="outlined"
+                                                                fullWidth
+                                                                label="Search"
+                                                                size="small"
+                                                                value={valueSearchMemo}
+                                                                onChange={(event) =>
+                                                                    setValueSearchMemo(event.target.value)
+                                                                }
+                                                            />
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<SearchIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                    onClick={() =>
+                                                                        setReloadListMemoHeader(!reloadListMemoHeader)
+                                                                    }
+                                                                >
+                                                                    Search
+                                                                </LoadingButton>
+                                                            </div>
                                                         </Stack>
                                                     </Grid>
                                                 </Grid>
@@ -1487,23 +1736,94 @@ function AccountingEntry({ title }) {
                                         </Grid>
                                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                             <Item>
-                                                {' '}
-                                                <Stack spacing={0}>
-                                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Memo List</h5>
-                                                    <div style={{ width: '100%' }}>
-                                                        {/* <DataGrid
-                                                            // rows={data}
-                                                            columns={columns}
-                                                            initialState={{
-                                                                pagination: {
-                                                                    paginationModel: { page: 0, pageSize: 5 },
-                                                                },
-                                                            }}
-                                                            pageSizeOptions={[5, 10, 15]}
-                                                            autoHeight
-                                                        /> */}
-                                                    </div>
-                                                </Stack>
+                                                <Grid container>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack
+                                                            width={'100%'}
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                            height={50}
+                                                        >
+                                                            <>
+                                                                <h5
+                                                                    style={{
+                                                                        fontWeight: 'bold',
+                                                                    }}
+                                                                >
+                                                                    Memo List
+                                                                </h5>
+                                                            </>
+                                                            {/* <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="outlined"
+                                                                onClick={() => setButtonSelectMode(!buttonSelectMode)}
+                                                            >
+                                                                Select Mode
+                                                            </Button>
+                                                            <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="outlined"
+                                                                tabIndex={-1}
+                                                                startIcon={<PostAddIcon />}
+                                                                sx={{
+                                                                    width: 300,
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                }}
+                                                            >
+                                                                {fileExcel
+                                                                    ? fileExcel[0].name.slice(0, 25) + '...'
+                                                                    : 'Import File'}
+                                                                <VisuallyHiddenInput
+                                                                    type="file"
+                                                                    onChange={handleClickChoseFile}
+                                                                />
+                                                            </Button>
+                                                            <Button
+                                                                component="label"
+                                                                role={undefined}
+                                                                variant="contained"
+                                                                tabIndex={-1}
+                                                                startIcon={<CloudUploadIcon />}
+                                                                onClick={handleClickImportFile}
+                                                            >
+                                                                Upload&nbsp;
+                                                                <u>f</u>
+                                                                ile
+                                                            </Button> */}
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={12}>
+                                                        <Stack spacing={0}>
+                                                            <div style={{ width: '100%' }}>
+                                                                <DataGrid
+                                                                    rows={dataListMemoHeader}
+                                                                    columns={columnsDataMemoHeader}
+                                                                    initialState={{
+                                                                        pagination: {
+                                                                            paginationModel: { page: 0, pageSize: 5 },
+                                                                        },
+                                                                    }}
+                                                                    pageSizeOptions={[5, 10, 15]}
+                                                                    autoHeight
+                                                                    showCellVerticalBorder
+                                                                    showColumnVerticalBorder
+                                                                    getRowId={(id) => id.doc_code}
+                                                                    loading={isLoading}
+                                                                    onRowSelectionModelChange={(ids) =>
+                                                                        onHandleRowsSelectionMemo(ids)
+                                                                    }
+                                                                    // checkboxSelection={buttonSelectMode}
+                                                                />
+                                                            </div>
+                                                        </Stack>
+                                                    </Grid>
+                                                </Grid>
                                             </Item>
                                         </Grid>
                                         <Grid xs={12} md={12}>
@@ -1530,9 +1850,14 @@ function AccountingEntry({ title }) {
                                                                 </h5>
                                                             </>
 
-                                                            <Button variant="contained" color="warning">
-                                                                Delete
-                                                            </Button>
+                                                            <LoadingButton
+                                                                startIcon={<DeleteOutlineIcon />}
+                                                                variant="contained"
+                                                                color="error"
+                                                                onClick={handleOnClickDeleteAeHeader}
+                                                            >
+                                                                <u>D</u>elete
+                                                            </LoadingButton>
                                                         </Stack>
                                                     </Grid>
                                                     <Grid xs={12} md={12} sx={{ width: '100%' }}>
@@ -1550,7 +1875,9 @@ function AccountingEntry({ title }) {
                                                                             variant="outlined"
                                                                             fullWidth
                                                                             size="small"
-                                                                            placeholder="name..."
+                                                                            placeholder="xxxxxxxxx"
+                                                                            disabled
+                                                                            value={valueCodeMemo}
                                                                         />
                                                                     </Stack>
                                                                 </Grid>
@@ -1562,22 +1889,20 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Doc date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>Posting date:</h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
                                                                                 sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
-                                                                                    // label={'"month" and "year"'}
-                                                                                    views={['month', 'year']}
-                                                                                    // value={value}
-                                                                                    // sx={{ width: 300 }}
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
                                                                                     }}
                                                                                     formatDensity="spacious"
                                                                                     format="DD/MM/YYYY"
+                                                                                    disabled
+                                                                                    value={valuePostingDateMemo}
                                                                                 />
                                                                             </LocalizationProvider>
                                                                         </div>
@@ -1597,6 +1922,8 @@ function AccountingEntry({ title }) {
                                                                             fullWidth
                                                                             size="small"
                                                                             placeholder="name..."
+                                                                            disabled
+                                                                            value={valueUserMemo}
                                                                         />
                                                                     </Stack>
                                                                 </Grid>
@@ -1608,22 +1935,20 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>Memo date:</h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
                                                                                 sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
-                                                                                    // label={'"month" and "year"'}
-                                                                                    views={['month', 'year']}
-                                                                                    // value={value}
-                                                                                    // sx={{ width: 300 }}
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
                                                                                     }}
                                                                                     formatDensity="spacious"
                                                                                     format="DD/MM/YYYY"
+                                                                                    disabled
+                                                                                    value={valueDateMemo}
                                                                                 />
                                                                             </LocalizationProvider>
                                                                         </div>
@@ -1642,6 +1967,8 @@ function AccountingEntry({ title }) {
                                                                             as="textarea"
                                                                             rows={3}
                                                                             placeholder="..."
+                                                                            disabled
+                                                                            value={valueDescriptionMemo}
                                                                         />
                                                                     </Stack>
                                                                 </Grid>
@@ -1668,9 +1995,7 @@ function AccountingEntry({ title }) {
                                                                                 <Select
                                                                                     value={valueAccountGroupMemo}
                                                                                     displayEmpty
-                                                                                    onChange={
-                                                                                        handleChangeAccountGroupMemo
-                                                                                    }
+                                                                                    disabled
                                                                                 >
                                                                                     {dataListAccountGroup.map(
                                                                                         (data) => {
@@ -1683,6 +2008,7 @@ function AccountingEntry({ title }) {
                                                                                                         data.gr_acc_code
                                                                                                     }
                                                                                                 >
+                                                                                                    {data.gr_acc_code} -{' '}
                                                                                                     {data.gr_acc_name}
                                                                                                 </MenuItem>
                                                                                             );
@@ -1708,10 +2034,10 @@ function AccountingEntry({ title }) {
                                                                                 size="small"
                                                                             >
                                                                                 <Select
-                                                                                    value={valueCurrency}
+                                                                                    value={valueCurrencyMemo}
                                                                                     // label="Age"
                                                                                     displayEmpty
-                                                                                    onChange={handleChangeCurren}
+                                                                                    disabled
                                                                                 >
                                                                                     {dataListCurrency.map((data) => {
                                                                                         return (
@@ -1826,18 +2152,31 @@ function AccountingEntry({ title }) {
                                                     <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                                         <Item>
                                                             <Stack spacing={0}>
-                                                                <div style={{ width: '100%' }}>
-                                                                    {/* <DataGrid
-                                                                        // rows={data}
-                                                                        columns={columns}
-                                                                        initialState={{
-                                                                            pagination: {
-                                                                                paginationModel: { page: 0, pageSize: 5 },
+                                                                <div style={{ width: '100%', minHeight: 500 }}>
+                                                                    <DataGrid
+                                                                        rows={dataListDetailMemo.filter(
+                                                                            (data) =>
+                                                                                data.isactive === true &&
+                                                                                data.is_delete_item !== true,
+                                                                        )}
+                                                                        columns={columnsDataMemoDetail}
+                                                                        autoHeight
+                                                                        showCellVerticalBorder
+                                                                        showColumnVerticalBorder
+                                                                        getRowId={(id) => id.detail_ids}
+                                                                        loading={isLoading}
+                                                                        slotProps={{
+                                                                            baseSelect: {
+                                                                                MenuProps: {
+                                                                                    PaperProps: {
+                                                                                        sx: {
+                                                                                            maxHeight: 250,
+                                                                                        },
+                                                                                    },
+                                                                                },
                                                                             },
                                                                         }}
-                                                                        pageSizeOptions={[5, 10, 15]}
-                                                                        autoHeight
-                                                                    /> */}
+                                                                    />
                                                                 </div>
                                                             </Stack>
                                                         </Item>

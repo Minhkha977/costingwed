@@ -1,6 +1,8 @@
 html,
 body {
     background-color: whitesmoke;
+    height: 100%;
+    margin: 0;
 }
 .main {
     display: flex;

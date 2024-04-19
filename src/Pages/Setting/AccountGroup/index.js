@@ -26,6 +26,7 @@ import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
 import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
 import { useSelector } from 'react-redux';
 import { Input, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -36,29 +37,36 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-const columns = [
-    { field: 'gr_acc_code', headerName: 'Group Code', minWidth: 100, headerClassName: 'super-app-theme--header' },
-    {
-        field: 'gr_acc_name',
-        headerName: 'Group Name',
-        minWidth: 200,
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'description',
-        headerName: 'Description',
-        flex: 1,
-        minWidth: 300,
-        headerClassName: 'super-app-theme--header',
-    },
-];
-
 function Account({ title }) {
     const access_token = useSelector((state) => state.FetchApi.token);
+    const { t } = useTranslation();
     const [isLoading, setIsLoading] = React.useState(false);
     const [valueSearch, setValueSearch] = React.useState('');
     const [reloadListAccGroup, setReloadListAccGroup] = React.useState(false);
     const [dataList, setDataList] = useState([]);
+
+    //! columns header
+    const columns = [
+        {
+            field: 'gr_acc_code',
+            headerName: t('accountgroup-groupcode'),
+            minWidth: 100,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'gr_acc_name',
+            headerName: t('accountgroup-groupname'),
+            minWidth: 200,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'description',
+            headerName: t('description'),
+            flex: 1,
+            minWidth: 300,
+            headerClassName: 'super-app-theme--header',
+        },
+    ];
 
     // TODO call api get data account group
     useEffect(() => {
@@ -104,7 +112,7 @@ function Account({ title }) {
     };
     const closeDialogNew = () => {
         setDialogIsOpenNew(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(t('toast-cancel-new'));
     };
 
     useEffect(() => {
@@ -148,7 +156,7 @@ function Account({ title }) {
     };
     const closeDialogUpdate = () => {
         setDialogIsOpenUpdate(false);
-        toast.warning(' Cancel update!');
+        toast.warning(t('toast-cancel-update'));
     };
 
     useEffect(() => {
@@ -207,7 +215,7 @@ function Account({ title }) {
                 setDialogIsOpenUpdate(true);
             }
         } else {
-            toast.error(' Empty group code, name!');
+            toast.error(t('accountgroup-toast-error'));
         }
     };
 
@@ -233,8 +241,9 @@ function Account({ title }) {
                 onClick={handleOnClickNew}
                 loading={valueNewButton}
                 loadingPosition="start"
+                sx={{ whiteSpace: 'nowrap' }}
             >
-                <u>N</u>ew
+                {t('button-new')}
             </LoadingButton>
             <LoadingButton
                 startIcon={<SystemUpdateAltIcon />}
@@ -243,8 +252,9 @@ function Account({ title }) {
                 onClick={handleOnClickUpdate}
                 loading={valueUpdateButton}
                 loadingPosition="start"
+                sx={{ whiteSpace: 'nowrap' }}
             >
-                <u>U</u>pdate
+                {t('button-update')}
             </LoadingButton>
             <LoadingButton
                 startIcon={<SaveIcon />}
@@ -253,22 +263,22 @@ function Account({ title }) {
                 onClick={handleClickSave}
                 disabled={valueDisableSaveButton}
             >
-                <u>S</u>ave
+                {t('button-save')}
             </LoadingButton>
         </Stack>
     );
-
     return (
-        <Spin size="large" tip={'Loading'} spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
+        <Spin size="large" tip={t('loading')} spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
             <div className="main">
                 <ToastContainer />
                 {dialogIsOpenNew && (
                     <AlertDialog
-                        title={'Create a new account group?'}
+                        title={t('accountgroup-toast-new')}
                         content={
                             <>
-                                Group code: {valueCode} <br /> Group name: {valueName} <br /> Description:{' '}
-                                {valueDescription}
+                                {t('accountgroup-groupcode')}: {valueCode}
+                                <br /> {t('accountgroup-groupname')}: {valueName}
+                                <br /> {t('description')}:{valueDescription}
                             </>
                         }
                         onOpen={dialogIsOpenNew}
@@ -278,11 +288,12 @@ function Account({ title }) {
                 )}
                 {dialogIsOpenUpdate && (
                     <AlertDialog
-                        title={'Update account group?'}
+                        title={t('accountgroup-toast-update')}
                         content={
                             <>
-                                Group code: {valueCode} <br /> Group name: {valueName} <br /> Description:{' '}
-                                {valueDescription}
+                                {t('accountgroup-groupcode')}: {valueCode}
+                                <br /> {t('accountgroup-groupname')}: {valueName}
+                                <br /> {t('description')}:{valueDescription}
                             </>
                         }
                         onOpen={dialogIsOpenUpdate}
@@ -297,7 +308,7 @@ function Account({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
                 <Box
@@ -316,7 +327,7 @@ function Account({ title }) {
                                         id="outlined-basic"
                                         variant="outlined"
                                         fullWidth
-                                        label="Search"
+                                        label={t('button-search')}
                                         size="small"
                                         // type="number"
                                         value={valueSearch}
@@ -327,9 +338,10 @@ function Account({ title }) {
                                             startIcon={<SearchIcon />}
                                             variant="contained"
                                             color="warning"
+                                            sx={{ whiteSpace: 'nowrap' }}
                                             onClick={() => setReloadListAccGroup(!reloadListAccGroup)}
                                         >
-                                            Search
+                                            {t('button-search')}
                                         </LoadingButton>
                                     </div>
                                 </Stack>
@@ -338,7 +350,9 @@ function Account({ title }) {
                         <Grid xs={12} md={12}>
                             <Item>
                                 <Stack spacing={0}>
-                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account Group List</h5>
+                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>
+                                        {t('accountgroup-title-list')}
+                                    </h5>
                                     <div style={{ width: '100%' }}>
                                         <DataGrid
                                             rows={dataList}
@@ -379,7 +393,7 @@ function Account({ title }) {
                                                 width: '100%',
                                             }}
                                         >
-                                            Account Group Information
+                                            {t('accountgroup-title-infor')}
                                         </h5>
                                     </Stack>
                                     <Stack direction={'row'} spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
@@ -390,8 +404,9 @@ function Account({ title }) {
                                             onClick={handleOnClickNew}
                                             loading={valueNewButton}
                                             loadingPosition="start"
+                                            sx={{ whiteSpace: 'nowrap' }}
                                         >
-                                            <u>N</u>ew
+                                            {t('button-new')}
                                         </LoadingButton>
                                         <LoadingButton
                                             startIcon={<SystemUpdateAltIcon />}
@@ -400,8 +415,9 @@ function Account({ title }) {
                                             onClick={handleOnClickUpdate}
                                             loading={valueUpdateButton}
                                             loadingPosition="start"
+                                            sx={{ whiteSpace: 'nowrap' }}
                                         >
-                                            <u>U</u>pdate
+                                            {t('button-update')}
                                         </LoadingButton>
                                         <LoadingButton
                                             startIcon={<SaveIcon />}
@@ -410,7 +426,7 @@ function Account({ title }) {
                                             onClick={handleClickSave}
                                             disabled={valueDisableSaveButton}
                                         >
-                                            <u>S</u>ave
+                                            {t('button-save')}
                                         </LoadingButton>
                                     </Stack>
                                 </Stack>
@@ -419,12 +435,11 @@ function Account({ title }) {
                                         <Stack spacing={3}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Group Code:</div>
+                                                    <div>{t('accountgroup-groupcode')}</div>
                                                 </div>
                                                 <Input
                                                     variant="outlined"
                                                     type="number"
-                                                    fullWidth
                                                     size="large"
                                                     status={!valueCode ? 'error' : ''}
                                                     count={{
@@ -443,7 +458,7 @@ function Account({ title }) {
                                             </Stack>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Group Name:</div>
+                                                    <div>{t('accountgroup-groupname')}</div>
                                                 </div>
                                                 <Input
                                                     variant="outlined"
@@ -457,7 +472,7 @@ function Account({ title }) {
                                             </Stack>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Description:</div>
+                                                    <div>{t('description')}</div>
                                                 </div>
                                                 <Input.TextArea
                                                     size="large"

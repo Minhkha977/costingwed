@@ -32,6 +32,7 @@ import PostAddIcon from '@mui/icons-material/PostAdd';
 import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
 import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
 import { Form, Input, InputNumber, Space, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -54,37 +55,40 @@ const VisuallyHiddenInput = styled('input')({
     width: 1,
 });
 function Account({ title }) {
+    const { t } = useTranslation();
+
+    //! column datagrid header
     const columns = [
         {
             field: 'account_code_display',
-            headerName: 'Account Code',
+            headerName: t('account-code'),
             width: 130,
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'account_name',
-            headerName: 'Account Name',
+            headerName: t('account-name'),
             minWidth: 300,
             flex: 1,
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'expense_name',
-            headerName: 'Cost Group',
+            headerName: t('account-expensegroup'),
             width: 150,
             headerClassName: 'super-app-theme--header',
             headerAlign: 'center',
         },
         {
             field: 'expense_type_name',
-            headerName: 'Cost Type',
+            headerName: t('account-expense'),
             width: 150,
             headerClassName: 'super-app-theme--header',
             headerAlign: 'center',
         },
         {
             field: 'is_shared_expense',
-            headerName: 'General Account',
+            headerName: t('account-general'),
             width: 130,
             type: 'boolean',
             headerClassName: 'super-app-theme--header',
@@ -220,7 +224,7 @@ function Account({ title }) {
     };
     const closeDialogNew = () => {
         setDialogIsOpenNew(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(t('toast-cancel-new'));
     };
 
     /* #region  button new */
@@ -284,7 +288,7 @@ function Account({ title }) {
     };
     const closeDialogUpdate = () => {
         setDialogIsOpenUpdate(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(t('toast-cancel-update'));
     };
 
     /* #region  button update */
@@ -336,11 +340,11 @@ function Account({ title }) {
                 setDialogIsOpenUpdate(true);
             }
         } else {
-            toast.error(' Empty main code, sub code, name!');
+            toast.error(t('account-toast-error'));
         }
     };
 
-    const [fileExcel, setFileExcell] = React.useState(null);
+    const [fileExcel, setFileExcell] = React.useState([]);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
     };
@@ -353,7 +357,7 @@ function Account({ title }) {
     };
     const closeDialogImportFile = () => {
         setDialogIsOpenImportFile(false);
-        toast.warning(' Cancel Import');
+        toast.warning(t('toast-cancel-upload'));
     };
 
     //TODO call api import file excel
@@ -362,21 +366,21 @@ function Account({ title }) {
             setIsLoading(true);
             const statusCode = await ApiImportFileAccount(access_token, fileExcel);
             setIsLoading(false);
-            setFileExcell(null);
+            setFileExcell([]);
             setReloadListAccount(!reloadListAccount);
         };
         apiImportFile();
     }, [callApiImportFile]);
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
-        if (!fileExcel) {
-            toast.error('No file chosen!');
+        if (fileExcel.length === 0) {
+            toast.error(t('toast-nofile'));
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
                 setDialogIsOpenImportFile(true);
             } else {
-                setFileExcell(null);
-                toast.error('Please chosen excel file!');
+                setFileExcell([]);
+                toast.error(t('toast-fileexcel'));
             }
         }
     };
@@ -388,18 +392,19 @@ function Account({ title }) {
     OnMultiKeyEvent(handleClickImportFile, 'f');
 
     return (
-        <Spin size="large" tip="Loading" spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
+        <Spin size="large" tip={t('loading')} spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
             <div className="main">
                 <ToastContainer />
                 {dialogIsOpenNew && (
                     <AlertDialog
-                        title={'Create a new account?'}
+                        title={t('account-toast-new')}
                         content={
                             <>
-                                Main Acc code: {valueCodeMain}
-                                <br /> Sub Acc name: {valueCodeSub}
-                                <br /> Account name: {valueName}
-                                <br /> Description: {valueDescription}
+                                {t('account-maincode')}: {valueCodeMain}
+                                <br /> {t('account-subcode')}: {valueCodeSub}
+                                <br /> {t('account-name')}: {valueName}
+                                <br />
+                                {t('description')}: {valueDescription}
                             </>
                         }
                         onOpen={dialogIsOpenNew}
@@ -410,13 +415,14 @@ function Account({ title }) {
 
                 {dialogIsOpenUpdate && (
                     <AlertDialog
-                        title={'Update account?'}
+                        title={t('account-toast-update')}
                         content={
                             <>
-                                Main Acc code: {valueCodeMain}
-                                <br /> Sub Acc name: {valueCodeSub}
-                                <br /> Account name: {valueName}
-                                <br /> Description: {valueDescription}
+                                {t('account-maincode')}: {valueCodeMain}
+                                <br /> {t('account-subcode')}: {valueCodeSub}
+                                <br /> {t('account-name')}: {valueName}
+                                <br />
+                                {t('description')}: {valueDescription}
                             </>
                         }
                         onOpen={dialogIsOpenUpdate}
@@ -427,8 +433,8 @@ function Account({ title }) {
 
                 {dialogIsOpenImportFile && (
                     <AlertDialog
-                        title={'Import file accounting?'}
-                        content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
+                        title={t('account-toast-upload')}
+                        content={<>File: {fileExcel ? fileExcel[0].name : ''}</>}
                         onOpen={dialogIsOpenImportFile}
                         onClose={closeDialogImportFile}
                         onAgree={agreeDialogImportFile}
@@ -442,7 +448,7 @@ function Account({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
                 <Box
@@ -461,7 +467,7 @@ function Account({ title }) {
                                         id="search"
                                         variant="outlined"
                                         fullWidth
-                                        label="Search"
+                                        label={t('button-search')}
                                         size="small"
                                         value={valueSearch}
                                         onChange={(event) => handleOnChangeValueSearch(event)}
@@ -472,8 +478,9 @@ function Account({ title }) {
                                             variant="contained"
                                             color="warning"
                                             onClick={() => setReloadListAccount(!reloadListAccount)}
+                                            sx={{ whiteSpace: 'nowrap' }}
                                         >
-                                            Search
+                                            {t('button-search')}
                                         </LoadingButton>
                                     </div>
                                 </Stack>
@@ -482,7 +489,7 @@ function Account({ title }) {
                         <Grid xs={12} md={12}>
                             <Item>
                                 <Stack spacing={0}>
-                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>Account List</h5>
+                                    <h5 style={{ textAlign: 'left', fontWeight: 'bold' }}>{t('account-title-list')}</h5>
                                     <div style={{ width: '100%' }}>
                                         <DataGrid
                                             rows={dataList}
@@ -507,7 +514,7 @@ function Account({ title }) {
                         <Grid xs={12} md={12}>
                             <Item>
                                 <Grid container spacing={2}>
-                                    <Grid xs={12} md={12} Grid>
+                                    <Grid xs={12} md={12}>
                                         <Stack
                                             width={'100%'}
                                             direction={'row'}
@@ -523,7 +530,7 @@ function Account({ title }) {
                                                     width: '100%',
                                                 }}
                                             >
-                                                Account Information
+                                                {t('account-title-infor')}
                                             </h5>
 
                                             <Stack
@@ -546,7 +553,11 @@ function Account({ title }) {
                                                         textOverflow: 'ellipsis',
                                                     }}
                                                 >
-                                                    {fileExcel ? fileExcel[0].name.slice(0, 25) + '...' : 'Import File'}
+                                                    {fileExcel
+                                                        ? fileExcel.length > 0
+                                                            ? fileExcel[0].name.slice(0, 25) + '...'
+                                                            : t('button-import')
+                                                        : t('button-import')}
                                                     <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
                                                 </Button>
                                                 <Button
@@ -562,9 +573,10 @@ function Account({ title }) {
                                                         textOverflow: 'ellipsis',
                                                     }}
                                                 >
-                                                    Upload&nbsp;
+                                                    {t('button-upload')}
+                                                    {/* Upload&nbsp;
                                                     <u>f</u>
-                                                    ile
+                                                    ile */}
                                                 </Button>
                                                 <LoadingButton
                                                     startIcon={<AddBoxIcon />}
@@ -573,8 +585,9 @@ function Account({ title }) {
                                                     onClick={handleOnClickNew}
                                                     loading={valueNewButton}
                                                     loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
                                                 >
-                                                    <u>N</u>ew
+                                                    {t('button-new')}
                                                 </LoadingButton>
 
                                                 <LoadingButton
@@ -584,8 +597,9 @@ function Account({ title }) {
                                                     onClick={handleOnClickUpdate}
                                                     loading={valueUpdateButton}
                                                     loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
                                                 >
-                                                    <u>U</u>pdate
+                                                    {t('button-update')}
                                                 </LoadingButton>
                                                 <LoadingButton
                                                     startIcon={<SaveIcon />}
@@ -594,7 +608,7 @@ function Account({ title }) {
                                                     onClick={handleClickSave}
                                                     disabled={valueDisableSaveButton}
                                                 >
-                                                    <u>S</u>ave
+                                                    {t('button-save')}
                                                 </LoadingButton>
                                             </Stack>
                                         </Stack>
@@ -603,7 +617,7 @@ function Account({ title }) {
                                     <Grid container xs={12} md={12} spacing={2}>
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
-                                                <div className="form-title">Account Code:</div>
+                                                <div className="form-title">{t('account-code')}</div>
 
                                                 <Input
                                                     variant="borderless"
@@ -627,7 +641,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Main Account:</div>
+                                                    <div>{t('account-maincode')}</div>
                                                 </div>
                                                 <Input
                                                     variant="outlined"
@@ -670,7 +684,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Sub Account:</div>
+                                                    <div>{t('account-subcode')}</div>
                                                 </div>
                                                 <Input
                                                     variant="outlined"
@@ -714,7 +728,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Account Name:</div>
+                                                    <div>{t('account-name')}</div>
                                                 </div>
                                                 <Input
                                                     variant="outlined"
@@ -741,7 +755,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <p>Description:</p>
+                                                    <p>{t('description')}</p>
                                                 </div>
                                                 <Input.TextArea
                                                     size="large"
@@ -757,7 +771,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Cost center:</div>
+                                                    <div>{t('cost-center')}</div>
                                                 </div>
 
                                                 <Select
@@ -784,7 +798,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Expense group:</div>
+                                                    <div>{t('account-expensegroup')}</div>
                                                 </div>
 
                                                 <Select
@@ -811,7 +825,7 @@ function Account({ title }) {
                                         <Grid xs={12} md={12} paddingBottom={4}>
                                             <Stack direction={'row'} spacing={2}>
                                                 <div className="form-title">
-                                                    <div>Expense:</div>
+                                                    <div>{t('account-expense')}</div>
                                                 </div>
                                                 <Select
                                                     labelId="demo-simple-select-helper-label"

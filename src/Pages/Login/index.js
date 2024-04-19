@@ -9,12 +9,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useState } from 'react';
 import { AuthenticatedTemplate, useMsal } from '@azure/msal-react';
 import { loginRequest } from '~/Config';
+import { MicrosoftLoginButton } from 'react-social-login-buttons';
+import { Input } from 'antd';
 
 const cx = classNames.bind(styles);
 
-function Login() {
-    const [userName, setUserName] = useState('admin');
-    const [passWord, setPassWord] = useState('123');
+function Login({ mess }) {
+    const [userName, setUserName] = useState('');
+    const [passWord, setPassWord] = useState('');
     const { instance } = useMsal();
 
     const activeAccount = instance.getActiveAccount();
@@ -43,11 +45,12 @@ function Login() {
         <div className={cx('login-background')}>
             <div className={cx('login-container')}>
                 <div className={cx('login-content')}>
-                    <div className={cx('login-title')}>Login Page</div>
+                    {/* <div className={cx('login-title')}>Login Page</div> */}
                     <Form>
                         <Form.Group className="mb-3" controlId="formGroupEmail">
                             <Form.Label>User Name</Form.Label>
-                            <Form.Control
+                            <Input
+                                size="large"
                                 type="email"
                                 placeholder="Enter User Name"
                                 value={userName}
@@ -56,7 +59,8 @@ function Login() {
                         </Form.Group>
                         <Form.Group className="mb-3" controlId="formGroupPassword">
                             <Form.Label>Password</Form.Label>
-                            <Form.Control
+                            <Input.Password
+                                size="large"
                                 type="password"
                                 placeholder="Enter Password"
                                 value={passWord}
@@ -67,15 +71,21 @@ function Login() {
                             className={cx('login-button')}
                             variant="contained"
                             endIcon={<LoginIcon />}
-                            // onClick={(event) => handleOnClickLogin(event)}
+                            onClick={(event) => handleOnClickLogin(event)}
                         ></Button>
+                        <div style={{ marginTop: 15 }}>
+                            <MicrosoftLoginButton onClick={handleRedirect} />
+                        </div>
+                        <div className="col-12 text-center mt-4">
+                            <span className={cx('login-with')} style={{ color: 'red' }}>
+                                {mess}
+                            </span>
+                        </div>
                     </Form>
-                    <div className="col-12 text-center mt-4">
-                        <span className={cx('login-with')}>Or Login With</span>
-                    </div>
-                    <button className={cx('social-login')} onClick={handleRedirect}>
+
+                    {/* <button className={cx('social-login')} onClick={handleRedirect}>
                         <FontAwesomeIcon icon="fa-brands fa-google-plus" />
-                    </button>
+                    </button> */}
                 </div>
             </div>
         </div>

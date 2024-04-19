@@ -37,9 +37,9 @@ import { toast, ToastContainer } from 'react-toastify';
 import AlertDialog from '~/components/AlertDialog';
 import { ApiOpenPeriod, ApiReopenPeriod } from '~/components/Api/OpenAccountingPeriod';
 import KeyboardTabIcon from '@mui/icons-material/KeyboardTab';
-import { fetchPeriod } from '~/Redux/FetchApi/fetchApiMaster';
 import Autocomplete from '@mui/material/Autocomplete';
 import { Spin } from 'antd';
+import { fetchPeriod } from '~/Redux/FetchApi/fetchApiMaster';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -64,36 +64,7 @@ function OpenAccountingPeriod({ title }) {
     const handleChangeReopenPeriod = (e) => {
         setDateReopenPeriod(e);
     };
-    const [dialogIsOpen, setDialogIsOpen] = React.useState(false);
-    const [callApiOpen, setCallApiOpen] = React.useState(false);
-    const agreeDialogr = () => {
-        setDialogIsOpen(false);
-        setCallApiOpen(true);
-    };
-    const closeDialog = () => {
-        setDialogIsOpen(false);
-        toast.warning(' Cancel open next period!');
-    };
 
-    //todo: call api open period
-    useEffect(() => {
-        const fetchApiOpen = async () => {
-            if (callApiOpen) {
-                setIsLoading(true);
-                const statusCode = await ApiOpenPeriod(access_token);
-                if (statusCode) {
-                    setDateReopenPeriod(null);
-                    dispatch(fetchPeriod(unitcode));
-                }
-                setIsLoading(false);
-            }
-            setCallApiOpen(false);
-        };
-        fetchApiOpen();
-    }, [callApiOpen]);
-    const handleOpenPeriod = () => {
-        setDialogIsOpen(true);
-    };
     const handleReopenPeriod = () => {
         if (dateReopenPeriod) {
             setDialogIsOpenReopen(true);
@@ -132,20 +103,7 @@ function OpenAccountingPeriod({ title }) {
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">
                 <ToastContainer />
-                {dialogIsOpen && (
-                    <AlertDialog
-                        title={'Open next period?'}
-                        content={
-                            <>
-                                Open next period:{' '}
-                                {dayjs(dataPeriod_From_Redux).add(1, 'month').utc(true).format('MM - YYYY')}
-                            </>
-                        }
-                        onOpen={dialogIsOpen}
-                        onClose={closeDialog}
-                        onAgree={agreeDialogr}
-                    />
-                )}
+
                 {dialogIsOpenReopen && (
                     <AlertDialog
                         title={'Reopen period?'}
@@ -265,16 +223,6 @@ function OpenAccountingPeriod({ title }) {
                                             justifyContent={'center'}
                                             alignItems={'center'}
                                         >
-                                            <LoadingButton
-                                                // loading={isLoading}
-                                                loadingPosition="start"
-                                                variant="contained"
-                                                color="success"
-                                                startIcon={<KeyboardTabIcon />}
-                                                onClick={handleOpenPeriod}
-                                            >
-                                                Open next period
-                                            </LoadingButton>
                                             <LoadingButton
                                                 // loading={isLoading}
                                                 loadingPosition="start"

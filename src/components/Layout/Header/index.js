@@ -51,6 +51,8 @@ import Select from '@mui/material/Select';
 import Api from '~/DomainApi';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { ConfigProvider, Switch } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const cx = classNames.bind(styles);
 
@@ -166,6 +168,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 // };
 
 function Header() {
+    const { t } = useTranslation();
     const { instance } = useMsal();
     const activeAccount = instance.getActiveAccount();
     const [dataUnit, setDataUnit] = React.useState([]);
@@ -305,7 +308,7 @@ function Header() {
                                 >
                                     {index === 0 ? <GroupIcon /> : <PersonIcon />}
                                 </ListItemIcon>
-                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                             </ListItemButton>
                         </NavLink>
                     </ListItem>
@@ -351,7 +354,7 @@ function Header() {
                                         <LockOpenIcon />
                                     )}
                                 </ListItemIcon>
-                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                             </ListItemButton>
                         </NavLink>
                     </ListItem>
@@ -390,7 +393,7 @@ function Header() {
                                 >
                                     {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
                                 </ListItemIcon>
-                                <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                             </ListItemButton>
                         </NavLink>
                     </ListItem>
@@ -467,21 +470,15 @@ function Header() {
         >
             <MenuItem onClick={handleMenuClose}>
                 <ListItemIcon>
-                    <PersonAdd fontSize="small" />
+                    <PersonIcon fontSize="small" />
                 </ListItemIcon>
-                Add another account
-            </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
-                <ListItemIcon>
-                    <Settings fontSize="small" />
-                </ListItemIcon>
-                Settings
+                {t('menu-profile')}
             </MenuItem>
             <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                     <Logout fontSize="small" />
                 </ListItemIcon>
-                Logout
+                {t('menu-logout')}
             </MenuItem>
         </Menu>
         // <Menu
@@ -552,6 +549,18 @@ function Header() {
         </Menu>
     );
 
+    //! handler change language
+    const { i18n } = useTranslation();
+
+    const handleLanguageChange = (e) => {
+        if (e) {
+            i18n.changeLanguage('en');
+            localStorage.setItem('language', 'en');
+        } else {
+            i18n.changeLanguage('vn');
+            localStorage.setItem('language', 'vn');
+        }
+    };
     return (
         <Box sx={{ flexGrow: 1 }}>
             <ToastContainer stacked />
@@ -588,6 +597,25 @@ function Header() {
                     </Search> */}
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: 'flex', md: 'flex' } }}>
+                        <Typography
+                            variant="h7"
+                            component="div"
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Switch
+                                checkedChildren="&nbsp;&nbsp;EN&nbsp;&nbsp;"
+                                unCheckedChildren="VN"
+                                style={{
+                                    backgroundColor: i18n.language === 'en' ? 'green' : 'crimson',
+                                    transform: [{ scaleX: 1 }, { scaleY: 0.8 }],
+                                }}
+                                onChange={handleLanguageChange}
+                                checked={i18n.language === 'en' ? true : false}
+                            />
+                        </Typography>
                         <FormControl
                             sx={{
                                 m: 1,
@@ -760,7 +788,7 @@ function Header() {
                                         >
                                             {index === 0 ? <GroupIcon /> : <PersonIcon />}
                                         </ListItemIcon>
-                                        <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                        <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                     </ListItemButton>
                                 </Link>
                             </ListItem>
@@ -806,7 +834,7 @@ function Header() {
                                                 <LockOpenIcon />
                                             )}
                                         </ListItemIcon>
-                                        <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                        <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                     </ListItemButton>
                                 </NavLink>
                             </ListItem>
@@ -845,7 +873,7 @@ function Header() {
                                         >
                                             {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
                                         </ListItemIcon>
-                                        <ListItemText primary={route.title} sx={{ opacity: open ? 1 : 0 }} />
+                                        <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                     </ListItemButton>
                                 </NavLink>
                             </ListItem>

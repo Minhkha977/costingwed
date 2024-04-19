@@ -34,6 +34,7 @@ import Tab from '@mui/material/Tab';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
+import ReportViewer from '~/Pages/Report/report-viewer';
 
 export default function Report({ title }) {
     return (
@@ -44,6 +45,7 @@ export default function Report({ title }) {
                     <Typography color="text.primary">{title}</Typography>
                 </Breadcrumbs>
             </div>
+            <ReportViewer />
         </div>
     );
 }

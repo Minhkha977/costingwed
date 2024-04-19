@@ -113,7 +113,7 @@ export async function ApiUpdateAccount(
 }
 
 export async function ApiImportFileAccount(access_token, valueFile) {
-    if (access_token && valueFile) {
+    if (access_token && valueFile.length > 0) {
         try {
             var statusCode = false;
             const header = {

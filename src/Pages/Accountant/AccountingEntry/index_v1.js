@@ -143,7 +143,7 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 function AccountingEntry({ title }) {
-    const access_token = ApiToken();
+    const access_token = useSelector((s) => s.FetchApi.token);
     const [buttonSelectMode, setButtonSelectMode] = React.useState(false);
     const [valueReadonly, setValueReadonly] = React.useState(true);
     const [valueReadonlyPostingDate, setValueReadonlyPostingDate] = React.useState(true);
@@ -713,7 +713,7 @@ function AccountingEntry({ title }) {
         // }
         return updatedRow;
     };
-    const [fileExcel, setFileExcell] = React.useState(null);
+    const [fileExcel, setFileExcell] = React.useState([]);
     const handleClickChoseFile = (event) => {
         setFileExcell(event.target.files);
     };
@@ -739,7 +739,7 @@ function AccountingEntry({ title }) {
     }, [callApiImportFile]);
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
-        if (!fileExcel) {
+        if (fileExcel.length === 0) {
             toast.error('No file chosen!');
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
