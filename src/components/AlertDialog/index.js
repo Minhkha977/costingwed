@@ -20,7 +20,7 @@ export default function AlertDialog({ title, content, onOpen, onClose, onAgree }
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle sx={{ background: '#ffc696', marginBottom: 2 }}>{title}</DialogTitle>
+                <DialogTitle sx={{ background: '#ffc696', marginBottom: 2, minWidth: 300 }}>{title}</DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">{content}</DialogContentText>
                 </DialogContent>

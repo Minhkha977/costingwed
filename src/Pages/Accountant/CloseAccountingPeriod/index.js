@@ -43,6 +43,8 @@ import { ApiOpenPeriod } from '~/components/Api/OpenAccountingPeriod';
 import { toast, ToastContainer } from 'react-toastify';
 import AlertDialog from '~/components/AlertDialog';
 import { Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
+import OnMultiKeyEvent from '~/components/Event/OnMultiKeyEvent';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -53,25 +55,7 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 const singleSelect = ['CH NVT', 'SH BP'];
-const columns = [
-    { field: 'id', headerName: 'No.', width: 100 },
-    {
-        field: 'username',
-        headerName: 'Document Code',
-        width: 300,
-        editable: true,
-        type: 'singleSelect',
-        valueOptions: singleSelect,
-    },
-    { field: 'name', headerName: 'Date Added', width: 300 },
-    {
-        field: 'phone',
-        headerName: 'Content',
-        // type: 'number',
-        width: 300,
-    },
-    { field: 'email', headerName: 'Cost Center', width: 300 },
-];
+
 function CloseAccountingPeriod({ title }) {
     var dispatch = useDispatch();
     const [isLoading, setIsLoading] = React.useState(false);
@@ -80,17 +64,57 @@ function CloseAccountingPeriod({ title }) {
     const unitcode = useSelector((state) => state.Actions.unitcode);
     const [valueNextPeriod, setValueNextPeriod] = React.useState(dayjs(dataPeriod_From_Redux).add(1, 'month'));
     const [data, setData] = useState([]);
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-                setData(response.data);
-            } catch (error) {
-                console.log(error);
-            }
-        }
-        fetchData();
-    }, []);
+    const { t } = useTranslation();
+
+    //! columns header
+    const columns = [
+        {
+            field: 'gr_acc_code',
+            headerName: 'No.',
+            width: 100,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'website',
+            headerName: t('account-expense'),
+            flex: 1,
+            minWidth: 300,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'phone',
+            headerName: 'Period N',
+            width: 200,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+        {
+            field: '1',
+            headerName: 'Period N-1',
+            width: 200,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+        {
+            field: '2',
+            headerName: 'Period N-2',
+            width: 200,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+    ];
+
+    // useEffect(() => {
+    //     async function fetchData() {
+    //         try {
+    //             const response = await axios.get('https://jsonplaceholder.typicode.com/users');
+    //             setData(response.data);
+    //         } catch (error) {
+    //             console.log(error);
+    //         }
+    //     }
+    //     fetchData();
+    // }, []);
 
     //todo: reload next month
     useEffect(() => {
@@ -105,7 +129,7 @@ function CloseAccountingPeriod({ title }) {
     };
     const closeDialog = () => {
         setDialogIsOpen(false);
-        toast.warning(' Cancel open next period!');
+        toast.warning(t('close-toast-cancel'));
     };
 
     //todo: call api open period
@@ -126,17 +150,19 @@ function CloseAccountingPeriod({ title }) {
     const handleOpenPeriod = () => {
         setDialogIsOpen(true);
     };
+
+    //! on key event
+    OnMultiKeyEvent(() => handleOpenPeriod(), 'l');
     return (
         <Spin size="large" tip="Loading" spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
             <div className="main">
                 <ToastContainer />
                 {dialogIsOpen && (
                     <AlertDialog
-                        title={'Open next period?'}
+                        title={t('close-toast-new')}
                         content={
                             <>
-                                Open next period:{' '}
-                                {dayjs(dataPeriod_From_Redux).add(1, 'month').utc(true).format('MM - YYYY')}
+                                {t('close-toast-new')}: {dayjs(dataPeriod_From_Redux).utc(true).format('MM - YYYY')}
                             </>
                         }
                         onOpen={dialogIsOpen}
@@ -151,10 +177,19 @@ function CloseAccountingPeriod({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
-                <Box sx={{ width: '100%', typography: 'body' }}>
+                <Box
+                    sx={{
+                        width: '100%',
+                        typography: 'body',
+                        flexGrow: 1,
+                        '& .super-app-theme--header': {
+                            backgroundColor: '#ffc696',
+                        },
+                    }}
+                >
                     <Grid container spacing={1}>
                         <Grid xs={12} md={12}>
                             <Item>
@@ -166,7 +201,7 @@ function CloseAccountingPeriod({ title }) {
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6 style={{ width: '50%' }}>Closed until period:</h6>
+                                            <h6 style={{ width: '50%' }}>{t('close-period')}</h6>
                                             <div style={{ width: '100%' }}>
                                                 <LocalizationProvider dateAdapter={AdapterDayjs} sx={{ width: '100%' }}>
                                                     <DatePicker
@@ -192,7 +227,7 @@ function CloseAccountingPeriod({ title }) {
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6 style={{ width: '50%' }}>New closing period:</h6>
+                                            <h6 style={{ width: '50%' }}>{t('new-period')}</h6>
                                             <div>
                                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                     <DatePicker
@@ -216,7 +251,7 @@ function CloseAccountingPeriod({ title }) {
                                                 startIcon={<LockIcon />}
                                                 onClick={handleOpenPeriod}
                                             >
-                                                Clock
+                                                {t('button-lock')}
                                             </LoadingButton>
                                         </Stack>
                                     </Grid>
@@ -227,7 +262,7 @@ function CloseAccountingPeriod({ title }) {
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6 style={{ width: '50%' }}>Cost center:</h6>
+                                            <h6 style={{ width: '50%' }}>{t('cost-center')}</h6>
                                             <FormControl
                                                 sx={{
                                                     m: 1,

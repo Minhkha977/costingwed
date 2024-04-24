@@ -12,7 +12,7 @@ export async function ApiCostAllocationListHeader(valueStatus, setDataListCostAl
             url += `&status=${valueStatus}`;
         }
         const response = await DomainApi.get(url);
-        setDataListCostAllocationHeader(response.data);
+        setDataListCostAllocationHeader(response.data.sort((a, b) => a.doc_code.localeCompare(b.doc_code)));
     } catch (error) {
         console.log(error);
         if (error.response) {

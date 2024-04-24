@@ -24,6 +24,7 @@ import { toast } from 'react-toastify';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataList, dataUpdate, setDataListDetail }) {
     const [valueDocDate, setValueDocDate] = React.useState(null);
@@ -32,6 +33,7 @@ export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataLis
     const [valueStatus, setValueStatus] = React.useState(null);
     const [valueEntryCode, setValueEntryCode] = React.useState(null);
     const [valueId, setValueId] = React.useState(1);
+    const { t } = useTranslation();
 
     React.useEffect(() => {
         const data = dataList
@@ -74,7 +76,7 @@ export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataLis
                 ]);
                 onClose();
             } else {
-                toast.warn('Empty doc date | description | amount!');
+                toast.warn(t('allocation-toast-warn'));
             }
         } else {
             const updatedRow = {
@@ -101,14 +103,15 @@ export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataLis
     return (
         <React.Fragment>
             <Dialog open={onOpen} onClose={onClose}>
-                <DialogTitle sx={{ background: '#ffc696' }}>Detail No. {valueId}</DialogTitle>
+                <DialogTitle sx={{ background: '#ffc696' }}>
+                    {' '}
+                    {t('detail')} {t('no')} {valueId}
+                </DialogTitle>
                 <DialogContent>
                     <Box display="flex" alignItems="center">
                         <Grid container spacing={1} width={400}>
                             <Stack direction={'column'} spacing={1} width={'100%'} justifyContent={'center'}>
-                                <div style={{ marginTop: 16 }}>
-                                    <Tag color="red">*</Tag>Doc date
-                                </div>
+                                <div style={{ marginTop: 16 }}>{t('allocation-date-date')}</div>
                                 <LocalizationProvider dateAdapter={AdapterDayjs} sx={{ width: '100%' }}>
                                     <DatePicker
                                         autoFocus
@@ -125,34 +128,30 @@ export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataLis
                                     />
                                 </LocalizationProvider>
 
-                                <div>
-                                    <Tag color="red">*</Tag>
-                                    Description &nbsp;
-                                </div>
+                                <div>{t('description')}</div>
                                 <Input.TextArea
                                     showCount
                                     maxLength={250}
+                                    status={valueDescription ? '' : 'error'}
                                     rows={3}
                                     value={valueDescription}
                                     onChange={(e) => setValueDescription(e.target.value)}
                                 />
-                                <div>
-                                    <Tag color="red">*</Tag>
-                                    Amount
-                                </div>
+                                <div>{t('amount')}</div>
                                 <InputNumber
                                     // prefix="+₫"
                                     style={{ width: '100%' }}
+                                    status={valueAmount ? '' : 'error'}
                                     size="large"
                                     formatter={(value) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                     parser={(value) => value.replace(/\$-+₫\s?|(,*)/g, '')}
                                     value={valueAmount}
                                     onChange={(e) => setValueAmount(e)}
                                 />
-                                <div>Status</div>
-                                <TextField variant="outlined" fullWidth size="small" value={valueStatus} disabled />
-                                <div>Entry code</div>
-                                <TextField variant="outlined" fullWidth size="small" value={valueEntryCode} disabled />
+                                <div>{t('status')}</div>
+                                <TextField variant="standard" fullWidth size="small" value={valueStatus} disabled />
+                                <div>{t('allocation-entry-code')}</div>
+                                <TextField variant="standard" fullWidth size="small" value={valueEntryCode} disabled />
                             </Stack>
                         </Grid>
                     </Box>
@@ -165,7 +164,7 @@ export default function DialogDetailAllocation({ isNew, onOpen, onClose, dataLis
                         onClick={handleClickSave}
                         fullWidth
                     >
-                        <u>S</u>ave
+                        {t('button-save')}
                     </Button>
                 </DialogActions>
             </Dialog>

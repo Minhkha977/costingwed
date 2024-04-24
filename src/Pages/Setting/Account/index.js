@@ -33,6 +33,7 @@ import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
 import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
 import { Form, Input, InputNumber, Space, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { fetchApiListAccount } from '~/Redux/FetchApi/fetchApiMaster';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -104,6 +105,7 @@ function Account({ title }) {
 
     const [isLoading, setIsLoading] = React.useState(false);
     const access_token = useSelector((state) => state.FetchApi.token);
+    var dispatch = useDispatch();
 
     const [valueReadonly, setValueReadonly] = React.useState(true);
     const [valueReadonlyCode, setValueReadonlyCode] = React.useState(true);
@@ -141,6 +143,7 @@ function Account({ title }) {
         const asyncApiListAccount = async () => {
             setIsLoading(true);
             await ApiAccountList(valueSearch, setDataList);
+            dispatch(fetchApiListAccount());
             setIsLoading(false);
         };
         asyncApiListAccount();

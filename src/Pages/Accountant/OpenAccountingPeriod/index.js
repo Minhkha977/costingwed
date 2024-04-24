@@ -40,6 +40,9 @@ import KeyboardTabIcon from '@mui/icons-material/KeyboardTab';
 import Autocomplete from '@mui/material/Autocomplete';
 import { Spin } from 'antd';
 import { fetchPeriod } from '~/Redux/FetchApi/fetchApiMaster';
+import { useTranslation } from 'react-i18next';
+import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
+import OnMultiKeyEvent from '~/components/Event/OnMultiKeyEvent';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -52,6 +55,7 @@ const Item = styled(Paper)(({ theme }) => ({
 function OpenAccountingPeriod({ title }) {
     const [isLoading, setIsLoading] = React.useState(false);
     var dispatch = useDispatch();
+    const { t } = useTranslation();
 
     //! get data from redux
     const access_token = useSelector((state) => state.FetchApi.token);
@@ -66,10 +70,10 @@ function OpenAccountingPeriod({ title }) {
     };
 
     const handleReopenPeriod = () => {
-        if (dateReopenPeriod) {
+        if (dateReopenPeriod && valueUser) {
             setDialogIsOpenReopen(true);
         } else {
-            toast.warning(' Please select a reopening month!');
+            toast.warning(t('reopen-toast-warn'));
         }
     };
     const [dialogIsOpenReopen, setDialogIsOpenReopen] = React.useState(false);
@@ -80,7 +84,7 @@ function OpenAccountingPeriod({ title }) {
     };
     const closeDialogReopen = () => {
         setDialogIsOpenReopen(false);
-        toast.warning(' Cancel Reopen next period!');
+        toast.warning(t('reopen-toast-cancel'));
     };
 
     //todo: call api reopen period
@@ -99,6 +103,9 @@ function OpenAccountingPeriod({ title }) {
         };
         fetchApiReopen();
     }, [callApiOpenReopen]);
+
+    //! on key event
+    OnMultiKeyEvent(() => handleReopenPeriod(), 'r');
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">
@@ -106,11 +113,11 @@ function OpenAccountingPeriod({ title }) {
 
                 {dialogIsOpenReopen && (
                     <AlertDialog
-                        title={'Reopen period?'}
+                        title={t('reopen-toast-new')}
                         content={
                             <>
-                                <br /> Reopen period: {dayjs(dateReopenPeriod).utc(true).format('MM - YYYY')}
-                                <br /> User: {valueUser.username}
+                                {t('reopen-toast-new')}: {dayjs(dateReopenPeriod).utc(true).format('MM - YYYY')}
+                                <br /> {t('reopen-user')}: {valueUser.username}
                             </>
                         }
                         onOpen={dialogIsOpenReopen}
@@ -125,7 +132,7 @@ function OpenAccountingPeriod({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
                 <Box sx={{ width: '100%', typography: 'body' }}>
@@ -139,7 +146,7 @@ function OpenAccountingPeriod({ title }) {
                                             alignItems={'flex-end'}
                                             justifyContent={'center'}
                                         >
-                                            <h6>Closed until period:</h6>
+                                            <h6>{t('close-period')}</h6>
                                         </Stack>
                                     </Grid>
                                     <Grid xs={7} md={6}>
@@ -166,7 +173,7 @@ function OpenAccountingPeriod({ title }) {
                                             alignItems={'flex-end'}
                                             justifyContent={'center'}
                                         >
-                                            <h6>Reopen the accounting period:</h6>
+                                            <h6>{t('reopen-period')}</h6>
                                         </Stack>
                                     </Grid>
                                     <Grid xs={7} md={6}>
@@ -193,7 +200,7 @@ function OpenAccountingPeriod({ title }) {
                                             alignItems={'flex-end'}
                                             justifyContent={'center'}
                                         >
-                                            <h6>User:</h6>
+                                            <h6>{t('reopen-user')}</h6>
                                         </Stack>
                                     </Grid>
                                     <Grid xs={7} md={6}>
@@ -231,7 +238,7 @@ function OpenAccountingPeriod({ title }) {
                                                 startIcon={<LockOpenIcon />}
                                                 onClick={handleReopenPeriod}
                                             >
-                                                Reopen period
+                                                {t('button-reopen')}
                                             </LoadingButton>
                                         </Stack>
                                     </Grid>

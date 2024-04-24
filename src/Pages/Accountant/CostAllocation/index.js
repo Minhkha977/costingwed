@@ -55,6 +55,7 @@ import DialogDetailAllocation from './DialogDetailAllocation';
 import { useSelector } from 'react-redux';
 import { Spin } from 'antd';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useTranslation } from 'react-i18next';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -65,65 +66,6 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-const columnsHeader = [
-    { field: 'ids', headerName: 'No.', width: 50, headerClassName: 'super-app-theme--header' },
-    {
-        field: 'doc_code',
-        headerName: 'Allocation code',
-        width: 150,
-        headerClassName: 'super-app-theme--header',
-    },
-
-    {
-        field: 'description',
-        headerName: 'Description',
-        minWidth: 300,
-        flex: 1,
-        headerClassName: 'super-app-theme--header',
-    },
-    {
-        field: 'from_date',
-        headerName: 'From date',
-        width: 120,
-        headerClassName: 'super-app-theme--header',
-        valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
-        headerAlign: 'center',
-    },
-    {
-        field: 'to_date',
-        headerName: 'To date',
-        width: 120,
-        headerClassName: 'super-app-theme--header',
-        valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
-        headerAlign: 'center',
-    },
-    {
-        field: 'process_percent',
-        headerName: '% Process',
-        width: 100,
-        headerClassName: 'super-app-theme--header',
-        valueFormatter: ({ value }) => `${value} %`,
-        type: 'number',
-    },
-    {
-        field: 'total_cost',
-        headerName: 'Total cost',
-        width: 150,
-        headerClassName: 'super-app-theme--header',
-        type: 'number',
-    },
-    {
-        field: 'status_display',
-        headerName: 'Status',
-        width: 120,
-        headerClassName: 'super-app-theme--header',
-        headerAlign: 'center',
-    },
-];
-
-// function TextField({ readOnly, ...props }) {
-//     return <MuiTextField {...props} inputProps={{ readOnly }} />;
-// }
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     clipPath: 'inset(50%)',
@@ -139,6 +81,7 @@ const VisuallyHiddenInput = styled('input')({
 function CostAllocation({ title }) {
     const access_token = useSelector((s) => s.FetchApi.token);
     const [valueIsLoading, setIsLoading] = React.useState(false);
+    const { t } = useTranslation();
     const [valueSearch, setValueSearch] = React.useState('');
     const handleOnChangeValueSearch = (event) => {
         setValueSearch(event.target.value);
@@ -149,6 +92,61 @@ function CostAllocation({ title }) {
     const [valueUpdateDate, setValueUpdateDate] = React.useState(dayjs());
     const [valueDescription, setValueDescription] = React.useState('');
     const [valueEditGrid, setValueEditGrid] = React.useState(false);
+
+    const columnsHeader = [
+        {
+            field: 'doc_code',
+            headerName: t('allocation-code'),
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+        },
+
+        {
+            field: 'description',
+            headerName: t('description'),
+            minWidth: 300,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'from_date',
+            headerName: t('from-date'),
+            width: 120,
+            headerClassName: 'super-app-theme--header',
+            valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+            headerAlign: 'center',
+        },
+        {
+            field: 'to_date',
+            headerName: t('to-date'),
+            width: 120,
+            headerClassName: 'super-app-theme--header',
+            valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
+            headerAlign: 'center',
+        },
+        {
+            field: 'process_percent',
+            headerName: t('process'),
+            width: 100,
+            headerClassName: 'super-app-theme--header',
+            valueFormatter: ({ value }) => `${value} %`,
+            type: 'number',
+        },
+        {
+            field: 'total_cost',
+            headerName: t('total-cost'),
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+            type: 'number',
+        },
+        {
+            field: 'status_display',
+            headerName: t('status'),
+            width: 120,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+    ];
 
     //! visibility column data grid
     const columnVisibilityModel = React.useMemo(() => {
@@ -303,7 +301,7 @@ function CostAllocation({ title }) {
                 setDialogIsOpenUpdate(true);
             }
         } else {
-            toast.error(' Empty description, account group!');
+            toast.error(t('entry-toast-error'));
         }
     };
     /* #endregion */
@@ -315,7 +313,7 @@ function CostAllocation({ title }) {
         if (valueAllocationCode) {
             setCallApiProcess(!callApiProcess);
         } else {
-            toast.error('Empty allocation code!');
+            toast.error(t('entry-toast-error'));
         }
     };
 
@@ -343,7 +341,7 @@ function CostAllocation({ title }) {
         if (valueAllocationCode) {
             setCallApiPause(!callApiPause);
         } else {
-            toast.error('Empty allocation code!');
+            toast.error(t('entry-toast-error'));
         }
     };
     const [callApiPause, setCallApiPause] = React.useState(false);
@@ -373,7 +371,7 @@ function CostAllocation({ title }) {
     };
     const closeDialogNewHeader = () => {
         setDialogIsOpenNewHeader(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(t('toast-cancel-new'));
     };
 
     useEffect(() => {
@@ -404,6 +402,7 @@ function CostAllocation({ title }) {
                 setValueReadonly(true);
                 // setValueReadonlyDocdate(true);
                 setValueEditGrid(false);
+                setDataListDetail([]);
             }
             setIsLoading(false);
             setReloadListHeader(!reloadListHeader);
@@ -423,7 +422,7 @@ function CostAllocation({ title }) {
     };
     const closeDialogUpdate = () => {
         setDialogIsOpenUpdate(false);
-        toast.warning(' Cancel Update!');
+        toast.warning(t('toast-cancel-update'));
     };
 
     useEffect(() => {
@@ -590,13 +589,13 @@ function CostAllocation({ title }) {
     const columnsDataDetail = [
         {
             field: 'id',
-            headerName: 'No.',
+            headerName: t('no'),
             width: 50,
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'actions',
-            type: 'actions',
+            type: t('actions'),
             headerName: 'Actions',
             width: 100,
             cellClassName: 'actions',
@@ -614,7 +613,7 @@ function CostAllocation({ title }) {
         },
         {
             field: 'doc_date',
-            headerName: 'Doc date',
+            headerName: t('allocation-date-date'),
             width: 150,
             // editable: valueEditGrid,
             type: 'date',
@@ -624,7 +623,7 @@ function CostAllocation({ title }) {
         },
         {
             field: 'description',
-            headerName: 'Description',
+            headerName: t('description'),
             minWidth: 400,
             // editable: valueEditGrid,
             flex: 1,
@@ -632,7 +631,7 @@ function CostAllocation({ title }) {
         },
         {
             field: 'amount',
-            headerName: 'Amount',
+            headerName: t('amount'),
             width: 150,
             // editable: valueEditGrid,
             type: 'number',
@@ -641,14 +640,14 @@ function CostAllocation({ title }) {
         },
         {
             field: 'status_display',
-            headerName: 'Status',
+            headerName: t('status'),
             width: 100,
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'entry_doc_code',
-            headerName: 'Entry code',
+            headerName: t('allocation-entry-code'),
             width: 100,
             headerAlign: 'center',
             headerClassName: 'super-app-theme--header',
@@ -694,7 +693,7 @@ function CostAllocation({ title }) {
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
         if (fileExcel.length === 0) {
-            toast.error('No file chosen!');
+            toast.warn(t('toast-nofile'));
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
                 let reader = new FileReader();
@@ -718,7 +717,7 @@ function CostAllocation({ title }) {
                 setFileExcell(null);
             } else {
                 setFileExcell(null);
-                toast.error('Please chosen excel file!');
+                toast.warn(t('toast-fileexcel'));
             }
         }
     };
@@ -754,13 +753,14 @@ function CostAllocation({ title }) {
                 <ToastContainer />
                 {dialogIsOpenNewHeader && (
                     <AlertDialog
-                        title={'Create a new Allocation?'}
+                        title={t('allocation-toast-new')}
                         content={
                             <>
-                                Description: {valueDescription}
-                                <br /> Account group: {valueAccountGroup}
-                                <br /> Debit entry: {valueDebitEntry}
-                                <br /> Credit entry: {valueCreditEntry}
+                                {t('description')}: {valueDescription}
+                                <br /> {t('account-group')}: {valueAccountGroup}
+                                <br />
+                                {t('allocation-debit-entry')}: {valueDebitEntry}
+                                <br /> {t('allocation-credit-entry')}: {valueCreditEntry}
                             </>
                         }
                         onOpen={dialogIsOpenNewHeader}
@@ -770,14 +770,15 @@ function CostAllocation({ title }) {
                 )}
                 {dialogIsOpenUpdate && (
                     <AlertDialog
-                        title={'update Allocation?'}
+                        title={t('allocation-toast-update')}
                         content={
                             <>
-                                Allocation code: {valueAllocationCode}
-                                <br /> Description: {valueDescription}
-                                <br /> Account group: {valueAccountGroup}
-                                <br /> Debit entry: {valueDebitEntry}
-                                <br /> Credit entry: {valueCreditEntry}
+                                {t('allocation-code')}: {valueAllocationCode}
+                                <br /> {t('description')}: {valueDescription}
+                                <br /> {t('account-group')}: {valueAccountGroup}
+                                <br />
+                                {t('allocation-debit-entry')}: {valueDebitEntry}
+                                <br /> {t('allocation-credit-entry')}: {valueCreditEntry}
                             </>
                         }
                         onOpen={dialogIsOpenUpdate}
@@ -802,7 +803,7 @@ function CostAllocation({ title }) {
                             color="inherit"
                             href="/material-ui/getting-started/installation/"
                         ></Link>
-                        <Typography color="text.primary">{title}</Typography>
+                        <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
                 <Box
@@ -825,7 +826,7 @@ function CostAllocation({ title }) {
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6>Status</h6>
+                                            <h6 style={{ whiteSpace: 'nowrap' }}>{t('status')}</h6>
                                             <FormControl
                                                 sx={{
                                                     m: 1,
@@ -863,7 +864,7 @@ function CostAllocation({ title }) {
                                                 id="outlined-basic"
                                                 variant="outlined"
                                                 fullWidth
-                                                label="Search"
+                                                label={t('button-search')}
                                                 size="small"
                                                 value={valueSearch}
                                                 onChange={(event) => handleOnChangeValueSearch(event)}
@@ -875,8 +876,9 @@ function CostAllocation({ title }) {
                                                     variant="contained"
                                                     color="warning"
                                                     onClick={() => setReloadListHeader(!reloadListHeader)}
+                                                    sx={{ whiteSpace: 'nowrap' }}
                                                 >
-                                                    Search
+                                                    {t('button-search')}
                                                 </LoadingButton>
                                             </div>
                                         </Stack>
@@ -903,7 +905,7 @@ function CostAllocation({ title }) {
                                                         fontWeight: 'bold',
                                                     }}
                                                 >
-                                                    Cost allocation list
+                                                    {t('allocation-list')}
                                                 </h5>
                                                 <LoadingButton
                                                     startIcon={<FileDownloadIcon />}
@@ -913,7 +915,7 @@ function CostAllocation({ title }) {
                                                     loading={buttonExport}
                                                     loadingPosition="start"
                                                 >
-                                                    Export excel
+                                                    {t('button-export')}
                                                 </LoadingButton>
                                             </>
                                         </Stack>
@@ -969,7 +971,7 @@ function CostAllocation({ title }) {
                                                         textOverflow: 'ellipsis',
                                                     }}
                                                 >
-                                                    1. Cost allocation information
+                                                    {t('allocation-infor')}
                                                 </h5>
                                             </>
                                             <Stack direction={'row'} spacing={1}>
@@ -981,8 +983,11 @@ function CostAllocation({ title }) {
                                                     disabled={valueButtonNew}
                                                     loading={valueButtonNew}
                                                     loadingPosition="start"
+                                                    sx={{
+                                                        whiteSpace: 'nowrap',
+                                                    }}
                                                 >
-                                                    <u>N</u>ew
+                                                    {t('button-new')}
                                                 </LoadingButton>
                                                 <LoadingButton
                                                     startIcon={<SystemUpdateAltIcon />}
@@ -992,8 +997,11 @@ function CostAllocation({ title }) {
                                                     disabled={valueButtonUpdate}
                                                     loading={valueButtonUpdate}
                                                     loadingPosition="start"
+                                                    sx={{
+                                                        whiteSpace: 'nowrap',
+                                                    }}
                                                 >
-                                                    <u>U</u>pdate
+                                                    {t('button-update')}
                                                 </LoadingButton>
                                                 <LoadingButton
                                                     startIcon={<SaveIcon />}
@@ -1002,7 +1010,7 @@ function CostAllocation({ title }) {
                                                     onClick={handleClickSaveHeader}
                                                     disabled={valueDisabledSaveButton}
                                                 >
-                                                    <u> S</u>ave
+                                                    {t('button-save')}
                                                 </LoadingButton>
                                                 <LoadingButton
                                                     startIcon={<CurrencyExchangeIcon />}
@@ -1012,9 +1020,12 @@ function CostAllocation({ title }) {
                                                     loadingPosition="start"
                                                     disabled={valueButtonProcess}
                                                     onClick={handleClickButtonProcess}
-                                                    sx={{ display: valueButtonProcess ? 'none' : null }}
+                                                    sx={{
+                                                        display: valueButtonProcess ? 'none' : null,
+                                                        whiteSpace: 'nowrap',
+                                                    }}
                                                 >
-                                                    P<u>r</u>ocess
+                                                    {t('button-process')}
                                                 </LoadingButton>
                                                 <LoadingButton
                                                     startIcon={<StopCircleIcon />}
@@ -1022,9 +1033,12 @@ function CostAllocation({ title }) {
                                                     color="error"
                                                     disabled={valueButtonPause}
                                                     onClick={handleClickButtonPause}
-                                                    sx={{ display: valueButtonPause ? 'none' : null }}
+                                                    sx={{
+                                                        display: valueButtonPause ? 'none' : null,
+                                                        whiteSpace: 'nowrap',
+                                                    }}
                                                 >
-                                                    <u>P</u>ause
+                                                    {t('button-pause')}
                                                 </LoadingButton>
                                             </Stack>
                                         </Stack>
@@ -1039,7 +1053,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Allocation code:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('allocation-code')}</h6>
                                                         <TextField
                                                             variant="outlined"
                                                             fullWidth
@@ -1061,7 +1075,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Doc date:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('entry-posting-date')}</h6>
                                                         <div style={{ width: '100%' }}>
                                                             <LocalizationProvider
                                                                 dateAdapter={AdapterDayjs}
@@ -1097,7 +1111,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('entry-user')}</h6>
                                                         <TextField
                                                             variant="outlined"
                                                             fullWidth
@@ -1117,7 +1131,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Update date:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('allocation-date')}</h6>
                                                         <div style={{ width: '100%' }}>
                                                             <LocalizationProvider
                                                                 dateAdapter={AdapterDayjs}
@@ -1152,7 +1166,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Descriptiont:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('description')}</h6>
                                                         <Form.Control
                                                             type="text"
                                                             as="textarea"
@@ -1172,7 +1186,7 @@ function CostAllocation({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6 style={{ width: '40%' }}>Account group:</h6>
+                                                            <h6 style={{ width: '40%' }}>{t('account-group')}</h6>
                                                             <FormControl
                                                                 sx={{
                                                                     m: 1,
@@ -1209,7 +1223,7 @@ function CostAllocation({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                            <h6 style={{ width: '40%' }}>{t('currency')}</h6>
                                                             <FormControl
                                                                 sx={{
                                                                     m: 1,
@@ -1244,7 +1258,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Debit entry:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('allocation-debit-entry')}</h6>
 
                                                         <div style={{ width: '100%' }}>
                                                             <Autocomplete
@@ -1282,7 +1296,7 @@ function CostAllocation({ title }) {
                                                         alignItems={'center'}
                                                         justifyContent={'flex-start'}
                                                     >
-                                                        <h6 style={{ width: '40%' }}>Credit entry:</h6>
+                                                        <h6 style={{ width: '40%' }}>{t('allocation-credit-entry')}</h6>
                                                         <div style={{ width: '100%' }}>
                                                             <Autocomplete
                                                                 fullWidth
@@ -1340,7 +1354,7 @@ function CostAllocation({ title }) {
                                                     textOverflow: 'ellipsis',
                                                 }}
                                             >
-                                                2. Detail
+                                                {t('entry-title-detail')}
                                             </h5>
                                             <Stack direction={'row'} spacing={1}>
                                                 <LoadingButton
@@ -1359,8 +1373,8 @@ function CostAllocation({ title }) {
                                                     {fileExcel
                                                         ? fileExcel.length > 0
                                                             ? fileExcel[0].name.slice(0, 25) + '...'
-                                                            : 'Import File'
-                                                        : 'Import File'}
+                                                            : t('button-import')
+                                                        : t('button-import')}
                                                     <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
                                                 </LoadingButton>
                                                 <LoadingButton
@@ -1370,10 +1384,9 @@ function CostAllocation({ title }) {
                                                     startIcon={<CloudUploadIcon />}
                                                     onClick={handleClickImportFile}
                                                     disabled={!valueEditGrid}
+                                                    sx={{ whiteSpace: 'nowrap' }}
                                                 >
-                                                    Upload&nbsp;
-                                                    <u>f</u>
-                                                    ile
+                                                    {t('button-upload')}
                                                 </LoadingButton>
 
                                                 <LoadingButton
@@ -1382,10 +1395,10 @@ function CostAllocation({ title }) {
                                                     color="success"
                                                     onClick={() => handleClickOpenDialogDetail(true)}
                                                     // onClick={handleOnClickNewAeDetail}
-                                                    sx={{ alignItems: 'left' }}
+                                                    sx={{ alignItems: 'left', whiteSpace: 'nowrap' }}
                                                     disabled={!valueEditGrid}
                                                 >
-                                                    Det<u>a</u>il
+                                                    {t('button-detail')}
                                                 </LoadingButton>
                                             </Stack>
                                         </Stack>
@@ -1429,50 +1442,6 @@ function CostAllocation({ title }) {
                                                 </div>
                                             </Stack>
                                         </Item>
-                                    </Grid>
-                                    <Grid xs={12} md={6}>
-                                        <Stack spacing={1}>
-                                            <Stack
-                                                direction={'row'}
-                                                spacing={2}
-                                                alignItems={'center'}
-                                                justifyContent={'flex-start'}
-                                            >
-                                                <h6 style={{ width: '40%' }}>Allocated costs:</h6>
-                                                <h6
-                                                    style={{
-                                                        width: '100%',
-                                                        textAlign: 'left',
-                                                        // color: 'red',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    {number.toLocaleString(undefined, {
-                                                        maximumFractionDigits: 2,
-                                                    })}
-                                                </h6>
-                                            </Stack>
-                                            <Stack
-                                                direction={'row'}
-                                                spacing={2}
-                                                alignItems={'center'}
-                                                justifyContent={'flex-start'}
-                                            >
-                                                <h6 style={{ width: '40%' }}>Remaining costs:</h6>
-                                                <h6
-                                                    style={{
-                                                        width: '100%',
-                                                        textAlign: 'left',
-                                                        color: 'red',
-                                                        fontWeight: 'bold',
-                                                    }}
-                                                >
-                                                    {number.toLocaleString(undefined, {
-                                                        maximumFractionDigits: 2,
-                                                    })}
-                                                </h6>
-                                            </Stack>
-                                        </Stack>
                                     </Grid>
                                 </Grid>
                             </Item>

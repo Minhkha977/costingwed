@@ -587,7 +587,7 @@ function Header() {
                         component="div"
                         sx={{ display: { xs: 'block', sm: 'block' }, marginLeft: 1 }}
                     >
-                        v0.1.5
+                        v0.1.7
                     </Typography>
                     {/* <Search>
                         <SearchIconWrapper>

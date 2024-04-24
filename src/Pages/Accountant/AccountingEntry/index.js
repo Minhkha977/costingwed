@@ -47,7 +47,6 @@ import DomainApi from '~/DomainApi';
 import { toast, ToastContainer } from 'react-toastify';
 import AlertDialog from '~/components/AlertDialog';
 import { ApiCostCenter, ApiCurrency } from '~/components/Api/Master';
-import YoutubeSearchedForIcon from '@mui/icons-material/YoutubeSearchedFor';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import {
@@ -58,6 +57,7 @@ import {
     ApiDeleteAccountEntryDetail,
     ApiDeleteAccountEntryHeader,
     ApiImportAccountEntry,
+    ApiLoadMemoFromFA,
     ApiMemoListHeader,
     ApiUpdateAccountEntryDetail,
     ApiUpdateAccountEntryHeader,
@@ -79,6 +79,7 @@ import { OnMultiKeyEvent } from '~/components/Event/OnMultiKeyEvent';
 import { Input, Spin } from 'antd';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useTranslation } from 'react-i18next';
+import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 
 var utc = require('dayjs/plugin/utc');
 dayjs.extend(utc);
@@ -284,7 +285,7 @@ function AccountingEntry({ title }) {
     };
     const closeDialogNewAeHeader = () => {
         setDialogIsOpenNewAeHeader(false);
-        toast.warning(' Cancel create new!');
+        toast.warning(t('toast-cancel-new'));
     };
     const handleOnClickNewAeHeader = () => {
         setValueNewButton(true);
@@ -353,7 +354,7 @@ function AccountingEntry({ title }) {
     };
     const closeDialogUpdateAeHeader = () => {
         setDialogIsOpenUpdateAeHeader(false);
-        toast.warning(' Cancel update!');
+        toast.warning(t('toast-cancel-update'));
     };
     const handleOnClickUpdateAeHeader = () => {
         setValueNewButton(false);
@@ -406,7 +407,7 @@ function AccountingEntry({ title }) {
                 setDialogIsOpenUpdateAeHeader(true);
             }
         } else {
-            toast.error(' Empty description, account group!');
+            toast.warning(t('entry-toast-error'));
         }
     };
 
@@ -420,18 +421,18 @@ function AccountingEntry({ title }) {
     };
     const closeDialogDeleteAeHeader = () => {
         setDialogIsOpenDeleteAeHeader(false);
-        toast.warning(' Cancel delete!');
+        toast.warning(t('toast-cancel-delete'));
     };
     const handleOnClickDeleteAeHeader = () => {
         if (valueTab === 'entry') {
             if (!access_token || selectedRows.length === 0) {
-                toast.error('Document no is empty!');
+                toast.warning(t('entry-toast-chose'));
                 return;
             }
         }
         if (valueTab === 'memo') {
             if (!access_token || !valueCodeMemo) {
-                toast.error('Document no is empty!');
+                toast.warning(t('entry-toast-chose'));
                 return;
             }
         }
@@ -507,8 +508,8 @@ function AccountingEntry({ title }) {
         {
             field: 'actions',
             type: 'actions',
-            headerName: 'Actions',
-            width: 70,
+            headerName: t('actions'),
+            width: 80,
             cellClassName: 'actions',
             headerClassName: 'super-app-theme--header',
             getActions: ({ id }) => {
@@ -524,14 +525,14 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'id',
-            headerName: 'No.',
+            headerName: t('no'),
             width: 50,
             headerClassName: 'super-app-theme--header',
         },
 
         {
             field: 'cost_center',
-            headerName: 'Cost center',
+            headerName: t('cost-center'),
             width: 150,
             // editable: valueEditGrid,
             type: 'singleSelect',
@@ -543,7 +544,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'acc_code',
-            headerName: 'Account code.',
+            headerName: t('account-code'),
             width: 200,
             // editable: valueEditGrid,
             type: 'singleSelect',
@@ -558,7 +559,7 @@ function AccountingEntry({ title }) {
 
         {
             field: 'debit_amount',
-            headerName: 'Debit',
+            headerName: t('debit'),
             width: 150,
             // editable: valueEditGrid,
             type: 'number',
@@ -568,7 +569,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'credit_amount',
-            headerName: 'Credit',
+            headerName: t('credit'),
             width: 150,
             // editable: valueEditGrid,
             type: 'number',
@@ -578,7 +579,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'description',
-            headerName: 'Description',
+            headerName: t('description'),
             minWidth: 400,
             // editable: valueEditGrid,
             flex: 1,
@@ -626,7 +627,7 @@ function AccountingEntry({ title }) {
     };
     const closeDialogImportFile = () => {
         setDialogIsOpenImportFile(false);
-        toast.warning(' Cancel Import');
+        toast.warning(t('toast-cancel-upload'));
     };
 
     useEffect(() => {
@@ -640,13 +641,13 @@ function AccountingEntry({ title }) {
     const handleClickImportFile = (event) => {
         let fileType = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'];
         if (fileExcel.length === 0) {
-            toast.error('No file chosen!');
+            toast.warning(t('toast-nofile'));
         } else {
             if (fileExcel && fileType.includes(fileExcel[0].type)) {
                 setDialogIsOpenImportFile(true);
             } else {
-                setFileExcell(null);
-                toast.error('Please chosen excel file!');
+                setFileExcell([]);
+                toast.warning(t('toast-fileexcel'));
             }
         }
     };
@@ -711,29 +712,37 @@ function AccountingEntry({ title }) {
     const columnsDataMemoHeader = [
         {
             field: 'trans_ids',
-            headerName: 'Transfer id',
+            headerName: t('memo-transfer-id'),
             width: 100,
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'doc_code',
-            headerName: 'Document Code',
+            headerName: t('entry-code'),
             width: 150,
             headerClassName: 'super-app-theme--header',
         },
         {
             field: 'doc_date',
-            headerName: 'Posting Date',
+            headerName: t('entry-posting-date'),
             width: 150,
             valueFormatter: (params) => dayjs(params.value).format('DD - MM - YYYY'),
             headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
         },
         {
             field: 'description',
-            headerName: 'Description',
+            headerName: t('description'),
             minWidth: 400,
             flex: 1,
             headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'doc_type_display',
+            headerName: t('memo-type'),
+            width: 130,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
         },
         // {
         //     field: 'cost_center',
@@ -774,14 +783,14 @@ function AccountingEntry({ title }) {
     const columnsDataMemoDetail = [
         {
             field: 'id',
-            headerName: 'No.',
+            headerName: t('no'),
             width: 50,
             headerClassName: 'super-app-theme--header',
         },
 
         {
             field: 'cost_center',
-            headerName: 'Cost center',
+            headerName: t('cost-center'),
             width: 150,
             // editable: valueEditGrid,
             type: 'singleSelect',
@@ -793,7 +802,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'acc_code',
-            headerName: 'Account code.',
+            headerName: t('account-code'),
             width: 200,
             // editable: valueEditGrid,
             type: 'singleSelect',
@@ -808,7 +817,7 @@ function AccountingEntry({ title }) {
 
         {
             field: 'debit_amount',
-            headerName: 'Debit',
+            headerName: t('debit'),
             width: 150,
             // editable: valueEditGrid,
             type: 'number',
@@ -818,7 +827,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'credit_amount',
-            headerName: 'Credit',
+            headerName: t('credit'),
             width: 150,
             // editable: valueEditGrid,
             type: 'number',
@@ -828,7 +837,7 @@ function AccountingEntry({ title }) {
         },
         {
             field: 'description',
-            headerName: 'Description',
+            headerName: t('description'),
             minWidth: 400,
             // editable: valueEditGrid,
             flex: 1,
@@ -850,18 +859,48 @@ function AccountingEntry({ title }) {
         process();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reloadListDetailMemo]);
+
+    const [dialogIsOpenLoadMemo, setDialogIsOpenLoadMemo] = React.useState(false);
+    const [isLoadApiMemo, setIsLoadApiMemo] = React.useState(false);
+    const agreeDialogLoadMemo = async () => {
+        setDialogIsOpenLoadMemo(false);
+        setIsLoadApiMemo(true);
+    };
+    const closeDialogLoadMemo = () => {
+        setDialogIsOpenLoadMemo(false);
+        toast.warning(t('toast-cancel-load-memo'));
+    };
+
+    //todo: call api load memo from FA
+    useEffect(() => {
+        const process = async () => {
+            setIsLoading(true);
+            if (isLoadApiMemo) {
+                const statusCode = await ApiLoadMemoFromFA();
+                if (statusCode) {
+                    toast.success(t('memo-toast-success'));
+                }
+            }
+
+            setIsLoadApiMemo(false);
+            setReloadListMemoHeader(!reloadListMemoHeader);
+            setIsLoading(false);
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isLoadApiMemo]);
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">
                 <ToastContainer />
                 {dialogIsOpenNewAeHeader && (
                     <AlertDialog
-                        title={'Create a new accounting entry header?'}
+                        title={t('entry-toast-new')}
                         content={
                             <>
-                                Description: {valueDescriptionAe}
-                                <br /> Currency: {valueCurrency}
-                                <br /> Account group: {valueAccountGroupAE}
+                                {t('description')}: {valueDescriptionAe}
+                                <br /> {t('currency')}: {valueCurrency}
+                                <br /> {t('account-group')}: {valueAccountGroupAE}
                             </>
                         }
                         onOpen={dialogIsOpenNewAeHeader}
@@ -871,13 +910,13 @@ function AccountingEntry({ title }) {
                 )}
                 {dialogIsOpenUpdateAeHeader && (
                     <AlertDialog
-                        title={'Update accounting entry header?'}
+                        title={t('entry-toast-update')}
                         content={
                             <>
-                                Document no: {valueCodeAe}
-                                <br /> Description: {valueDescriptionAe}
-                                <br /> Currency: {valueCurrency}
-                                <br /> Account group: {valueAccountGroupAE}
+                                {t('entry-code')}: {valueCodeAe}
+                                <br /> {t('description')}: {valueDescriptionAe}
+                                <br /> {t('currency')}: {valueCurrency}
+                                <br /> {t('account-group')}: {valueAccountGroupAE}
                             </>
                         }
                         onOpen={dialogIsOpenUpdateAeHeader}
@@ -887,23 +926,21 @@ function AccountingEntry({ title }) {
                 )}
                 {dialogIsOpenDeleteAeHeader && (
                     <AlertDialog
-                        title={
-                            valueTab === 'entry' ? 'Delete accounting entry header?' : 'Delete transfer memo header?'
-                        }
+                        title={valueTab === 'entry' ? t('entry-toast-delete') : t('memo-toast-delete')}
                         content={
                             valueTab === 'entry' ? (
                                 <>
-                                    Document no: {selectedRows}
-                                    <br /> Description: {valueDescriptionAe}
-                                    <br /> Currency: {valueCurrency}
-                                    <br /> Account group: {valueAccountGroupAE}
+                                    {t('entry-code')}: {selectedRows}
+                                    <br /> {t('description')}: {valueDescriptionAe}
+                                    <br /> {t('currency')}: {valueCurrency}
+                                    <br /> {t('account-group')}: {valueAccountGroupAE}
                                 </>
                             ) : (
                                 <>
-                                    Document no: {valueCodeMemo}
-                                    <br /> Description: {valueDescriptionMemo}
-                                    <br /> Currency: {valueCurrencyMemo}
-                                    <br /> Account group: {valueAccountGroupMemo}
+                                    {t('entry-code')}: {valueCodeMemo}
+                                    <br /> {t('description')}: {valueDescriptionMemo}
+                                    <br /> {t('currency')}: {valueCurrencyMemo}
+                                    <br /> {t('account-group')}: {valueAccountGroupMemo}
                                 </>
                             )
                         }
@@ -914,8 +951,8 @@ function AccountingEntry({ title }) {
                 )}
                 {dialogIsOpenImportFile && (
                     <AlertDialog
-                        title={'Import file accounting entry?'}
-                        content={<>File Name: {fileExcel ? fileExcel[0].name : ''}</>}
+                        title={t('entry-toast-upload')}
+                        content={<> Name: {fileExcel ? fileExcel[0].name : ''}</>}
                         onOpen={dialogIsOpenImportFile}
                         onClose={closeDialogImportFile}
                         onAgree={agreeDialogImportFile}
@@ -931,6 +968,20 @@ function AccountingEntry({ title }) {
                         dataUpdate={dataUpdate}
                         setValueDescriptionAe={setValueDescriptionAe}
                         description={valueDescriptionAe}
+                    />
+                )}
+                {dialogIsOpenLoadMemo && (
+                    <AlertDialog
+                        title={t('allocation-toast-load-memo')}
+                        content={
+                            <>
+                                Unit: {localStorage.getItem('Unit')}.
+                                <br /> {t('entry-user')}: {localStorage.getItem('UserName')}.
+                            </>
+                        }
+                        onOpen={dialogIsOpenLoadMemo}
+                        onClose={closeDialogLoadMemo}
+                        onAgree={agreeDialogLoadMemo}
                     />
                 )}
                 <div role="presentation">
@@ -1014,49 +1065,6 @@ function AccountingEntry({ title }) {
                                                                         }
                                                                     />
                                                                 </LocalizationProvider>
-                                                            </div>
-                                                        </Stack>
-                                                    </Grid>
-
-                                                    <Grid xs={12} md={6}>
-                                                        <Stack
-                                                            direction={'row'}
-                                                            spacing={2}
-                                                            alignItems={'center'}
-                                                            justifyContent={'flex-start'}
-                                                        >
-                                                            <h6 style={{ width: '40%' }}>Memo:</h6>
-                                                            <FormControl
-                                                                sx={{
-                                                                    m: 1,
-                                                                    width: '100%',
-                                                                    // minWidth: 100,
-                                                                    // maxWidth: 200,
-                                                                }}
-                                                                size="small"
-                                                            >
-                                                                <Select
-                                                                    // value={age}
-                                                                    // label="Age"
-                                                                    displayEmpty
-                                                                    // onChange={handleChange}
-                                                                >
-                                                                    {/* <MenuItem value={''}>Group 1</MenuItem> */}
-                                                                </Select>
-                                                            </FormControl>
-                                                            <div>
-                                                                <LoadingButton
-                                                                    startIcon={<YoutubeSearchedForIcon />}
-                                                                    variant="contained"
-                                                                    color="warning"
-                                                                    onClick={() =>
-                                                                        setReloadListAccountingEntryHeader(
-                                                                            !reloadListAccountingEntryHeader,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Load
-                                                                </LoadingButton>
                                                             </div>
                                                         </Stack>
                                                     </Grid>
@@ -1512,7 +1520,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                {t('total-crebit')}
+                                                                                {t('total-credit')}
                                                                             </h6>
                                                                             <h6
                                                                                 style={{
@@ -1558,7 +1566,7 @@ function AccountingEntry({ title }) {
                                                                         width: '100%',
                                                                     }}
                                                                 >
-                                                                    2. Detail
+                                                                    {t('entry-title-detail')}
                                                                 </h5>
                                                             </>
 
@@ -1569,10 +1577,10 @@ function AccountingEntry({ title }) {
                                                                     color="success"
                                                                     onClick={() => handleClickOpenDialogDetail(true)}
                                                                     // onClick={handleOnClickNewAeDetail}
-                                                                    sx={{ alignItems: 'left' }}
+                                                                    sx={{ alignItems: 'left', whiteSpace: 'nowrap' }}
                                                                     disabled={!valueEditGrid}
                                                                 >
-                                                                    Det<u>a</u>il
+                                                                    {t('button-detail')}
                                                                 </LoadingButton>
                                                             </Stack>
                                                         </Stack>
@@ -1640,7 +1648,7 @@ function AccountingEntry({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6 style={{ width: '40%' }}>Accounting period:</h6>
+                                                            <h6 style={{ width: '40%' }}>{t('entry-period')}</h6>
                                                             <div style={{ width: '100%' }}>
                                                                 <LocalizationProvider
                                                                     dateAdapter={AdapterDayjs}
@@ -1670,47 +1678,10 @@ function AccountingEntry({ title }) {
                                                             alignItems={'center'}
                                                             justifyContent={'flex-start'}
                                                         >
-                                                            <h6 style={{ width: '40%' }}>From memo:</h6>
-                                                            <FormControl
-                                                                sx={{
-                                                                    m: 1,
-                                                                    width: '100%',
-                                                                    // minWidth: 100,
-                                                                    // maxWidth: 200,
-                                                                }}
-                                                                size="small"
-                                                            >
-                                                                <Select
-                                                                    // value={age}
-                                                                    // label="Age"
-                                                                    displayEmpty
-                                                                    // onChange={handleChange}
-                                                                >
-                                                                    {/* <MenuItem value={''}>Group 1</MenuItem> */}
-                                                                </Select>
-                                                            </FormControl>
-                                                            <div>
-                                                                <LoadingButton
-                                                                    startIcon={<YoutubeSearchedForIcon />}
-                                                                    variant="contained"
-                                                                    color="warning"
-                                                                >
-                                                                    Load
-                                                                </LoadingButton>
-                                                            </div>
-                                                        </Stack>
-                                                    </Grid>
-                                                    <Grid xs={12} md={6}>
-                                                        <Stack
-                                                            direction={'row'}
-                                                            spacing={2}
-                                                            alignItems={'center'}
-                                                            justifyContent={'flex-start'}
-                                                        >
                                                             <TextField
                                                                 variant="outlined"
                                                                 fullWidth
-                                                                label="Search"
+                                                                label={t('button-search')}
                                                                 size="small"
                                                                 value={valueSearchMemo}
                                                                 onChange={(event) =>
@@ -1725,8 +1696,20 @@ function AccountingEntry({ title }) {
                                                                     onClick={() =>
                                                                         setReloadListMemoHeader(!reloadListMemoHeader)
                                                                     }
+                                                                    sx={{ whiteSpace: 'nowrap' }}
                                                                 >
-                                                                    Search
+                                                                    {t('button-search')}
+                                                                </LoadingButton>
+                                                            </div>
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<PublishedWithChangesIcon />}
+                                                                    variant="contained"
+                                                                    color="secondary"
+                                                                    onClick={() => setDialogIsOpenLoadMemo(true)}
+                                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                                >
+                                                                    {t('load-memo')}
                                                                 </LoadingButton>
                                                             </div>
                                                         </Stack>
@@ -1752,7 +1735,7 @@ function AccountingEntry({ title }) {
                                                                         fontWeight: 'bold',
                                                                     }}
                                                                 >
-                                                                    Memo List
+                                                                    {t('memo-list')}
                                                                 </h5>
                                                             </>
                                                             {/* <Button
@@ -1846,7 +1829,7 @@ function AccountingEntry({ title }) {
                                                                         width: '100%',
                                                                     }}
                                                                 >
-                                                                    1. Memo Information
+                                                                    {t('memo-infor')}
                                                                 </h5>
                                                             </>
 
@@ -1856,7 +1839,7 @@ function AccountingEntry({ title }) {
                                                                 color="error"
                                                                 onClick={handleOnClickDeleteAeHeader}
                                                             >
-                                                                <u>D</u>elete
+                                                                {t('button-delete')}
                                                             </LoadingButton>
                                                         </Stack>
                                                     </Grid>
@@ -1870,7 +1853,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Document no:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-code')}
+                                                                        </h6>
                                                                         <TextField
                                                                             variant="outlined"
                                                                             fullWidth
@@ -1889,7 +1874,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Posting date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-posting-date')}
+                                                                        </h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
@@ -1916,7 +1903,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>User:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('entry-user')}
+                                                                        </h6>
                                                                         <TextField
                                                                             variant="outlined"
                                                                             fullWidth
@@ -1935,7 +1924,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Memo date:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('memo-date')}
+                                                                        </h6>
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
@@ -1961,7 +1952,9 @@ function AccountingEntry({ title }) {
                                                                         alignItems={'center'}
                                                                         justifyContent={'flex-start'}
                                                                     >
-                                                                        <h6 style={{ width: '40%' }}>Description:</h6>
+                                                                        <h6 style={{ width: '40%' }}>
+                                                                            {t('description')}
+                                                                        </h6>
                                                                         <Form.Control
                                                                             type="text"
                                                                             as="textarea"
@@ -1981,7 +1974,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Account group:
+                                                                                {t('account-group')}
                                                                             </h6>
                                                                             <FormControl
                                                                                 sx={{
@@ -2023,7 +2016,9 @@ function AccountingEntry({ title }) {
                                                                             alignItems={'center'}
                                                                             justifyContent={'flex-start'}
                                                                         >
-                                                                            <h6 style={{ width: '40%' }}>Currency:</h6>
+                                                                            <h6 style={{ width: '40%' }}>
+                                                                                {t('currency')}
+                                                                            </h6>
                                                                             <FormControl
                                                                                 sx={{
                                                                                     m: 1,
@@ -2063,7 +2058,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Total debit:
+                                                                                {t('total-debit')}
                                                                             </h6>
                                                                             <h6
                                                                                 style={{
@@ -2088,7 +2083,7 @@ function AccountingEntry({ title }) {
                                                                             justifyContent={'flex-start'}
                                                                         >
                                                                             <h6 style={{ width: '40%' }}>
-                                                                                Total credit:
+                                                                                {t('total-credit')}
                                                                             </h6>
                                                                             <h6
                                                                                 style={{
@@ -2134,7 +2129,7 @@ function AccountingEntry({ title }) {
                                                                         width: '100%',
                                                                     }}
                                                                 >
-                                                                    2. Detail
+                                                                    {t('entry-title-detail')}
                                                                 </h5>
                                                             </>
 

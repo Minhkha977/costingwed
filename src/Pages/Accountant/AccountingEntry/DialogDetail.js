@@ -21,6 +21,7 @@ import { InputNumber } from 'antd';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import OnMultiKeyEvent from '~/components/Event/OnMultiKeyEvent';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 export default function DialogDetail({
     isNew,
@@ -42,6 +43,7 @@ export default function DialogDetail({
     const [valueDescription, setValueDescription] = React.useState(description);
     const [valueId, setValueId] = React.useState(1);
     const [valueSelectAmount, setValueSelectAmount] = React.useState('-');
+    const { t } = useTranslation();
 
     React.useEffect(() => {
         const data = dataList
@@ -98,7 +100,7 @@ export default function DialogDetail({
                 setValueDescriptionAe((oldDesc) => (oldDesc ? oldDesc : valueDescription));
                 onClose();
             } else {
-                toast.warn('Empty account code | description!');
+                toast.warn(t('entry-toast-warn'));
             }
         } else {
             const updatedRow = {
@@ -129,12 +131,14 @@ export default function DialogDetail({
     return (
         <React.Fragment>
             <Dialog open={onOpen} onClose={onClose}>
-                <DialogTitle sx={{ background: '#ffc696', marginBottom: 2 }}>Detail No. {valueId}</DialogTitle>
+                <DialogTitle sx={{ background: '#ffc696', marginBottom: 2 }}>
+                    {t('detail')} {t('no')} {valueId}
+                </DialogTitle>
                 <DialogContent>
                     <Box display="flex" alignItems="center">
                         <Grid container spacing={1} width={400}>
                             <Stack direction={'column'} spacing={1} width={'100%'} justifyContent={'center'}>
-                                <div>Cost center</div>
+                                <div>{t('cost-center')}</div>
                                 <Select
                                     autoFocus
                                     size="small"
@@ -150,10 +154,7 @@ export default function DialogDetail({
                                             );
                                         })}
                                 </Select>
-                                <div>
-                                    <Tag color="red">*</Tag>
-                                    Account code&nbsp;
-                                </div>
+                                <div>{t('account-code')}</div>
 
                                 <Autocomplete
                                     fullWidth
@@ -162,6 +163,7 @@ export default function DialogDetail({
                                     //         style: { width: 'fit-content' },
                                     //     },
                                     // }}
+
                                     size="small"
                                     freeSolo
                                     value={valueAccountCode}
@@ -173,7 +175,9 @@ export default function DialogDetail({
                                     getOptionLabel={(option) =>
                                         `${option.account_code_display ?? ''} - ${option.account_name ?? ''}`
                                     }
-                                    renderInput={(params) => <TextField {...params} />}
+                                    renderInput={(params) => (
+                                        <TextField error={valueAccountCode ? false : true} {...params} />
+                                    )}
                                 />
                                 {/* <div style={{ color: 'red' }}>
                                     <Tag color="red">*</Tag>
@@ -190,7 +194,7 @@ export default function DialogDetail({
                                 /> */}
                                 <div>
                                     <Tag color="red">*</Tag>
-                                    Amount
+                                    {t('amount')}
                                 </div>
                                 <Stack direction={'row'} spacing={0.5}>
                                     <Select
@@ -201,15 +205,16 @@ export default function DialogDetail({
                                         variant="outlined"
                                     >
                                         <MenuItem key={1} value={'-'} sx={{ color: 'red' }}>
-                                            Debit
+                                            {t('debit')}
                                         </MenuItem>
                                         <MenuItem key={2} value={'+'} sx={{ color: 'green' }}>
-                                            Credit
+                                            {t('credit')}
                                         </MenuItem>
                                     </Select>
                                     <InputNumber
                                         // prefix="+₫"
                                         style={{ width: '100%' }}
+                                        status={valueAmount ? '' : 'error'}
                                         size="large"
                                         formatter={(value) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                         parser={(value) => value.replace(/\$-+₫\s?|(,*)/g, '')}
@@ -220,10 +225,11 @@ export default function DialogDetail({
 
                                 <div>
                                     <Tag color="red">*</Tag>
-                                    Description &nbsp;
+                                    {t('description')}
                                 </div>
                                 <Input.TextArea
                                     showCount
+                                    status={valueDescription ? '' : 'error'}
                                     maxLength={250}
                                     rows={3}
                                     value={valueDescription}
@@ -241,7 +247,7 @@ export default function DialogDetail({
                         onClick={handleClickSave}
                         fullWidth
                     >
-                        <u>S</u>ave
+                        {t('button-save')}
                     </Button>
                 </DialogActions>
             </Dialog>

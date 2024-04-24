@@ -15,7 +15,7 @@ export async function ApiAccountEntryListHeader(valueDateMonth, valueDateYear, v
         }
         const response = await DomainApi.get(url);
 
-        setDataAEListHeader(response.data);
+        setDataAEListHeader(response.data.sort((a, b) => b.doc_code - a.doc_code));
     } catch (error) {
         console.log(error);
         toast.error(' Error api get data account entry list!');
@@ -220,9 +220,24 @@ export async function ApiMemoListHeader(valueDateMonth, valueDateYear, valueSear
         }
         const response = await DomainApi.get(url);
 
-        setDataMemoListHeader(response.data.sort((a, b) => a.trans_ids - b.trans_ids));
+        setDataMemoListHeader(response.data.sort((a, b) => b.trans_ids - a.trans_ids));
     } catch (error) {
         console.log(error);
         toast.error(' Error api get data account entry list!');
     }
+}
+
+export async function ApiLoadMemoFromFA() {
+    try {
+        var statusCode = false;
+        let url = `journal/transfer-memo/depreciation?username=${localStorage.getItem(
+            'UserName',
+        )}&unitcode=${localStorage.getItem('Unit')}`;
+        const response = await DomainApi.post(url, null);
+        statusCode = response.data;
+    } catch (error) {
+        console.log(error);
+        toast.error(' Error api load data memo from FA!');
+    }
+    return statusCode;
 }
