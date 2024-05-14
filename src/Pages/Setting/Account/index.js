@@ -394,6 +394,108 @@ function Account({ title }) {
     OnMultiKeyEvent(handleClickSave, valueDisableSaveButton ? '' : 's');
     OnMultiKeyEvent(handleClickImportFile, 'f');
 
+    //! mobile responsive
+    const mobilefile = (
+        <Grid xs={12} md={12}>
+            <Stack
+                width={'100%'}
+                direction={'row'}
+                spacing={2}
+                alignItems={'center'}
+                justifyContent={'flex-end'}
+                sx={{ display: { xs: 'flex', md: 'none' } }}
+            >
+                <Button
+                    size="small"
+                    component="label"
+                    role={undefined}
+                    variant="outlined"
+                    tabIndex={-1}
+                    startIcon={<PostAddIcon />}
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}
+                >
+                    {fileExcel
+                        ? fileExcel.length > 0
+                            ? fileExcel[0].name.slice(0, 25) + '...'
+                            : t('button-import')
+                        : t('button-import')}
+                    <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+                </Button>
+                <Button
+                    size="small"
+                    component="label"
+                    role={undefined}
+                    variant="contained"
+                    tabIndex={-1}
+                    startIcon={<CloudUploadIcon />}
+                    onClick={handleClickImportFile}
+                    sx={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}
+                >
+                    {t('button-upload')}
+                </Button>
+            </Stack>
+        </Grid>
+    );
+
+    const mobilebutton = (
+        <Grid xs={12} md={12}>
+            <Stack
+                direction={'row'}
+                spacing={1}
+                justifyContent={'space-between'}
+                sx={{ display: { xs: 'flex', md: 'none' } }}
+                paddingBottom={2}
+            >
+                <LoadingButton
+                    size="small"
+                    fullWidth
+                    startIcon={<AddBoxIcon />}
+                    variant="contained"
+                    color="success"
+                    onClick={handleOnClickNew}
+                    loading={valueNewButton}
+                    loadingPosition="start"
+                    sx={{ whiteSpace: 'nowrap' }}
+                >
+                    {t('button-new')}
+                </LoadingButton>
+
+                <LoadingButton
+                    size="small"
+                    fullWidth
+                    startIcon={<SystemUpdateAltIcon />}
+                    variant="contained"
+                    color="warning"
+                    onClick={handleOnClickUpdate}
+                    loading={valueUpdateButton}
+                    loadingPosition="start"
+                    sx={{ whiteSpace: 'nowrap' }}
+                >
+                    {t('button-update')}
+                </LoadingButton>
+                <LoadingButton
+                    size="small"
+                    fullWidth
+                    startIcon={<SaveIcon />}
+                    variant="contained"
+                    color="primary"
+                    onClick={handleClickSave}
+                    disabled={valueDisableSaveButton}
+                >
+                    {t('button-save')}
+                </LoadingButton>
+            </Stack>
+        </Grid>
+    );
+
     return (
         <Spin size="large" tip={t('loading')} spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
             <div className="main">
@@ -516,7 +618,8 @@ function Account({ title }) {
                         </Grid>
                         <Grid xs={12} md={12}>
                             <Item>
-                                <Grid container spacing={2}>
+                                <Grid container spacing={1}>
+                                    {mobilefile}
                                     <Grid xs={12} md={12}>
                                         <Stack
                                             width={'100%'}
@@ -850,6 +953,7 @@ function Account({ title }) {
                                             </Stack>
                                         </Grid>
                                     </Grid>
+                                    {mobilebutton}
                                 </Grid>
                             </Item>
                         </Grid>

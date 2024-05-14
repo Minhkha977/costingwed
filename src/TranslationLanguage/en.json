@@ -34,6 +34,7 @@
     "load-memo": "Load memo from FA",
     "button-lock": "Lock(l)",
     "button-reopen": "Reopen period(r)",
+    "button-view-report": "View Report",
 
     "toast-cancel-new": "Cancel create!",
     "toast-cancel-update": "Cancel update!",
@@ -42,6 +43,7 @@
     "toast-nofile": "No file chosen!",
     "toast-fileexcel": "Please chosen excel file!",
     "toast-cancel-load-memo": "Cancel load memo from FA!",
+    "toast-nodata": "There is no data to view !",
 
     "menu-acc-group": "Account Group",
     "menu-acc": "Account",
@@ -49,7 +51,6 @@
     "menu-allocation": "Cost Allocation",
     "menu-close-period": "Close Period",
     "menu-open-period": "Open Period",
-    "menu-report-costing": "Report Costing",
     "menu-profile": "Profile",
     "menu-logout": "Log Out",
 
@@ -128,5 +129,8 @@
     "reopen-user": "Register user",
     "reopen-toast-warn": "Please select a reopening month and user!",
     "reopen-toast-cancel": "Cancel Reopen next period!",
-    "reopen-toast-new": "Reopen period?"
+    "reopen-toast-new": "Reopen period?",
+
+    "menu-report-cogs": "COGS Report",
+    "menu-report-inout-ward": "InOut Ward Report"
 }

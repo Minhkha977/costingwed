@@ -6,7 +6,8 @@ import CostAllocation from '~/Pages/Accountant/CostAllocation';
 import CloseAccountingPeriod from '~/Pages/Accountant/CloseAccountingPeriod';
 import OpenAccountingPeriod from '~/Pages/Accountant/OpenAccountingPeriod';
 import { HeaderLayoutOnly } from '~/components/Layout';
-import Report from '~/Pages/Report';
+import Report_COGS from '~/Pages/Report/COGS';
+import Report_InOut_Ward from '~/Pages/Report/InOutWard';
 import { useTranslation } from 'react-i18next';
 
 export const publicRoutes = [
@@ -17,7 +18,8 @@ export const publicRoutes = [
     { path: '/costallocation', component: CostAllocation, title: 'menu-allocation' },
     { path: '/closeaccountingperiod', component: CloseAccountingPeriod, title: 'menu-close-period' },
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
-    { path: '/report', component: Report, title: 'menu-report-costing' },
+    { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
+    { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
     // { path: '/following', component: Following, layout: HeaderLayoutOnly },
     // { path: '/login', component: Login, layout: null },
 ];
@@ -32,4 +34,7 @@ export const accountantRoutes = [
     { path: '/closeaccountingperiod', component: CloseAccountingPeriod, title: 'menu-close-period' },
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
 ];
-export const reportRoutes = [{ path: '/report', component: Report, title: 'menu-report-costing' }];
+export const reportRoutes = [
+    { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
+    { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
+];

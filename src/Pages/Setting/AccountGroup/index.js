@@ -231,10 +231,12 @@ function Account({ title }) {
             direction={'row'}
             spacing={1}
             sx={{ display: { xs: 'flex', md: 'none' } }}
-            justifyContent={'space-around'}
+            justifyContent={'space-between'}
             marginTop={1.5}
         >
             <LoadingButton
+                size="small"
+                fullWidth
                 startIcon={<AddBoxIcon />}
                 variant="contained"
                 color="success"
@@ -246,6 +248,8 @@ function Account({ title }) {
                 {t('button-new')}
             </LoadingButton>
             <LoadingButton
+                size="small"
+                fullWidth
                 startIcon={<SystemUpdateAltIcon />}
                 variant="contained"
                 color="warning"
@@ -257,6 +261,8 @@ function Account({ title }) {
                 {t('button-update')}
             </LoadingButton>
             <LoadingButton
+                size="small"
+                fullWidth
                 startIcon={<SaveIcon />}
                 variant="contained"
                 color="primary"

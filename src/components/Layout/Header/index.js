@@ -53,6 +53,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ConfigProvider, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import { LibraryAdd } from '@mui/icons-material';
 
 const cx = classNames.bind(styles);
 
@@ -391,7 +393,7 @@ function Header() {
                                         color: '#ed6c02',
                                     }}
                                 >
-                                    {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
+                                    {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
                                 </ListItemIcon>
                                 <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                             </ListItemButton>
@@ -587,7 +589,7 @@ function Header() {
                         component="div"
                         sx={{ display: { xs: 'block', sm: 'block' }, marginLeft: 1 }}
                     >
-                        v0.1.7
+                        v1.0.1
                     </Typography>
                     {/* <Search>
                         <SearchIconWrapper>
@@ -871,7 +873,7 @@ function Header() {
                                                 color: '#ed6c02',
                                             }}
                                         >
-                                            {index === 0 ? <LibraryBooksIcon /> : <PersonIcon />}
+                                            {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
                                         </ListItemIcon>
                                         <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                     </ListItemButton>

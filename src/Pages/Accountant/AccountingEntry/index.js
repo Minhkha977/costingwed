@@ -683,7 +683,6 @@ function AccountingEntry({ title }) {
     const [valueDateMemo, setValueDateMemo] = useState(dayjs());
     const [valueAccountGroupMemo, setValueAccountGroupMemo] = useState(null);
     const [valueCurrencyMemo, setValueCurrencyMemo] = useState(null);
-    const [valueCostCenterMemo, setValueCostCenterMemo] = useState('');
     const [valueTotalDebitMemo, setValueTotalDebitMemo] = useState(0);
     const [valueTotalCreditMemo, setValueTotalCreditMemo] = useState(0);
 
@@ -889,6 +888,118 @@ function AccountingEntry({ title }) {
         process();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoadApiMemo]);
+
+    //! mobile respomsive
+    const mobileButtonList = (
+        <Stack
+            width={'100%'}
+            direction={'row'}
+            spacing={2}
+            alignItems={'center'}
+            justifyContent={'flex-end'}
+            sx={{ display: { xs: 'flex', md: 'none' } }}
+        >
+            <Button
+                size="small"
+                component="label"
+                role={undefined}
+                variant="outlined"
+                tabIndex={-1}
+                startIcon={<PostAddIcon />}
+                sx={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                }}
+            >
+                {fileExcel
+                    ? fileExcel.length > 0
+                        ? fileExcel[0].name.slice(0, 20) + '...'
+                        : t('button-import')
+                    : t('button-import')}
+                <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+            </Button>
+            <Button
+                size="small"
+                component="label"
+                sx={{
+                    whiteSpace: 'nowrap',
+                }}
+                role={undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<CloudUploadIcon />}
+                onClick={handleClickImportFile}
+            >
+                {t('button-upload')}
+            </Button>
+        </Stack>
+    );
+
+    const mobileButtonInfor = (
+        <Stack
+            direction={'column'}
+            spacing={1}
+            sx={{ display: { xs: 'flex', md: 'none' } }}
+            justifyContent={'space-between'}
+        >
+            <Stack
+                direction={'row'}
+                spacing={1}
+                sx={{ display: { xs: 'flex', md: 'none' } }}
+                justifyContent={'space-between'}
+            >
+                <LoadingButton
+                    size="small"
+                    fullWidth
+                    startIcon={<AddBoxIcon />}
+                    variant="contained"
+                    color="success"
+                    onClick={handleOnClickNewAeHeader}
+                    loading={valueNewButton}
+                    loadingPosition="start"
+                    sx={{ whiteSpace: 'nowrap' }}
+                >
+                    {t('button-new')}
+                </LoadingButton>
+                <LoadingButton
+                    size="small"
+                    fullWidth
+                    startIcon={<SystemUpdateAltIcon />}
+                    variant="contained"
+                    color="warning"
+                    onClick={handleOnClickUpdateAeHeader}
+                    loading={valueUpdateButton}
+                    loadingPosition="start"
+                    sx={{ whiteSpace: 'nowrap' }}
+                >
+                    {t('button-update')}
+                </LoadingButton>
+            </Stack>
+
+            <LoadingButton
+                size="small"
+                fullWidth
+                startIcon={<SaveIcon />}
+                variant="contained"
+                color="primary"
+                onClick={handleClickSave}
+                disabled={valueDisableSaveButton}
+            >
+                {t('button-save')}
+            </LoadingButton>
+            <LoadingButton
+                size="small"
+                fullWidth
+                startIcon={<DeleteOutlineIcon />}
+                variant="contained"
+                color="error"
+                onClick={handleOnClickDeleteAeHeader}
+            >
+                {t('button-delete')}
+            </LoadingButton>
+        </Stack>
+    );
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">
@@ -1038,7 +1149,7 @@ function AccountingEntry({ title }) {
                                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                             <Item>
                                                 <Grid container xs={12} md={12} spacing={1}>
-                                                    <Grid xs={12} md={6}>
+                                                    <Grid xs={12} md={4}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
@@ -1047,13 +1158,10 @@ function AccountingEntry({ title }) {
                                                         >
                                                             <h6 style={{ width: '40%' }}>{t('entry-period')}</h6>
                                                             <div style={{ width: '100%' }}>
-                                                                <LocalizationProvider
-                                                                    dateAdapter={AdapterDayjs}
-                                                                    sx={{ width: '100%' }}
-                                                                >
+                                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                                     <DatePicker
-                                                                        // label={'"month" and "year"'}
                                                                         views={['month', 'year']}
+                                                                        sx={{ width: '100%' }}
                                                                         value={valueDateAccountPeriod}
                                                                         slotProps={{
                                                                             textField: { size: 'small' },
@@ -1069,7 +1177,7 @@ function AccountingEntry({ title }) {
                                                         </Stack>
                                                     </Grid>
 
-                                                    <Grid xs={12} md={6}>
+                                                    <Grid xs={12} md={8}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
@@ -1104,10 +1212,12 @@ function AccountingEntry({ title }) {
                                                 </Grid>
                                             </Item>
                                         </Grid>
+
                                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                             <Item>
                                                 <Grid container>
                                                     <Grid xs={12} md={12}>
+                                                        {mobileButtonList}
                                                         <Stack
                                                             width={'100%'}
                                                             direction={'row'}
@@ -1125,7 +1235,9 @@ function AccountingEntry({ title }) {
                                                                     {t('entry-title-list')}
                                                                 </h5>
                                                             </>
+
                                                             <Button
+                                                                size="small"
                                                                 component="label"
                                                                 role={undefined}
                                                                 variant="outlined"
@@ -1133,41 +1245,48 @@ function AccountingEntry({ title }) {
                                                             >
                                                                 {t('button-select-mode')}
                                                             </Button>
-                                                            <Button
-                                                                component="label"
-                                                                role={undefined}
-                                                                variant="outlined"
-                                                                tabIndex={-1}
-                                                                startIcon={<PostAddIcon />}
-                                                                sx={{
-                                                                    width: 300,
-                                                                    whiteSpace: 'nowrap',
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
-                                                                }}
+                                                            <Stack
+                                                                direction={'row'}
+                                                                spacing={1}
+                                                                sx={{ display: { xs: 'none', md: 'flex' } }}
                                                             >
-                                                                {fileExcel
-                                                                    ? fileExcel.length > 0
-                                                                        ? fileExcel[0].name.slice(0, 25) + '...'
-                                                                        : t('button-import')
-                                                                    : t('button-import')}
-                                                                <VisuallyHiddenInput
-                                                                    type="file"
-                                                                    onChange={handleClickChoseFile}
-                                                                />
-                                                            </Button>
-                                                            <Button
-                                                                component="label"
-                                                                role={undefined}
-                                                                variant="contained"
-                                                                tabIndex={-1}
-                                                                startIcon={<CloudUploadIcon />}
-                                                                onClick={handleClickImportFile}
-                                                            >
-                                                                {t('button-upload')}
-                                                            </Button>
+                                                                <Button
+                                                                    component="label"
+                                                                    role={undefined}
+                                                                    variant="outlined"
+                                                                    tabIndex={-1}
+                                                                    startIcon={<PostAddIcon />}
+                                                                    sx={{
+                                                                        width: 300,
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                    }}
+                                                                >
+                                                                    {fileExcel
+                                                                        ? fileExcel.length > 0
+                                                                            ? fileExcel[0].name.slice(0, 25) + '...'
+                                                                            : t('button-import')
+                                                                        : t('button-import')}
+                                                                    <VisuallyHiddenInput
+                                                                        type="file"
+                                                                        onChange={handleClickChoseFile}
+                                                                    />
+                                                                </Button>
+                                                                <Button
+                                                                    component="label"
+                                                                    role={undefined}
+                                                                    variant="contained"
+                                                                    tabIndex={-1}
+                                                                    startIcon={<CloudUploadIcon />}
+                                                                    onClick={handleClickImportFile}
+                                                                >
+                                                                    {t('button-upload')}
+                                                                </Button>
+                                                            </Stack>
                                                         </Stack>
                                                     </Grid>
+
                                                     <Grid xs={12} md={12}>
                                                         <Stack spacing={0}>
                                                             <div style={{ width: '100%' }}>
@@ -1196,6 +1315,7 @@ function AccountingEntry({ title }) {
                                                 </Grid>
                                             </Item>
                                         </Grid>
+
                                         <Grid xs={12} md={12}>
                                             <Item>
                                                 <Grid>
@@ -1218,7 +1338,11 @@ function AccountingEntry({ title }) {
                                                                 {t('entry-title-infor')}
                                                             </h5>
 
-                                                            <Stack direction={'row'} spacing={1}>
+                                                            <Stack
+                                                                direction={'row'}
+                                                                spacing={1}
+                                                                sx={{ display: { xs: 'none', md: 'flex' } }}
+                                                            >
                                                                 <LoadingButton
                                                                     startIcon={<AddBoxIcon />}
                                                                     variant="contained"
@@ -1299,12 +1423,12 @@ function AccountingEntry({ title }) {
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
-                                                                                sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
                                                                                     // label={'"month" and "year"'}
                                                                                     // views={['month', 'year']}
                                                                                     value={valueDocsDateAe}
+                                                                                    sx={{ width: '100%' }}
                                                                                     // sx={{ width: 300 }}
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
@@ -1356,13 +1480,12 @@ function AccountingEntry({ title }) {
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
-                                                                                sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
                                                                                     // label={'"month" and "year"'}
                                                                                     // views={['month', 'year']}
                                                                                     value={valueDateAe}
-                                                                                    // sx={{ width: 300 }}
+                                                                                    sx={{ width: '100%' }}
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
                                                                                     }}
@@ -1543,6 +1666,7 @@ function AccountingEntry({ title }) {
                                                             </Grid>
                                                         </Item>
                                                     </Grid>
+                                                    {mobileButtonInfor}
                                                 </Grid>
                                             </Item>
                                         </Grid>
@@ -1641,7 +1765,7 @@ function AccountingEntry({ title }) {
                                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                             <Item>
                                                 <Grid container xs={12} md={12} spacing={1}>
-                                                    <Grid xs={12} md={6}>
+                                                    <Grid xs={12} md={4}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
@@ -1650,13 +1774,11 @@ function AccountingEntry({ title }) {
                                                         >
                                                             <h6 style={{ width: '40%' }}>{t('entry-period')}</h6>
                                                             <div style={{ width: '100%' }}>
-                                                                <LocalizationProvider
-                                                                    dateAdapter={AdapterDayjs}
-                                                                    sx={{ width: '100%' }}
-                                                                >
+                                                                <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                                     <DatePicker
                                                                         // label={'"month" and "year"'}
                                                                         views={['month', 'year']}
+                                                                        sx={{ width: '100%' }}
                                                                         value={valueDateAccountPeriod}
                                                                         slotProps={{
                                                                             textField: { size: 'small' },
@@ -1671,7 +1793,7 @@ function AccountingEntry({ title }) {
                                                             </div>
                                                         </Stack>
                                                     </Grid>
-                                                    <Grid xs={12} md={6}>
+                                                    <Grid xs={12} md={8}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
@@ -1880,12 +2002,12 @@ function AccountingEntry({ title }) {
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
-                                                                                sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
                                                                                     }}
+                                                                                    sx={{ width: '100%' }}
                                                                                     formatDensity="spacious"
                                                                                     format="DD/MM/YYYY"
                                                                                     disabled
@@ -1930,12 +2052,12 @@ function AccountingEntry({ title }) {
                                                                         <div style={{ width: '100%' }}>
                                                                             <LocalizationProvider
                                                                                 dateAdapter={AdapterDayjs}
-                                                                                sx={{ width: '100%' }}
                                                                             >
                                                                                 <DatePicker
                                                                                     slotProps={{
                                                                                         textField: { size: 'small' },
                                                                                     }}
+                                                                                    sx={{ width: '100%' }}
                                                                                     formatDensity="spacious"
                                                                                     format="DD/MM/YYYY"
                                                                                     disabled

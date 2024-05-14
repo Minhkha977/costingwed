@@ -34,6 +34,7 @@
     "load-memo": "Load memo từ FA",
     "button-lock": "Khóa(l)",
     "button-reopen": "Mở lại kỳ(r)",
+    "button-view-report": "Xem báo cáo",
 
     "toast-cancel-new": "Hủy bỏ tạo mới!",
     "toast-cancel-update": "Hủy bỏ cập nhật!",
@@ -42,6 +43,7 @@
     "toast-nofile": "Không có file được chọn!",
     "toast-fileexcel": "Vui lòng chọn loại file excel!",
     "toast-cancel-load-memo": "Hủy bỏ load memo từ FA!",
+    "toast-nodata": "Không có dữ liệu để xem!",
 
     "menu-acc-group": "Nhóm Tài Khoản",
     "menu-acc": "Tài Khoản",
@@ -49,7 +51,6 @@
     "menu-allocation": "Phân Bổ Chi Phí",
     "menu-close-period": "Đóng Kỳ",
     "menu-open-period": "Mở Kỳ",
-    "menu-report-costing": "Báo Cáo",
     "menu-profile": "Hồ sơ",
     "menu-logout": "Đăng xuất",
 
@@ -128,5 +129,8 @@
     "reopen-user": "Đăng ký người được chỉnh sửa",
     "reopen-toast-warn": "Vui lòng chọn tháng cần lùi và người được chỉnh sữa!",
     "reopen-toast-cancel": "Hủy bỏ mở lại kỳ mới!",
-    "reopen-toast-new": "Mở lại kỳ?"
+    "reopen-toast-new": "Mở lại kỳ?",
+
+    "menu-report-cogs": "Báo cáo COGS",
+    "menu-report-inout-ward": "Báo Cáo InOut Ward"
 }
