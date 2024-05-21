@@ -588,16 +588,10 @@ function CostAllocation({ title }) {
 
     const columnsDataDetail = [
         {
-            field: 'id',
-            headerName: t('no'),
-            width: 50,
-            headerClassName: 'super-app-theme--header',
-        },
-        {
             field: 'actions',
-            type: t('actions'),
-            headerName: 'Actions',
-            width: 100,
+            type: 'actions',
+            headerName: t('actions'),
+            width: 80,
             cellClassName: 'actions',
             headerClassName: 'super-app-theme--header',
             getActions: ({ id }) => {
@@ -611,6 +605,13 @@ function CostAllocation({ title }) {
                 ];
             },
         },
+        {
+            field: 'id',
+            headerName: t('no'),
+            width: 50,
+            headerClassName: 'super-app-theme--header',
+        },
+
         {
             field: 'doc_date',
             headerName: t('allocation-date-date'),

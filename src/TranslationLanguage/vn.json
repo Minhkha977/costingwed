@@ -56,9 +56,9 @@
 
     "enum-status-all": "Tất cả",
     "enum-status-new": "Mới tạo",
-    "enum-status-processing": "Đang xử lý",
+    "enum-status-processing": "Đang phân bổ",
     "enum-status-pause": "Tạm dừng",
-    "enum-status-finish": "Hoàn tất",
+    "enum-status-finish": "Đã hoàn tất",
 
     "accountgroup-title-list": "Danh sách nhóm tài khoản",
     "accountgroup-title-infor": "Thông tin nhóm tài khoản",
@@ -131,6 +131,8 @@
     "reopen-toast-cancel": "Hủy bỏ mở lại kỳ mới!",
     "reopen-toast-new": "Mở lại kỳ?",
 
+    "report": "Báo cáo",
     "menu-report-cogs": "Báo cáo COGS",
-    "menu-report-inout-ward": "Báo Cáo InOut Ward"
+    "menu-report-inout-ward": "Báo Cáo InOut Ward",
+    "menu-report-cogm": "Báo cáo COGM"
 }

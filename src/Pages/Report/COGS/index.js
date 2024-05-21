@@ -58,10 +58,12 @@ export default function Report_COGS({ title }) {
     const access_token = useSelector((s) => s.FetchApi.token);
     const [isLoading, setIsLoading] = React.useState(false);
     const { t } = useTranslation();
-    const dataCostCenter = useSelector((state) => state.FetchApi.listData_CostCenter);
+    const dataCostCenter = useSelector((state) =>
+        state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location == 'SH'),
+    );
 
     const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
-    const [valueCostCenter, setValueCostCenter] = React.useState('');
+    const [valueCostCenter, setValueCostCenter] = React.useState('BS048');
     const [valueUrlBase64, setValueUrlBase64] = React.useState('');
 
     //todo: call api export file

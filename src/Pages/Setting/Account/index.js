@@ -58,6 +58,12 @@ const VisuallyHiddenInput = styled('input')({
 function Account({ title }) {
     const { t } = useTranslation();
 
+    // TODO call api cost center
+    /* #region  call api data cost center */
+    const dataCostCenter = useSelector((state) => state.FetchApi.listData_CostCenter);
+    const [valueCostCenter, setValueCostCenter] = React.useState('');
+    /* #endregion */
+
     //! column datagrid header
     const columns = [
         {
@@ -86,6 +92,17 @@ function Account({ title }) {
             width: 150,
             headerClassName: 'super-app-theme--header',
             headerAlign: 'center',
+        },
+        {
+            field: 'cost_center',
+            headerName: t('cost-center'),
+            width: 150,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+            type: 'singleSelect',
+            getOptionValue: (value) => value.code,
+            getOptionLabel: (value) => value.name,
+            valueOptions: dataCostCenter,
         },
         {
             field: 'is_shared_expense',
@@ -174,12 +191,6 @@ function Account({ title }) {
             }
         }
     };
-
-    // TODO call api cost center
-    /* #region  call api data cost center */
-    const dataCostCenter = useSelector((state) => state.FetchApi.listData_CostCenter);
-    const [valueCostCenter, setValueCostCenter] = React.useState('');
-    /* #endregion */
 
     // TODO call api expense group
     /* #region  call api data group cost */

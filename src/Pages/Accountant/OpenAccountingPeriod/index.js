@@ -24,7 +24,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
 import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
+// import Select from '@mui/material/Select';
 import Checkbox from '@mui/material/Checkbox';
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -43,6 +43,8 @@ import { fetchPeriod } from '~/Redux/FetchApi/fetchApiMaster';
 import { useTranslation } from 'react-i18next';
 import { OnKeyEvent } from '~/components/Event/OnKeyEvent';
 import OnMultiKeyEvent from '~/components/Event/OnMultiKeyEvent';
+import { DownOutlined } from '@ant-design/icons';
+import { Select } from 'antd';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -52,6 +54,11 @@ const Item = styled(Paper)(({ theme }) => ({
     direction: 'row',
     color: theme.palette.text.secondary,
 }));
+const suffix = (
+    <>
+        <DownOutlined />
+    </>
+);
 function OpenAccountingPeriod({ title }) {
     const [isLoading, setIsLoading] = React.useState(false);
     var dispatch = useDispatch();
@@ -62,7 +69,7 @@ function OpenAccountingPeriod({ title }) {
     const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
     const unitcode = useSelector((state) => state.Actions.unitcode);
     const listUser = useSelector((state) => state.FetchApi.listData_User);
-    const [valueUser, setValueUser] = React.useState(null);
+    const [valueUser, setValueUser] = React.useState([]);
     const [dateReopenPeriod, setDateReopenPeriod] = React.useState(null);
 
     const handleChangeReopenPeriod = (e) => {
@@ -92,7 +99,7 @@ function OpenAccountingPeriod({ title }) {
         const fetchApiReopen = async () => {
             if (callApiOpenReopen) {
                 setIsLoading(true);
-                const statusCode = await ApiReopenPeriod(access_token, dateReopenPeriod, valueUser.username);
+                const statusCode = await ApiReopenPeriod(access_token, dateReopenPeriod, valueUser);
                 if (statusCode) {
                     dispatch(fetchPeriod(unitcode));
                     setDateReopenPeriod(null);
@@ -117,7 +124,7 @@ function OpenAccountingPeriod({ title }) {
                         content={
                             <>
                                 {t('reopen-toast-new')}: {dayjs(dateReopenPeriod).utc(true).format('MM - YYYY')}
-                                <br /> {t('reopen-user')}: {valueUser.username}
+                                <br /> {t('reopen-user')}: {valueUser}
                             </>
                         }
                         onOpen={dialogIsOpenReopen}
@@ -204,7 +211,30 @@ function OpenAccountingPeriod({ title }) {
                                         </Stack>
                                     </Grid>
                                     <Grid xs={7} md={6}>
-                                        <Autocomplete
+                                        <Box
+                                            sx={{
+                                                width: {
+                                                    xs: '100%',
+                                                    lg: 263,
+                                                    // lg: 400,
+                                                },
+                                            }}
+                                        >
+                                            <Select
+                                                size="large"
+                                                mode="multiple"
+                                                // maxCount={3}
+                                                value={valueUser}
+                                                style={{ width: '100%' }}
+                                                onChange={setValueUser}
+                                                suffixIcon={suffix}
+                                                placeholder="Please select"
+                                                options={listUser.map((data) => {
+                                                    return { value: data.username, label: data.fullname };
+                                                })}
+                                            />
+                                        </Box>
+                                        {/* <Autocomplete
                                             sx={{ width: { xs: '100%', lg: 263 } }}
                                             // componentsProps={{
                                             //     popper: {
@@ -220,7 +250,7 @@ function OpenAccountingPeriod({ title }) {
                                             options={listUser}
                                             getOptionLabel={(option) => `${option.fullname ?? ''}`}
                                             renderInput={(params) => <TextField {...params} />}
-                                        />
+                                        /> */}
                                     </Grid>
 
                                     <Grid xs={12} md={12}>

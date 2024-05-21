@@ -20,6 +20,7 @@ export const publicRoutes = [
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
     { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
+    // { path: '/reportcogm', component: Report_COGM, title: 'menu-report-cogm' },
     // { path: '/following', component: Following, layout: HeaderLayoutOnly },
     // { path: '/login', component: Login, layout: null },
 ];
@@ -37,4 +38,5 @@ export const accountantRoutes = [
 export const reportRoutes = [
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
     { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
+    // { path: '/reportcogm', component: Report_COGM, title: 'menu-report-cogm' },
 ];

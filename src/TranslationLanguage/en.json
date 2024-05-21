@@ -131,6 +131,8 @@
     "reopen-toast-cancel": "Cancel Reopen next period!",
     "reopen-toast-new": "Reopen period?",
 
+    "report": "Report",
     "menu-report-cogs": "COGS Report",
-    "menu-report-inout-ward": "InOut Ward Report"
+    "menu-report-inout-ward": "InOut Ward Report",
+    "menu-report-cogm": "COGM Report"
 }

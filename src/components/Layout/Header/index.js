@@ -55,6 +55,11 @@ import { ConfigProvider, Switch } from 'antd';
 import { useTranslation } from 'react-i18next';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import { LibraryAdd } from '@mui/icons-material';
+import Collapse from '@mui/material/Collapse';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import ArticleIcon from '@mui/icons-material/Article';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const cx = classNames.bind(styles);
 
@@ -174,6 +179,13 @@ function Header() {
     const { instance } = useMsal();
     const activeAccount = instance.getActiveAccount();
     const [dataUnit, setDataUnit] = React.useState([]);
+
+    const [openReport, setOpenReport] = React.useState(false);
+
+    const handleClickReport = () => {
+        setOpenReport(!openReport);
+    };
+
     React.useEffect(() => {
         async function fetchData() {
             try {
@@ -235,8 +247,8 @@ function Header() {
         <Box
             sx={{ width: anchor === 'top' || anchor === 'bottom' ? 'auto' : 250 }}
             role="presentation"
-            onClick={toggleDrawer(anchor, false)}
-            onKeyDown={toggleDrawer(anchor, false)}
+            // onClick={toggleDrawer(anchor, false)}
+            // onKeyDown={toggleDrawer(anchor, false)}
         >
             <List>
                 {['Inbox'].map((text, index) => (
@@ -368,37 +380,53 @@ function Header() {
                     backgroundColor: '#ed6c02',
                 }}
             />
+            <ListItemButton onClick={handleClickReport}>
+                <ListItemIcon
+                    sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                        color: '#ed6c02',
+                    }}
+                >
+                    <AccountBalanceWalletIcon />
+                </ListItemIcon>
+                <ListItemText primary={t('report')} sx={{ opacity: open ? 1 : 0, color: '#ed6c02' }} />
+                {openReport ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
             {reportRoutes.map((route, index) => {
                 return (
-                    <ListItem
-                        key={route.title}
-                        disablePadding
-                        sx={{ display: 'block' }}
-                        onClick={toggleDrawer('left', false)}
-                    >
-                        <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
-                            <ListItemButton
-                                sx={{
-                                    minHeight: 48,
-                                    justifyContent: open ? 'initial' : 'center',
-                                    px: 2.5,
-                                }}
-                                selected={location.pathname === route.path ? true : false}
-                            >
-                                <ListItemIcon
+                    <Collapse in={openReport} timeout="auto" unmountOnExit>
+                        <ListItem
+                            key={route.title}
+                            disablePadding
+                            sx={{ display: 'block' }}
+                            onClick={toggleDrawer('left', false)}
+                        >
+                            <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                                <ListItemButton
                                     sx={{
-                                        minWidth: 0,
-                                        mr: open ? 3 : 'auto',
-                                        justifyContent: 'center',
-                                        color: '#ed6c02',
+                                        minHeight: 48,
+                                        justifyContent: open ? 'initial' : 'center',
+                                        px: 2.5,
                                     }}
+                                    selected={location.pathname === route.path ? true : false}
                                 >
-                                    {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
-                                </ListItemIcon>
-                                <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
-                            </ListItemButton>
-                        </NavLink>
-                    </ListItem>
+                                    <ListItemIcon
+                                        sx={{
+                                            minWidth: 0,
+                                            mr: open ? 3 : 'auto',
+                                            justifyContent: 'center',
+                                            color: '#ed6c02',
+                                        }}
+                                    >
+                                        {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
+                                    </ListItemIcon>
+                                    <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
+                                </ListItemButton>
+                            </NavLink>
+                        </ListItem>
+                    </Collapse>
                 );
             })}
             <Divider
@@ -706,7 +734,13 @@ function Header() {
             {renderMobileMenu}
             {renderMenu}
             <Drawer
-                sx={{ display: { xs: 'flex', md: 'none' } }}
+                sx={{
+                    display: { xs: 'flex', md: 'none' },
+                    '.Mui-selected': {
+                        color: '#ed6c02',
+                        backgroundColor: '#f5e1d0',
+                    },
+                }}
                 anchor={'left'}
                 open={state['left']}
                 onClose={toggleDrawer('left', false)}
@@ -720,14 +754,7 @@ function Header() {
                     </IconButton>
                 </DrawerHeader>
                 <Divider />
-                <List
-                // sx={{
-                //     '.Mui-selected': {
-                //         color: '#ed6c02',
-                //         backgroundColor: '#f5e1d0',
-                //     },
-                // }}
-                >
+                <List>
                     <ListItem
                         key={'menu'}
                         disablePadding
@@ -848,37 +875,53 @@ function Header() {
                             backgroundColor: '#ed6c02',
                         }}
                     />
+                    <ListItemButton onClick={handleClickReport}>
+                        <ListItemIcon
+                            sx={{
+                                minWidth: 0,
+                                mr: open ? 3 : 'auto',
+                                justifyContent: 'center',
+                                color: '#ed6c02',
+                            }}
+                        >
+                            <AssignmentIcon />
+                        </ListItemIcon>
+                        <ListItemText primary={t('report')} sx={{ opacity: open ? 1 : 0, color: '#ed6c02' }} />
+                        {openReport ? <ExpandLess /> : <ExpandMore />}
+                    </ListItemButton>
                     {reportRoutes.map((route, index) => {
                         return (
-                            <ListItem
-                                key={route.title}
-                                disablePadding
-                                sx={{ display: 'block' }}
-                                onClick={toggleDrawer('left', false)}
-                            >
-                                <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
-                                    <ListItemButton
-                                        sx={{
-                                            minHeight: 48,
-                                            justifyContent: open ? 'initial' : 'center',
-                                            px: 2.5,
-                                        }}
-                                        selected={location.pathname === route.path ? true : false}
-                                    >
-                                        <ListItemIcon
+                            <Collapse in={openReport} timeout="auto" unmountOnExit>
+                                <ListItem
+                                    key={route.title}
+                                    disablePadding
+                                    sx={{ display: 'block' }}
+                                    onClick={toggleDrawer('left', false)}
+                                >
+                                    <NavLink to={route.path} style={{ textDecoration: 'none', color: 'black' }}>
+                                        <ListItemButton
                                             sx={{
-                                                minWidth: 0,
-                                                mr: open ? 3 : 'auto',
-                                                justifyContent: 'center',
-                                                color: '#ed6c02',
+                                                minHeight: 48,
+                                                justifyContent: open ? 'initial' : 'center',
+                                                px: 2.5,
                                             }}
+                                            selected={location.pathname === route.path ? true : false}
                                         >
-                                            {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
-                                        </ListItemIcon>
-                                        <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
-                                    </ListItemButton>
-                                </NavLink>
-                            </ListItem>
+                                            <ListItemIcon
+                                                sx={{
+                                                    minWidth: 0,
+                                                    mr: open ? 3 : 'auto',
+                                                    justifyContent: 'center',
+                                                    color: '#ed6c02',
+                                                }}
+                                            >
+                                                {index === 0 ? <ArticleIcon /> : <LibraryBooksIcon />}
+                                            </ListItemIcon>
+                                            <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
+                                        </ListItemButton>
+                                    </NavLink>
+                                </ListItem>
+                            </Collapse>
                         );
                     })}
                     <Divider
