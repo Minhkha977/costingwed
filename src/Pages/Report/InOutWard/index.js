@@ -70,9 +70,9 @@ export default function Report_InOut_Ward({ title }) {
     /* #region  call api export list */
     const [dataListExport, setDataListExport] = useState([]);
     const [buttonExport, setButtonExport] = useState(true);
-    const [callApi, setCallApi] = useState(true);
+    const [callApi, setCallApi] = useState(false);
     useEffect(() => {
-        if (valueCostCenter) {
+        if (callApi && valueCostCenter) {
             const process = async () => {
                 setIsLoading(true);
                 setButtonExport(true);
@@ -88,36 +88,40 @@ export default function Report_InOut_Ward({ title }) {
                 setIsLoading(false);
             };
             process();
+            setCallApi(false);
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [callApi]);
-
-    const handleViewReport = (event) => {
-        if (dataListExport.length > 0) {
+    useEffect(() => {
+        if (callApi && valueCostCenter) {
             const process = async () => {
                 setIsLoading(true);
-                await Api_PDF_Report_InOutWard({
+                const status_code = await Api_PDF_Report_InOutWard({
                     COSTCENTER: valueCostCenter,
                     PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                     PERIOD_YEAR: valueDateAccountPeriod.year(),
                     setDataUrlBase64: setValueUrlBase64,
                 });
+                if (!status_code) {
+                    toast.warning(t('toast-nodata'));
+                }
                 setIsLoading(false);
             };
             process();
-        } else {
-            toast.warning(t('toast-nodata'));
         }
+        setCallApi(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [callApi]);
+    const handleViewReport = (event) => {
+        setCallApi(true);
     };
 
     const handleChangePeriod = (event) => {
         setValueDateAccountPeriod(event);
-        setCallApi(!callApi);
     };
     const handleChangeCostCenter = (event) => {
         setValueCostCenter(event.target.value);
-        setCallApi(!callApi);
     };
 
     const columnsExport = [
@@ -187,7 +191,6 @@ export default function Report_InOut_Ward({ title }) {
 
     //! handler click export file
     const handleClickExport = () => {
-        setCallApi(!callApi);
         const data = dataListExport.map((el) => {
             // let doc_date = dayjs(el.doc_date);
             // let allcation_date = dayjs(el.allcation_date);
@@ -221,7 +224,7 @@ export default function Report_InOut_Ward({ title }) {
                     str2Percent: true,
                 },
             )
-            .saveAs('InOutWard.xlsx');
+            .saveAs(`InOutWard_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
     };
     /* #endregion */
 

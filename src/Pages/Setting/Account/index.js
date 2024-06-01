@@ -198,6 +198,13 @@ function Account({ title }) {
     const [valueGroupCost, setValueGroupCost] = React.useState('');
     const handleChangeGroupCost = (event) => {
         setValueGroupCost(event.target.value);
+        if (!event.target.value) {
+            setDataTypeCostFilter(dataTypeCost);
+        } else {
+            const expense = dataTypeCost.filter((data) => data.group_code_ref == event.target.value);
+            const data = [{ code: null, name: 'Not selected' }, ...expense];
+            setDataTypeCostFilter(data);
+        }
     };
     React.useEffect(() => {
         const fetchApiExpenseGroup = async () => {
@@ -213,6 +220,7 @@ function Account({ title }) {
     // TODO call api expense
     /* #region  call api data type cost */
     const [dataTypeCost, setDataTypeCost] = React.useState([]);
+    const [dataTypeCostFilter, setDataTypeCostFilter] = React.useState([]);
     const [valueTypeCost, setValueTypeCost] = React.useState('');
     const handleChangeTypeCost = (event) => {
         setValueTypeCost(event.target.value);
@@ -220,7 +228,7 @@ function Account({ title }) {
     React.useEffect(() => {
         const fetchApiExpense = async () => {
             setIsLoading(true);
-            await ApiTypeCost(setDataTypeCost);
+            await ApiTypeCost(setDataTypeCost, setDataTypeCostFilter);
             setIsLoading(false);
         };
         fetchApiExpense();
@@ -953,7 +961,7 @@ function Account({ title }) {
                                                     onChange={handleChangeTypeCost}
                                                     disabled={valueReadonly}
                                                 >
-                                                    {dataTypeCost.map((data) => {
+                                                    {dataTypeCostFilter.map((data) => {
                                                         return (
                                                             <MenuItem key={data.type_expense_id} value={data.code}>
                                                                 {data.name}

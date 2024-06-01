@@ -49,6 +49,9 @@ import { Excel } from 'antd-table-saveas-excel';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { Api_PDF_Report_COGM, Api_Report_COGM } from '~/components/Api/Report';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import MoveUpIcon from '@mui/icons-material/MoveUp';
+import { ApiCalCOGM, ApiCalCostTransfer, ApiLoadDataReport } from '~/components/Api/CloseAccountingPeriod';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -58,7 +61,6 @@ const Item = styled(Paper)(({ theme }) => ({
     direction: 'row',
     color: theme.palette.text.secondary,
 }));
-const singleSelect = ['CH NVT', 'SH BP'];
 
 function CloseAccountingPeriod({ title }) {
     var dispatch = useDispatch();
@@ -69,18 +71,16 @@ function CloseAccountingPeriod({ title }) {
     const [valueNextPeriod, setValueNextPeriod] = React.useState(dayjs(dataPeriod_From_Redux).add(1, 'month'));
     const { t } = useTranslation();
     const dataCostCenter = useSelector((state) =>
-        state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location == 'CH'),
+        state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location !== null),
     );
 
     const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
-    const [valueCostCenter, setValueCostCenter] = React.useState('BS009');
-    const [valueUrlBase64, setValueUrlBase64] = React.useState('');
+    const [valueCostCenter, setValueCostCenter] = React.useState('');
 
     //todo: reload next month
     useEffect(() => {
         setValueNextPeriod(dayjs(dataPeriod_From_Redux).add(1, 'month'));
     }, [dataPeriod_From_Redux]);
-    console.log(dataPeriod_From_Redux);
     const [dialogIsOpen, setDialogIsOpen] = React.useState(false);
     const [callApiOpen, setCallApiOpen] = React.useState(false);
     const agreeDialogr = () => {
@@ -113,145 +113,237 @@ function CloseAccountingPeriod({ title }) {
 
     //todo: call api export file
     /* #region  call api export list */
-    const [dataListExport, setDataListExport] = useState([]);
-    const [buttonExport, setButtonExport] = useState(true);
-    const [callApi, setCallApi] = useState(true);
-    useEffect(() => {
-        if (valueCostCenter) {
-            const process = async () => {
-                setIsLoading(true);
-                setButtonExport(true);
-                const status_code = await Api_Report_COGM({
-                    COSTCENTER: valueCostCenter,
-                    PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                    PERIOD_YEAR: valueDateAccountPeriod.year(),
-                    setDataExport: setDataListExport,
-                });
-                if (status_code) {
-                    setButtonExport(false);
-                }
-                setIsLoading(false);
-            };
-            process();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [callApi]);
+    const [buttonExport, setButtonExport] = useState(false);
     const handleViewReport = (event) => {
-        // if (dataListExport.length > 0) {
-        const process = async () => {
-            setIsLoading(true);
-            await Api_PDF_Report_COGM({
-                COSTCENTER: valueCostCenter,
-                PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                PERIOD_YEAR: valueDateAccountPeriod.year(),
-                setDataUrlBase64: setValueUrlBase64,
-            });
-            setIsLoading(false);
-        };
-        process();
-        // } else {
-        //     toast.warning(t('toast-nodata'));
-        // }
+        setReloadData(true);
     };
 
+    //todo: call api calculate cogm
+    const [buttonCalCOGM, setButtonCalCOGM] = useState(false);
+    useEffect(() => {
+        const fetchApiCalCOGM = async () => {
+            if (buttonCalCOGM) {
+                setIsLoading(true);
+                const statusCode = await ApiCalCOGM({
+                    access_token: access_token,
+                    PERIOD_MONTH: dayjs(dataPeriod_From_Redux).add(1, 'month').month(),
+                    PERIOD_YEAR: dayjs(dataPeriod_From_Redux).year(),
+                });
+                if (statusCode) {
+                    toast.success(t('toast-success-cogm'));
+                }
+                setIsLoading(false);
+            }
+            setButtonCalCOGM(false);
+        };
+        fetchApiCalCOGM();
+    }, [buttonCalCOGM]);
+    const [dialogIsOpenCalCOGM, setDialogIsOpenCalCOGM] = React.useState(false);
+    const agreeDialogCalCOGM = () => {
+        setDialogIsOpenCalCOGM(false);
+        setButtonCalCOGM(true);
+    };
+    const closeDialogCalCOGM = () => {
+        setDialogIsOpenCalCOGM(false);
+        toast.warning(t('toast-cancel-cogm'));
+    };
+
+    //todo: call api calculate cogm
+    const [buttonCalCostTransfer, setButtonCalCostTransfer] = useState(false);
+    useEffect(() => {
+        const fetchApiCalCostTransfer = async () => {
+            if (buttonCalCostTransfer) {
+                setIsLoading(true);
+                const statusCode = await ApiCalCostTransfer({
+                    access_token: access_token,
+                    PERIOD_MONTH: dayjs(dataPeriod_From_Redux).add(1, 'month').month(),
+                    PERIOD_YEAR: dayjs(dataPeriod_From_Redux).year(),
+                });
+                if (statusCode) {
+                    toast.success(t('toast-success-cost-transfer'));
+                }
+                setIsLoading(false);
+            }
+            setButtonCalCostTransfer(false);
+        };
+        fetchApiCalCostTransfer();
+    }, [buttonCalCostTransfer]);
+    const [dialogIsOpenCalCost, setDialogIsOpenCalCost] = React.useState(false);
+    const agreeDialogCalCost = () => {
+        setDialogIsOpenCalCost(false);
+        setButtonCalCostTransfer(true);
+    };
+    const closeDialogCalCost = () => {
+        setDialogIsOpenCalCost(false);
+        toast.warning(t('toast-cancel-cost-transfer'));
+    };
+
+    //! handler change
     const handleChangePeriod = (event) => {
         setValueDateAccountPeriod(event);
-        setCallApi(!callApi);
     };
     const handleChangeCostCenter = (event) => {
         setValueCostCenter(event.target.value);
-        setCallApi(!callApi);
     };
-
-    const columnsExport = [
-        {
-            title: 'Results',
-            dataIndex: 'product_name',
-            key: 'product_name',
-        },
-        {
-            title: 'Kg',
-            dataIndex: 'weight_after_prcessing',
-            key: 'weight_after_prcessing',
-        },
-        {
-            title: 'Yield',
-            // width: 300,
-            dataIndex: 'yield_display',
-            key: 'yield_display',
-        },
-        {
-            title: 'HET',
-            dataIndex: 'HET',
-            key: 'HET',
-        },
-        {
-            title: 'Basic Count',
-            dataIndex: 'basic_count',
-            key: 'basic_count',
-        },
-        {
-            title: 'Material',
-            dataIndex: 'material_val',
-            key: 'material_val',
-        },
-        {
-            title: 'Direct Labor',
-            dataIndex: 'direct_labor',
-            key: 'direct_labor',
-        },
-        {
-            title: 'Processing Fee',
-            dataIndex: 'processing_fee',
-            key: 'processing_fee',
-        },
-        {
-            title: 'Transportation',
-            // width: 300,
-            dataIndex: 'transportation',
-            key: 'transportation',
-        },
-        {
-            title: 'Insurance',
-            dataIndex: 'insurance',
-            key: 'insurance',
-        },
-        {
-            title: 'FOH',
-            dataIndex: 'FOH',
-            key: 'FOH',
-        },
-        {
-            title: 'Total Cost',
-            dataIndex: 'total_cost',
-            key: 'total_cost',
-        },
-        {
-            title: 'VND/KG',
-            dataIndex: 'cogs_value',
-            key: 'cogs_value',
-        },
-    ];
 
     //! handler click export file
     const handleClickExport = () => {
-        function download(filename, data) {
-            var link = document.createElement('a');
-            link.href =
-                'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' +
-                encodeURIComponent(data);
-            link.setAttribute('download', filename);
+        if (dataList.length > 0) {
+            const data = dataList.map((el) => {
+                // let doc_date = dayjs(el.doc_date);
+                // let allcation_date = dayjs(el.allcation_date);
+                // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
+                // el.allcation_date =
+                //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
+                el.amount_period_N = el.amount_period_N.toLocaleString();
+                el.amount_period_N_1 = el.amount_period_N_1.toLocaleString();
+                el.amount_period_N_2 = el.amount_period_N_2.toLocaleString();
+                return el;
+            });
 
-            link.style.display = 'none';
-            document.body.appendChild(link);
+            const excel = new Excel();
+            excel
+                .addSheet('Spread Period')
+                .addColumns(columnsExport)
+                .addDataSource(
+                    data.sort(function (a, b) {
+                        return a.expense_code.localeCompare(b.expense_code);
+                    }),
 
-            link.click();
-
-            document.body.removeChild(link);
+                    {
+                        str2Percent: true,
+                    },
+                )
+                .saveAs(`SpreadPeriod_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
+        } else {
+            toast.warn(t('toast-nodata'));
         }
-        download('COGM Report.xls', dataListExport);
     };
     /* #endregion */
+
+    const columnsExport = [
+        {
+            title: 'Mã tài khoản',
+            dataIndex: 'acc_code',
+            key: 'Mã tài khoản',
+        },
+        {
+            title: 'Tên tài khoản',
+            dataIndex: 'acc_name',
+            key: 'Tên tài khoản',
+        },
+        {
+            title: 'Mã nhóm chi phí',
+            dataIndex: 'grp_expense_code',
+            key: 'Mã nhóm chi phí',
+        },
+        {
+            title: 'Nhóm chi phí',
+            dataIndex: 'grp_expense_name',
+            key: 'Nhóm chi phí',
+        },
+        {
+            title: 'Mã chi phí',
+            dataIndex: 'expense_code',
+            key: 'Mã chi phí',
+        },
+        {
+            title: 'Chi phí',
+            dataIndex: 'expense_name',
+            width: 400,
+            key: 'Chi phí',
+        },
+        {
+            title: 'Kỳ N-2',
+            dataIndex: 'amount_period_N_2',
+            key: 'Period N2',
+        },
+        {
+            title: 'Kỳ N-1',
+            dataIndex: 'amount_period_N_1',
+            key: 'Period N1',
+        },
+        {
+            title: 'Kỳ N',
+            dataIndex: 'amount_period_N',
+            key: 'Period N',
+        },
+    ];
+
+    /* #region  call api list */
+    const [reloadData, setReloadData] = React.useState(false);
+    const [dataList, setDataList] = useState([]);
+
+    useEffect(() => {
+        const asyncApiList = async () => {
+            setIsLoading(true);
+            if (reloadData) {
+                if (valueCostCenter) {
+                    const status_code = await ApiLoadDataReport({
+                        valueCostCenter: valueCostCenter,
+                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                        PERIOD_YEAR: valueDateAccountPeriod.year(),
+                        setDataReport: setDataList,
+                    });
+                } else {
+                    toast.warn(t('toast-nodata'));
+                }
+            }
+            setIsLoading(false);
+        };
+
+        asyncApiList();
+        setReloadData(false);
+    }, [reloadData]);
+    /* #endregion */
+    //! column datagrid
+    const columns = [
+        {
+            field: 'acc_code',
+            headerName: t('account-code'),
+            width: 100,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'acc_name',
+            headerName: t('account-name'),
+            width: 200,
+            flex: 1,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'expense_name',
+            headerName: t('account-expense'),
+            minWidth: 300,
+            headerClassName: 'super-app-theme--header',
+        },
+        {
+            field: 'amount_period_N_2',
+            headerName: t('close-n2'),
+            type: 'number',
+            width: 130,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+        {
+            field: 'amount_period_N_1',
+            headerName: t('close-n1'),
+            type: 'number',
+            width: 130,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+
+        {
+            field: 'amount_period_N',
+            headerName: t('close-n'),
+            type: 'number',
+            width: 130,
+            headerClassName: 'super-app-theme--header',
+            headerAlign: 'center',
+        },
+    ];
+
     //! on key event
     OnMultiKeyEvent(() => handleOpenPeriod(), 'l');
     return (
@@ -269,6 +361,34 @@ function CloseAccountingPeriod({ title }) {
                         onOpen={dialogIsOpen}
                         onClose={closeDialog}
                         onAgree={agreeDialogr}
+                    />
+                )}
+                {dialogIsOpenCalCOGM && (
+                    <AlertDialog
+                        title={t('button-calculate-cogm')}
+                        content={
+                            <>
+                                {t('button-calculate-cogm')}:{' '}
+                                {dayjs(dataPeriod_From_Redux).utc(true).format('MM - YYYY')}
+                            </>
+                        }
+                        onOpen={dialogIsOpenCalCOGM}
+                        onClose={closeDialogCalCOGM}
+                        onAgree={agreeDialogCalCOGM}
+                    />
+                )}
+                {dialogIsOpenCalCost && (
+                    <AlertDialog
+                        title={t('button-calculate-cost-transfer')}
+                        content={
+                            <>
+                                {t('button-calculate-cost-transfer')}:{' '}
+                                {dayjs(dataPeriod_From_Redux).utc(true).format('MM - YYYY')}
+                            </>
+                        }
+                        onOpen={dialogIsOpenCalCost}
+                        onClose={closeDialogCalCost}
+                        onAgree={agreeDialogCalCost}
                     />
                 )}
                 <div role="presentation">
@@ -376,8 +496,32 @@ function CloseAccountingPeriod({ title }) {
                                                     fontWeight: 'bold',
                                                 }}
                                             >
-                                                1. Expenses during the period
+                                                {t('expenses-period')}
                                             </h5>
+                                            <div>
+                                                <LoadingButton
+                                                    startIcon={<CalculateIcon />}
+                                                    variant="contained"
+                                                    color="warning"
+                                                    onClick={() => setDialogIsOpenCalCOGM(true)}
+                                                    loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    {t('button-calculate-cogm')}
+                                                </LoadingButton>
+                                            </div>
+                                            <div>
+                                                <LoadingButton
+                                                    startIcon={<MoveUpIcon />}
+                                                    variant="contained"
+                                                    color="secondary"
+                                                    onClick={() => setDialogIsOpenCalCost(true)}
+                                                    loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    {t('button-calculate-cost-transfer')}
+                                                </LoadingButton>
+                                            </div>
                                         </Stack>
                                     </Grid>
                                     <Grid xs={12} md={12}>
@@ -491,16 +635,25 @@ function CloseAccountingPeriod({ title }) {
                                                     </Item>
                                                 </Grid>
                                                 <Grid xs={12} md={12}>
-                                                    {valueUrlBase64 && (
-                                                        <embed
-                                                            src={'data:application/pdf;base64,' + valueUrlBase64}
-                                                            style={{
-                                                                border: '1px solid rgba(0, 0, 0, 0.3)',
-                                                                width: '100%',
-                                                                height: '80vh',
-                                                            }}
-                                                        />
-                                                    )}
+                                                    <Stack spacing={0}>
+                                                        <div style={{ width: '100%' }}>
+                                                            <DataGrid
+                                                                rows={dataList}
+                                                                columns={columns}
+                                                                initialState={{
+                                                                    pagination: {
+                                                                        paginationModel: { page: 0, pageSize: 5 },
+                                                                    },
+                                                                }}
+                                                                pageSizeOptions={[5, 10, 15]}
+                                                                autoHeight
+                                                                showCellVerticalBorder
+                                                                showColumnVerticalBorder
+                                                                loading={isLoading}
+                                                                getRowId={(row) => row.expense_code}
+                                                            />
+                                                        </div>
+                                                    </Stack>
                                                 </Grid>
                                             </Grid>
                                         </Box>

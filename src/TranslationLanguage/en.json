@@ -35,6 +35,8 @@
     "button-lock": "Lock(l)",
     "button-reopen": "Reopen period(r)",
     "button-view-report": "View Report",
+    "button-calculate-cogm": "Calculate COGS",
+    "button-calculate-cost-transfer": "Create auto accounting entry",
 
     "toast-cancel-new": "Cancel create!",
     "toast-cancel-update": "Cancel update!",
@@ -44,6 +46,11 @@
     "toast-fileexcel": "Please chosen excel file!",
     "toast-cancel-load-memo": "Cancel load memo from FA!",
     "toast-nodata": "There is no data to view !",
+    "toast-success-cogm": "Success calculator COGS!",
+    "toast-success-cost-transfer": "Success create auto accounting entry!",
+    "toast-cancel-cogm": "Cancel calculator COGS!",
+    "toast-cancel-cost-transfer": "Cancel create auto accounting entry!",
+    "toast-error": "No data has been entered yet!",
 
     "menu-acc-group": "Account Group",
     "menu-acc": "Account",
@@ -124,15 +131,29 @@
     "close-period": "Closed until period",
     "close-toast-cancel": "Cancel close period!",
     "close-toast-new": "Close period",
+    "close-n": "Period N",
+    "close-n1": "Period N-1",
+    "close-n2": "Period N-2",
     "new-period": "New closing period",
     "reopen-period": "Reopen the accounting period",
     "reopen-user": "Register user",
     "reopen-toast-warn": "Please select a reopening month and user!",
     "reopen-toast-cancel": "Cancel Reopen next period!",
     "reopen-toast-new": "Reopen period?",
+    "expenses-period": "1. Expenses during the period",
 
     "report": "Report",
     "menu-report-cogs": "COGS Report",
     "menu-report-inout-ward": "InOut Ward Report",
-    "menu-report-cogm": "COGM Report"
+    "menu-report-cogm": "COGM Report",
+
+    "live-pig": "Live Pigs",
+    "live-pig-title-list": "List of Live Pigs from farm to SH",
+    "value": "Value",
+    "transfer-id": "Transfer Id",
+    "info-livepig": "Information Live Pig",
+    "livepig-toast-new": "Create new Live Pig?",
+    "livepig-toast-update": "Update Live Pig?",
+    "livepig-toast-delete": "Delete Live Pig?",
+    "livepig-delete-error": "Live Pig has not been selected to delete?"
 }

@@ -39,7 +39,7 @@ import { useTranslation } from 'react-i18next';
 import { LoadingButton } from '@mui/lab';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { Excel } from 'antd-table-saveas-excel';
-import { Api_PDF_Report_COGS, Api_Report_COGS } from '~/components/Api/Report';
+import { Api_PDF_Report_COGM, Api_PDF_Report_COGS, Api_Report_COGM, Api_Report_COGS } from '~/components/Api/Report';
 import { useSelector } from 'react-redux';
 import SearchIcon from '@mui/icons-material/Search';
 import { toast, ToastContainer } from 'react-toastify';
@@ -59,63 +59,107 @@ export default function Report_COGS({ title }) {
     const [isLoading, setIsLoading] = React.useState(false);
     const { t } = useTranslation();
     const dataCostCenter = useSelector((state) =>
-        state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location == 'SH'),
+        state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location !== null),
     );
-
     const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
     const [valueCostCenter, setValueCostCenter] = React.useState('BS048');
+    const [valueKindLocation, setValueKindLocation] = React.useState('SH');
     const [valueUrlBase64, setValueUrlBase64] = React.useState('');
 
     //todo: call api export file
     /* #region  call api export list */
     const [dataListExport, setDataListExport] = useState([]);
     const [buttonExport, setButtonExport] = useState(true);
-    const [callApi, setCallApi] = useState(true);
+    const [callApi, setCallApi] = useState(false);
     useEffect(() => {
-        if (valueCostCenter) {
-            const process = async () => {
-                setIsLoading(true);
-                setButtonExport(true);
-                const status_code = await Api_Report_COGS({
-                    COSTCENTER: valueCostCenter,
-                    PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                    PERIOD_YEAR: valueDateAccountPeriod.year(),
-                    setDataExport: setDataListExport,
-                });
-                if (status_code) {
-                    setButtonExport(false);
-                }
-                setIsLoading(false);
-            };
-            process();
+        if (callApi && valueCostCenter) {
+            if (valueKindLocation == 'SH') {
+                const process = async () => {
+                    setIsLoading(true);
+                    setButtonExport(true);
+                    const status_code = await Api_Report_COGS({
+                        COSTCENTER: valueCostCenter,
+                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                        PERIOD_YEAR: valueDateAccountPeriod.year(),
+                        setDataExport: setDataListExport,
+                    });
+                    if (status_code) {
+                        setButtonExport(false);
+                    }
+                    setIsLoading(false);
+                };
+                process();
+            }
+            if (valueKindLocation == 'CH') {
+                const process = async () => {
+                    setIsLoading(true);
+                    setButtonExport(true);
+                    const status_code = await Api_Report_COGM({
+                        COSTCENTER: valueCostCenter,
+                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                        PERIOD_YEAR: valueDateAccountPeriod.year(),
+                        setDataExport: setDataListExport,
+                    });
+                    if (status_code) {
+                        setButtonExport(false);
+                    }
+                    setIsLoading(false);
+                };
+                process();
+            }
+            setCallApi(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [callApi]);
-    const handleViewReport = (event) => {
-        if (dataListExport.length > 0) {
-            const process = async () => {
-                setIsLoading(true);
-                await Api_PDF_Report_COGS({
-                    COSTCENTER: valueCostCenter,
-                    PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                    PERIOD_YEAR: valueDateAccountPeriod.year(),
-                    setDataUrlBase64: setValueUrlBase64,
-                });
-                setIsLoading(false);
-            };
-            process();
-        } else {
-            toast.warning(t('toast-nodata'));
+    useEffect(() => {
+        if (callApi && valueCostCenter) {
+            if (valueKindLocation == 'SH') {
+                const process = async () => {
+                    setIsLoading(true);
+                    const status_code = await Api_PDF_Report_COGS({
+                        COSTCENTER: valueCostCenter,
+                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                        PERIOD_YEAR: valueDateAccountPeriod.year(),
+                        setDataUrlBase64: setValueUrlBase64,
+                    });
+                    if (!status_code) {
+                        toast.warning(t('toast-nodata'));
+                    }
+                    setIsLoading(false);
+                };
+                process();
+            }
+            if (valueKindLocation == 'CH') {
+                const process = async () => {
+                    setIsLoading(true);
+                    const status_code = await Api_PDF_Report_COGM({
+                        COSTCENTER: valueCostCenter,
+                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                        PERIOD_YEAR: valueDateAccountPeriod.year(),
+                        setDataUrlBase64: setValueUrlBase64,
+                    });
+                    if (!status_code) {
+                        toast.warning(t('toast-nodata'));
+                    }
+                    setIsLoading(false);
+                };
+                process();
+            }
         }
+        setCallApi(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [callApi]);
+    const handleViewReport = (event) => {
+        setCallApi(true);
     };
 
     const handleChangePeriod = (event) => {
         setValueDateAccountPeriod(event);
-        setCallApi(!callApi);
     };
     const handleChangeCostCenter = (event) => {
         setValueCostCenter(event.target.value);
-        setCallApi(!callApi);
+        const kind_costcenter = dataCostCenter.filter((data) => data.code == event.target.value);
+        setValueKindLocation(kind_costcenter[0].kind_of_location);
     };
 
     const columnsExport = [
@@ -190,40 +234,62 @@ export default function Report_COGS({ title }) {
 
     //! handler click export file
     const handleClickExport = () => {
-        const data = dataListExport.map((el) => {
-            // let doc_date = dayjs(el.doc_date);
-            // let allcation_date = dayjs(el.allcation_date);
-            // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
-            // el.allcation_date =
-            //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
-            el.weight_after_prcessing = el.weight_after_prcessing.toLocaleString();
-            el.HET = el.HET.toLocaleString();
-            el.basic_count = el.basic_count.toLocaleString();
-            el.material_val = el.material_val.toLocaleString();
-            el.direct_labor = el.direct_labor.toLocaleString();
-            el.processing_fee = el.processing_fee.toLocaleString();
-            el.transportation = el.transportation.toLocaleString();
-            el.insurance = el.insurance.toLocaleString();
-            el.FOH = el.FOH.toLocaleString();
-            el.total_cost = el.total_cost.toLocaleString();
-            el.cogs_value = el.cogs_value.toLocaleString();
-            return el;
-        });
+        if (valueKindLocation == 'SH') {
+            const data = dataListExport.map((el) => {
+                // let doc_date = dayjs(el.doc_date);
+                // let allcation_date = dayjs(el.allcation_date);
+                // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
+                // el.allcation_date =
+                //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
+                el.weight_after_prcessing = el.weight_after_prcessing.toLocaleString();
+                el.HET = el.HET.toLocaleString();
+                el.basic_count = el.basic_count.toLocaleString();
+                el.material_val = el.material_val.toLocaleString();
+                el.direct_labor = el.direct_labor.toLocaleString();
+                el.processing_fee = el.processing_fee.toLocaleString();
+                el.transportation = el.transportation.toLocaleString();
+                el.insurance = el.insurance.toLocaleString();
+                el.FOH = el.FOH.toLocaleString();
+                el.total_cost = el.total_cost.toLocaleString();
+                el.cogs_value = el.cogs_value.toLocaleString();
+                return el;
+            });
 
-        const excel = new Excel();
-        excel
-            .addSheet('COGS')
-            .addColumns(columnsExport)
-            .addDataSource(
-                dataListExport.sort(function (a, b) {
-                    return b.product_id.localeCompare(a.product_id);
-                }),
+            const excel = new Excel();
+            excel
+                .addSheet('COGS')
+                .addColumns(columnsExport)
+                .addDataSource(
+                    dataListExport.sort(function (a, b) {
+                        return b.product_id.localeCompare(a.product_id);
+                    }),
 
-                {
-                    str2Percent: true,
-                },
-            )
-            .saveAs('COGS.xlsx');
+                    {
+                        str2Percent: true,
+                    },
+                )
+                .saveAs(`COGS_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
+        }
+        if (valueKindLocation == 'CH') {
+            function download(filename, data) {
+                var link = document.createElement('a');
+                link.href =
+                    'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' +
+                    encodeURIComponent(data);
+                link.setAttribute('download', filename);
+
+                link.style.display = 'none';
+                document.body.appendChild(link);
+
+                link.click();
+
+                document.body.removeChild(link);
+            }
+            download(
+                `COGM_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xls`,
+                dataListExport,
+            );
+        }
     };
     /* #endregion */
 

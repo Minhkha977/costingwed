@@ -9,6 +9,7 @@ import { HeaderLayoutOnly } from '~/components/Layout';
 import Report_COGS from '~/Pages/Report/COGS';
 import Report_InOut_Ward from '~/Pages/Report/InOutWard';
 import { useTranslation } from 'react-i18next';
+import LivePig from '~/Pages/Accountant/LivePig';
 
 export const publicRoutes = [
     { path: '/', component: Home, title: 'Dashboard' },
@@ -20,6 +21,7 @@ export const publicRoutes = [
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
     { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
+    { path: '/livepig', component: LivePig, title: 'live-pig' },
     // { path: '/reportcogm', component: Report_COGM, title: 'menu-report-cogm' },
     // { path: '/following', component: Following, layout: HeaderLayoutOnly },
     // { path: '/login', component: Login, layout: null },
@@ -34,6 +36,7 @@ export const accountantRoutes = [
     { path: '/costallocation', component: CostAllocation, title: 'menu-allocation' },
     { path: '/closeaccountingperiod', component: CloseAccountingPeriod, title: 'menu-close-period' },
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
+    { path: '/livepig', component: LivePig, title: 'live-pig' },
 ];
 export const reportRoutes = [
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },

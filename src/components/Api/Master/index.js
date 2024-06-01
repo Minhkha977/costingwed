@@ -17,19 +17,22 @@ export async function ApiGroupCost(setDataGroupCost) {
         const response = await DomainApi.get(
             `master/group-expense/unit/${localStorage.getItem('Unit')}?username=${localStorage.getItem('UserName')}`,
         );
-        setDataGroupCost(response.data);
+        const data = [{ code: null, name: 'Not selected' }, ...response.data];
+        setDataGroupCost(data);
     } catch (error) {
         console.log(error);
         toast.error(' Error api get data group cost list!');
     }
 }
 
-export async function ApiTypeCost(setDataTypeCost) {
+export async function ApiTypeCost(setDataTypeCost, setDataTypeCostFilter) {
     try {
         const response = await DomainApi.get(
             `master/type-expense/unit/${localStorage.getItem('Unit')}?username=${localStorage.getItem('UserName')}`,
         );
-        setDataTypeCost(response.data);
+        const data = [{ code: null, name: 'Not selected' }, ...response.data];
+        setDataTypeCost(data);
+        setDataTypeCostFilter(data);
     } catch (error) {
         console.log(error);
         toast.error(' Error api get type cost list!');

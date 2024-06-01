@@ -60,6 +60,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import SavingsIcon from '@mui/icons-material/Savings';
 
 const cx = classNames.bind(styles);
 
@@ -364,8 +365,10 @@ function Header() {
                                         <ManageHistoryIcon />
                                     ) : index === 2 ? (
                                         <LockIcon />
-                                    ) : (
+                                    ) : index === 3 ? (
                                         <LockOpenIcon />
+                                    ) : (
+                                        <SavingsIcon />
                                     )}
                                 </ListItemIcon>
                                 <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
@@ -389,10 +392,10 @@ function Header() {
                         color: '#ed6c02',
                     }}
                 >
-                    <AccountBalanceWalletIcon />
+                    {/* <AccountBalanceWalletIcon /> */}
+                    {openReport ? <ExpandLess /> : <ExpandMore />}
                 </ListItemIcon>
                 <ListItemText primary={t('report')} sx={{ opacity: open ? 1 : 0, color: '#ed6c02' }} />
-                {openReport ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
             {reportRoutes.map((route, index) => {
                 return (
@@ -859,8 +862,10 @@ function Header() {
                                                 <ManageHistoryIcon />
                                             ) : index === 2 ? (
                                                 <LockIcon />
-                                            ) : (
+                                            ) : index === 3 ? (
                                                 <LockOpenIcon />
+                                            ) : (
+                                                <SavingsIcon />
                                             )}
                                         </ListItemIcon>
                                         <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
@@ -884,10 +889,10 @@ function Header() {
                                 color: '#ed6c02',
                             }}
                         >
-                            <AssignmentIcon />
+                            {/* <AssignmentIcon /> */}
+                            {openReport ? <ExpandLess /> : <ExpandMore />}
                         </ListItemIcon>
                         <ListItemText primary={t('report')} sx={{ opacity: open ? 1 : 0, color: '#ed6c02' }} />
-                        {openReport ? <ExpandLess /> : <ExpandMore />}
                     </ListItemButton>
                     {reportRoutes.map((route, index) => {
                         return (

@@ -28,7 +28,7 @@ export const fetchApiCostCenter = createAsyncThunk('master/fetchApiCostCenter', 
     const response = await DomainApi.get(
         `master/cost-center?username=${localStorage.getItem('UserName')}&unitcode=${localStorage.getItem('Unit')}`,
     );
-    const data = [{ code: null, name: 'General Account', unitcode: 'UN001' }, ...response.data];
+    const data = [{ code: null, name: 'General Account', unitcode: 'UN001', kind_of_location: null }, ...response.data];
     return data;
 });
 

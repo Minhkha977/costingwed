@@ -1041,7 +1041,7 @@ function AccountingEntry({ title }) {
                         content={
                             valueTab === 'entry' ? (
                                 <>
-                                    {t('entry-code')}: {selectedRows}
+                                    {t('entry-code')}: {selectedRows.toString()}
                                     <br /> {t('description')}: {valueDescriptionAe}
                                     <br /> {t('currency')}: {valueCurrency}
                                     <br /> {t('account-group')}: {valueAccountGroupAE}

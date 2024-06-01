@@ -36,11 +36,10 @@ export async function Api_Report_COGS({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, s
         // setDataExport(response.data.cogs_detail);
         status_code = true;
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api export list! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api export list! \n' + error.message);
+            console.log(error.message);
         }
     }
     return status_code;
@@ -60,11 +59,10 @@ export async function Api_Report_InOut({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, 
         setDataExport(response.data.detail);
         status_code = true;
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api export list! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api export list! \n' + error.message);
+            console.log(error.message);
         }
     }
     return status_code;
@@ -75,25 +73,28 @@ export async function Api_PDF_Report_COGS({ COSTCENTER, PERIOD_YEAR, PERIOD_MONT
         if (PERIOD_MONTH !== 10 && PERIOD_MONTH !== 11 && PERIOD_MONTH !== 12) {
             var dateMonth = `0${PERIOD_MONTH}`;
         }
+        var status_code = false;
         let url = `report/unitcode/${localStorage.getItem('Unit')}/pdf/cogs?username=${localStorage.getItem(
             'UserName',
         )}&cost_center=${COSTCENTER}&acc_period_year=${PERIOD_YEAR}&acc_period_month=${dateMonth}`;
         const response = await DomainApi.get(url);
 
         setDataUrlBase64(response.data);
+        status_code = true;
         // setDataExport(response.data.cogs_detail);
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api get url base64! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api get url base64! \n' + error.message);
+            console.log(error.message);
         }
     }
+    return status_code;
 }
 
 export async function Api_PDF_Report_InOutWard({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, setDataUrlBase64 }) {
     try {
+        var status_code = false;
         if (PERIOD_MONTH !== 10 && PERIOD_MONTH !== 11 && PERIOD_MONTH !== 12) {
             var dateMonth = `0${PERIOD_MONTH}`;
         }
@@ -103,15 +104,16 @@ export async function Api_PDF_Report_InOutWard({ COSTCENTER, PERIOD_YEAR, PERIOD
         const response = await DomainApi.get(url);
 
         setDataUrlBase64(response.data);
+        status_code = true;
         // setDataExport(response.data.cogs_detail);
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api get url base64! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api get url base64! \n' + error.message);
+            console.log(error.message);
         }
     }
+    return status_code;
 }
 
 export async function Api_Report_COGM({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, setDataExport }) {
@@ -128,11 +130,10 @@ export async function Api_Report_COGM({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, s
         setDataExport(response.data);
         status_code = true;
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api export list! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api export list! \n' + error.message);
+            console.log(error.message);
         }
     }
     return status_code;
@@ -140,6 +141,7 @@ export async function Api_Report_COGM({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, s
 
 export async function Api_PDF_Report_COGM({ COSTCENTER, PERIOD_YEAR, PERIOD_MONTH, setDataUrlBase64 }) {
     try {
+        var status_code = false;
         if (PERIOD_MONTH !== 10 && PERIOD_MONTH !== 11 && PERIOD_MONTH !== 12) {
             var dateMonth = `0${PERIOD_MONTH}`;
         }
@@ -149,13 +151,14 @@ export async function Api_PDF_Report_COGM({ COSTCENTER, PERIOD_YEAR, PERIOD_MONT
         const response = await DomainApi.get(url);
 
         setDataUrlBase64(response.data);
+        status_code = true;
         // setDataExport(response.data.cogs_detail);
     } catch (error) {
-        console.log(error);
         if (error.response) {
-            toast.error(' Error api get url base64! \n' + error.response.data);
+            console.log(error.response.data);
         } else {
-            toast.error(' Error api get url base64! \n' + error.message);
+            console.log(error.message);
         }
     }
+    return status_code;
 }

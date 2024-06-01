@@ -35,6 +35,8 @@
     "button-lock": "Khóa(l)",
     "button-reopen": "Mở lại kỳ(r)",
     "button-view-report": "Xem báo cáo",
+    "button-calculate-cogm": "Tính COGS",
+    "button-calculate-cost-transfer": "Tạo bút toán tự động",
 
     "toast-cancel-new": "Hủy bỏ tạo mới!",
     "toast-cancel-update": "Hủy bỏ cập nhật!",
@@ -44,6 +46,11 @@
     "toast-fileexcel": "Vui lòng chọn loại file excel!",
     "toast-cancel-load-memo": "Hủy bỏ load memo từ FA!",
     "toast-nodata": "Không có dữ liệu để xem!",
+    "toast-success-cogm": "Đã tính COGS!",
+    "toast-success-cost-transfer": "Đã tạo bút toán tự động!",
+    "toast-cancel-cogm": "Hủy bỏ tính COGS!",
+    "toast-cancel-cost-transfer": "Hủy bỏ tạo bút toán tự động!",
+    "toast-error": "Chưa nhập dữ liệu!",
 
     "menu-acc-group": "Nhóm Tài Khoản",
     "menu-acc": "Tài Khoản",
@@ -124,15 +131,29 @@
     "close-period": "Khóa sổ kế toán đến kỳ",
     "close-toast-cancel": "Hủy bỏ đóng kỳ!",
     "close-toast-new": "Đóng kỳ",
+    "close-n": "Kỳ N",
+    "close-n1": "Kỳ N-1",
+    "close-n2": "Kỳ N-2",
     "new-period": "Ngày khóa sổ mới",
     "reopen-period": "Mở lại kỳ kế toán",
     "reopen-user": "Đăng ký người được chỉnh sửa",
     "reopen-toast-warn": "Vui lòng chọn tháng cần lùi và người được chỉnh sữa!",
     "reopen-toast-cancel": "Hủy bỏ mở lại kỳ mới!",
     "reopen-toast-new": "Mở lại kỳ?",
+    "expenses-period": "1. Chi phí trong kỳ",
 
     "report": "Báo cáo",
     "menu-report-cogs": "Báo cáo COGS",
     "menu-report-inout-ward": "Báo Cáo InOut Ward",
-    "menu-report-cogm": "Báo cáo COGM"
+    "menu-report-cogm": "Báo cáo COGM",
+
+    "live-pig": "Live Pigs",
+    "live-pig-title-list": "Danh sách Live Pigs từ farm đến SH",
+    "value": "Giá trị",
+    "transfer-id": "Mã chuyển",
+    "info-livepig": "Thông tin Live Pig",
+    "livepig-toast-new": "Tạo mới Live Pig?",
+    "livepig-toast-update": "Chỉnh sửa Live Pig?",
+    "livepig-toast-delete": "Xóa Live Pig?",
+    "livepig-delete-error": "Chưa chọn Live Pig để xóa?"
 }

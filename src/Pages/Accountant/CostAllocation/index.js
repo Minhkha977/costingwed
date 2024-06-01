@@ -582,7 +582,8 @@ function CostAllocation({ title }) {
                     str2Percent: true,
                 },
             )
-            .saveAs('Allocation List.xlsx');
+            .saveAs(`Allocation_${dayjs().format('YYYYMMDD')}.xlsx`);
+        // .saveAs(`Allocation_${dayjs().year()}${dayjs().month() + 1}${dayjs().date()}.xlsx`);
     };
     /* #endregion */
 
