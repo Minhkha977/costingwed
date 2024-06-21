@@ -52,6 +52,8 @@ import { Api_PDF_Report_COGM, Api_Report_COGM } from '~/components/Api/Report';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import MoveUpIcon from '@mui/icons-material/MoveUp';
 import { ApiCalCOGM, ApiCalCostTransfer, ApiLoadDataReport } from '~/components/Api/CloseAccountingPeriod';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import DialogLivePigs from './DialogLivePigs';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -74,7 +76,7 @@ function CloseAccountingPeriod({ title }) {
         state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location !== null),
     );
 
-    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
+    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs(dataPeriod_From_Redux));
     const [valueCostCenter, setValueCostCenter] = React.useState('');
 
     //todo: reload next month
@@ -344,8 +346,65 @@ function CloseAccountingPeriod({ title }) {
         },
     ];
 
+    //! handler open dialog
+    const [openDialogCost, setOpenDialogCost] = React.useState(false);
+    const handleClickOpenDialogDetail = () => {
+        setOpenDialogCost(true);
+    };
+
+    const handleCloseDialogDetail = () => {
+        setOpenDialogCost(false);
+    };
+
     //! on key event
     OnMultiKeyEvent(() => handleOpenPeriod(), 'l');
+
+    //? Mobile
+    //! button phan bo header
+    const mobileButtonCalculated = (
+        <Stack
+            direction={'column'}
+            spacing={1}
+            alignItems={'center'}
+            justifyContent={'flex-start'}
+            sx={{ display: { xs: 'flex', md: 'none' } }}
+        >
+            <LoadingButton
+                fullWidth
+                startIcon={<AddBoxIcon />}
+                variant="contained"
+                color="primary"
+                onClick={handleClickOpenDialogDetail}
+                loadingPosition="start"
+                sx={{ whiteSpace: 'nowrap' }}
+            >
+                {t('button-material-cost')}
+            </LoadingButton>
+
+            <LoadingButton
+                fullWidth
+                startIcon={<CalculateIcon />}
+                variant="contained"
+                color="warning"
+                onClick={() => setDialogIsOpenCalCOGM(true)}
+                loadingPosition="start"
+                sx={{ whiteSpace: 'nowrap' }}
+            >
+                {t('button-calculate-cogm')}
+            </LoadingButton>
+            <LoadingButton
+                fullWidth
+                startIcon={<MoveUpIcon />}
+                variant="contained"
+                color="secondary"
+                onClick={() => setDialogIsOpenCalCost(true)}
+                loadingPosition="start"
+                sx={{ whiteSpace: 'nowrap' }}
+            >
+                {t('button-calculate-cost-transfer')}
+            </LoadingButton>
+        </Stack>
+    );
     return (
         <Spin size="large" tip="Loading" spinning={isLoading} style={{ maxHeight: 'fit-content' }}>
             <div className="main">
@@ -391,6 +450,7 @@ function CloseAccountingPeriod({ title }) {
                         onAgree={agreeDialogCalCost}
                     />
                 )}
+                {openDialogCost && <DialogLivePigs open={openDialogCost} onClose={handleCloseDialogDetail} />}
                 <div role="presentation">
                     <Breadcrumbs aria-label="breadcrumb">
                         <Link
@@ -415,14 +475,14 @@ function CloseAccountingPeriod({ title }) {
                         <Grid xs={12} md={12}>
                             <Item>
                                 <Grid container spacing={1}>
-                                    <Grid xs={12} md={6}>
+                                    <Grid xs={12} md={5}>
                                         <Stack
                                             direction={'row'}
                                             spacing={2}
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6 style={{ width: '50%' }}>{t('close-period')}</h6>
+                                            <h6 style={{ width: '50%', textAlign: 'right' }}>{t('close-period')}</h6>
                                             <div style={{ width: '100%' }}>
                                                 <LocalizationProvider dateAdapter={AdapterDayjs} sx={{ width: '100%' }}>
                                                     <DatePicker
@@ -441,15 +501,15 @@ function CloseAccountingPeriod({ title }) {
                                             </div>
                                         </Stack>
                                     </Grid>
-                                    <Grid xs={12} md={6}>
+                                    <Grid xs={12} md={5}>
                                         <Stack
                                             direction={'row'}
                                             spacing={2}
                                             alignItems={'center'}
                                             justifyContent={'flex-start'}
                                         >
-                                            <h6 style={{ width: '50%' }}>{t('new-period')}</h6>
-                                            <div>
+                                            <h6 style={{ width: '50%', textAlign: 'right' }}>{t('new-period')}</h6>
+                                            <div style={{ width: '100%' }}>
                                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                     <DatePicker
                                                         // label={'"month" and "year"'}
@@ -465,22 +525,26 @@ function CloseAccountingPeriod({ title }) {
                                                     />
                                                 </LocalizationProvider>
                                             </div>
-                                            <LoadingButton
-                                                // loading
-                                                variant="contained"
-                                                color="primary"
-                                                startIcon={<LockIcon />}
-                                                onClick={handleOpenPeriod}
-                                            >
-                                                {t('button-lock')}
-                                            </LoadingButton>
                                         </Stack>
+                                    </Grid>
+                                    <Grid xs={12} md={2}>
+                                        <LoadingButton
+                                            fullWidth
+                                            // loading
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<LockIcon />}
+                                            onClick={handleOpenPeriod}
+                                        >
+                                            {t('button-lock')}
+                                        </LoadingButton>
                                     </Grid>
                                 </Grid>
                             </Item>
                         </Grid>
                         <Grid xs={12} md={12} sx={{ width: '100%' }}>
                             <Item>
+                                {mobileButtonCalculated}
                                 <Grid container>
                                     <Grid xs={12} md={12}>
                                         <Stack
@@ -498,7 +562,25 @@ function CloseAccountingPeriod({ title }) {
                                             >
                                                 {t('expenses-period')}
                                             </h5>
-                                            <div>
+
+                                            <Stack
+                                                direction={'row'}
+                                                spacing={2}
+                                                alignItems={'center'}
+                                                justifyContent={'flex-start'}
+                                                sx={{ display: { xs: 'none', md: 'flex' } }}
+                                            >
+                                                <LoadingButton
+                                                    startIcon={<AddBoxIcon />}
+                                                    variant="contained"
+                                                    color="primary"
+                                                    onClick={handleClickOpenDialogDetail}
+                                                    loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                >
+                                                    {t('button-material-cost')}
+                                                </LoadingButton>
+
                                                 <LoadingButton
                                                     startIcon={<CalculateIcon />}
                                                     variant="contained"
@@ -509,8 +591,7 @@ function CloseAccountingPeriod({ title }) {
                                                 >
                                                     {t('button-calculate-cogm')}
                                                 </LoadingButton>
-                                            </div>
-                                            <div>
+
                                                 <LoadingButton
                                                     startIcon={<MoveUpIcon />}
                                                     variant="contained"
@@ -521,7 +602,7 @@ function CloseAccountingPeriod({ title }) {
                                                 >
                                                     {t('button-calculate-cost-transfer')}
                                                 </LoadingButton>
-                                            </div>
+                                            </Stack>
                                         </Stack>
                                     </Grid>
                                     <Grid xs={12} md={12}>
@@ -541,9 +622,9 @@ function CloseAccountingPeriod({ title }) {
                                                                     alignItems={'center'}
                                                                     justifyContent={'flex-start'}
                                                                 >
-                                                                    <h6 style={{ width: '40%' }}>
+                                                                    <div className="form-title">
                                                                         {t('entry-period')}
-                                                                    </h6>
+                                                                    </div>
                                                                     <div style={{ width: '100%' }}>
                                                                         <LocalizationProvider
                                                                             dateAdapter={AdapterDayjs}

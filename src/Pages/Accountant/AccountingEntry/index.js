@@ -1793,7 +1793,7 @@ function AccountingEntry({ title }) {
                                                             </div>
                                                         </Stack>
                                                     </Grid>
-                                                    <Grid xs={12} md={8}>
+                                                    <Grid xs={12} md={5}>
                                                         <Stack
                                                             direction={'row'}
                                                             spacing={2}
@@ -1823,6 +1823,54 @@ function AccountingEntry({ title }) {
                                                                     {t('button-search')}
                                                                 </LoadingButton>
                                                             </div>
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid xs={12} md={3}>
+                                                        <div>
+                                                            <LoadingButton
+                                                                fullWidth
+                                                                startIcon={<PublishedWithChangesIcon />}
+                                                                variant="contained"
+                                                                color="secondary"
+                                                                onClick={() => setDialogIsOpenLoadMemo(true)}
+                                                                sx={{ whiteSpace: 'nowrap' }}
+                                                            >
+                                                                {t('load-memo')}
+                                                            </LoadingButton>
+                                                        </div>
+                                                    </Grid>
+
+                                                    {/* <Grid xs={12} md={8}>
+                                                        <Stack
+                                                            direction={'row'}
+                                                            spacing={2}
+                                                            alignItems={'center'}
+                                                            justifyContent={'flex-start'}
+                                                        >
+                                                            <TextField
+                                                                variant="outlined"
+                                                                fullWidth
+                                                                label={t('button-search')}
+                                                                size="small"
+                                                                value={valueSearchMemo}
+                                                                onChange={(event) =>
+                                                                    setValueSearchMemo(event.target.value)
+                                                                }
+                                                            />
+                                                            <div>
+                                                                <LoadingButton
+                                                                    startIcon={<SearchIcon />}
+                                                                    variant="contained"
+                                                                    color="warning"
+                                                                    onClick={() =>
+                                                                        setReloadListMemoHeader(!reloadListMemoHeader)
+                                                                    }
+                                                                    sx={{ whiteSpace: 'nowrap' }}
+                                                                >
+                                                                    {t('button-search')}
+                                                                </LoadingButton>
+                                                            </div>
+
                                                             <div>
                                                                 <LoadingButton
                                                                     startIcon={<PublishedWithChangesIcon />}
@@ -1835,7 +1883,7 @@ function AccountingEntry({ title }) {
                                                                 </LoadingButton>
                                                             </div>
                                                         </Stack>
-                                                    </Grid>
+                                                    </Grid> */}
                                                 </Grid>
                                             </Item>
                                         </Grid>
@@ -2254,16 +2302,6 @@ function AccountingEntry({ title }) {
                                                                     {t('entry-title-detail')}
                                                                 </h5>
                                                             </>
-
-                                                            {/* <Button variant="contained" color="warning">
-                                                                New
-                                                            </Button>
-                                                            <Button variant="contained" color="warning">
-                                                                Update
-                                                            </Button>
-                                                            <Button variant="contained" color="warning">
-                                                                Delete
-                                                            </Button> */}
                                                         </Stack>
                                                     </Grid>
                                                     <Grid xs={12} md={12} sx={{ width: '100%' }}>

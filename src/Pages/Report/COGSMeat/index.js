@@ -39,7 +39,14 @@ import { useTranslation } from 'react-i18next';
 import { LoadingButton } from '@mui/lab';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { Excel } from 'antd-table-saveas-excel';
-import { Api_PDF_Report_COGM, Api_PDF_Report_COGS, Api_Report_COGM, Api_Report_COGS } from '~/components/Api/Report';
+import {
+    Api_Export_COGS_Meat,
+    Api_PDF_Report_COGM,
+    Api_PDF_Report_COGS,
+    Api_PDF_Report_COGS_Meat,
+    Api_Report_COGM,
+    Api_Report_COGS,
+} from '~/components/Api/Report';
 import { useSelector } from 'react-redux';
 import SearchIcon from '@mui/icons-material/Search';
 import { toast, ToastContainer } from 'react-toastify';
@@ -54,14 +61,15 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-export default function Report_COGS({ title }) {
+export default function Report_COGS_Meat({ title }) {
     const access_token = useSelector((s) => s.FetchApi.token);
     const [isLoading, setIsLoading] = React.useState(false);
     const { t } = useTranslation();
+    const dataPeriod_From_Redux = useSelector((state) => state.FetchApi.listData_Period.acc_date);
     const dataCostCenter = useSelector((state) =>
         state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location !== null),
     );
-    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs());
+    const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs(dataPeriod_From_Redux));
     const [valueCostCenter, setValueCostCenter] = React.useState('BS048');
     const [valueKindLocation, setValueKindLocation] = React.useState('SH');
     const [valueUrlBase64, setValueUrlBase64] = React.useState('');
@@ -77,7 +85,7 @@ export default function Report_COGS({ title }) {
                 const process = async () => {
                     setIsLoading(true);
                     setButtonExport(true);
-                    const status_code = await Api_Report_COGS({
+                    const status_code = await Api_Export_COGS_Meat({
                         COSTCENTER: valueCostCenter,
                         PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                         PERIOD_YEAR: valueDateAccountPeriod.year(),
@@ -113,38 +121,20 @@ export default function Report_COGS({ title }) {
     }, [callApi]);
     useEffect(() => {
         if (callApi && valueCostCenter) {
-            if (valueKindLocation == 'SH') {
-                const process = async () => {
-                    setIsLoading(true);
-                    const status_code = await Api_PDF_Report_COGS({
-                        COSTCENTER: valueCostCenter,
-                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                        PERIOD_YEAR: valueDateAccountPeriod.year(),
-                        setDataUrlBase64: setValueUrlBase64,
-                    });
-                    if (!status_code) {
-                        toast.warning(t('toast-nodata'));
-                    }
-                    setIsLoading(false);
-                };
-                process();
-            }
-            if (valueKindLocation == 'CH') {
-                const process = async () => {
-                    setIsLoading(true);
-                    const status_code = await Api_PDF_Report_COGM({
-                        COSTCENTER: valueCostCenter,
-                        PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
-                        PERIOD_YEAR: valueDateAccountPeriod.year(),
-                        setDataUrlBase64: setValueUrlBase64,
-                    });
-                    if (!status_code) {
-                        toast.warning(t('toast-nodata'));
-                    }
-                    setIsLoading(false);
-                };
-                process();
-            }
+            const process = async () => {
+                setIsLoading(true);
+                const status_code = await Api_PDF_Report_COGS_Meat({
+                    COSTCENTER: valueCostCenter,
+                    PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
+                    PERIOD_YEAR: valueDateAccountPeriod.year(),
+                    setDataUrlBase64: setValueUrlBase64,
+                });
+                if (!status_code) {
+                    toast.warning(t('toast-nodata'));
+                }
+                setIsLoading(false);
+            };
+            process();
         }
         setCallApi(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -234,62 +224,24 @@ export default function Report_COGS({ title }) {
 
     //! handler click export file
     const handleClickExport = () => {
-        if (valueKindLocation == 'SH') {
-            const data = dataListExport.map((el) => {
-                // let doc_date = dayjs(el.doc_date);
-                // let allcation_date = dayjs(el.allcation_date);
-                // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
-                // el.allcation_date =
-                //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
-                el.weight_after_prcessing = el.weight_after_prcessing.toLocaleString();
-                el.HET = el.HET.toLocaleString();
-                el.basic_count = el.basic_count.toLocaleString();
-                el.material_val = el.material_val.toLocaleString();
-                el.direct_labor = el.direct_labor.toLocaleString();
-                el.processing_fee = el.processing_fee.toLocaleString();
-                el.transportation = el.transportation.toLocaleString();
-                el.insurance = el.insurance.toLocaleString();
-                el.FOH = el.FOH.toLocaleString();
-                el.total_cost = el.total_cost.toLocaleString();
-                el.cogs_value = el.cogs_value.toLocaleString();
-                return el;
-            });
+        function download(filename, data) {
+            var link = document.createElement('a');
+            link.href =
+                'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' +
+                encodeURIComponent(data);
+            link.setAttribute('download', filename);
 
-            const excel = new Excel();
-            excel
-                .addSheet('COGS')
-                .addColumns(columnsExport)
-                .addDataSource(
-                    dataListExport.sort(function (a, b) {
-                        return b.product_id.localeCompare(a.product_id);
-                    }),
+            link.style.display = 'none';
+            document.body.appendChild(link);
 
-                    {
-                        str2Percent: true,
-                    },
-                )
-                .saveAs(`COGS_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
+            link.click();
+
+            document.body.removeChild(link);
         }
-        if (valueKindLocation == 'CH') {
-            function download(filename, data) {
-                var link = document.createElement('a');
-                link.href =
-                    'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' +
-                    encodeURIComponent(data);
-                link.setAttribute('download', filename);
-
-                link.style.display = 'none';
-                document.body.appendChild(link);
-
-                link.click();
-
-                document.body.removeChild(link);
-            }
-            download(
-                `COGM_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xls`,
-                dataListExport,
-            );
-        }
+        download(
+            `COGS_Meat_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xls`,
+            dataListExport,
+        );
     };
     /* #endregion */
 

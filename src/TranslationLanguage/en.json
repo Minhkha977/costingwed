@@ -37,6 +37,7 @@
     "button-view-report": "View Report",
     "button-calculate-cogm": "Calculate COGS",
     "button-calculate-cost-transfer": "Create auto accounting entry",
+    "button-material-cost": "Add material costs",
 
     "toast-cancel-new": "Cancel create!",
     "toast-cancel-update": "Cancel update!",
@@ -143,9 +144,10 @@
     "expenses-period": "1. Expenses during the period",
 
     "report": "Report",
-    "menu-report-cogs": "COGS Report",
+    "menu-report-cogs": "COGM Report",
     "menu-report-inout-ward": "InOut Ward Report",
     "menu-report-cogm": "COGM Report",
+    "menu-report-cogs-meat": "COGS Meat Report",
 
     "live-pig": "Live Pigs",
     "live-pig-title-list": "List of Live Pigs from farm to SH",

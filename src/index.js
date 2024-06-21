@@ -29,9 +29,9 @@ pca.addEventCallback(
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <Provider store={store}>
-        {/* <React.StrictMode> */}
-        <App msalInstance={pca} />
-        {/* </React.StrictMode> */}
+        <React.StrictMode>
+            <App msalInstance={pca} />
+        </React.StrictMode>
     </Provider>,
 );
 

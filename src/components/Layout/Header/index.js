@@ -61,6 +61,9 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import SavingsIcon from '@mui/icons-material/Savings';
+import { Button, Stack } from '@mui/material';
+import ReactNiceAvatar, { genConfig } from 'react-nice-avatar';
+import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 
 const cx = classNames.bind(styles);
 
@@ -183,9 +186,13 @@ function Header() {
 
     const [openReport, setOpenReport] = React.useState(false);
 
+    const avaConfig = genConfig();
+    console.log(avaConfig);
     const handleClickReport = () => {
         setOpenReport(!openReport);
     };
+
+    const userName = activeAccount.name.split('(');
 
     React.useEffect(() => {
         async function fetchData() {
@@ -423,7 +430,13 @@ function Header() {
                                             color: '#ed6c02',
                                         }}
                                     >
-                                        {index === 0 ? <AccountBalanceWalletIcon /> : <LibraryBooksIcon />}
+                                        {index === 0 ? (
+                                            <ArticleIcon />
+                                        ) : index === 1 ? (
+                                            <LibraryBooksIcon />
+                                        ) : (
+                                            <TextSnippetIcon />
+                                        )}
                                     </ListItemIcon>
                                     <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                 </ListItemButton>
@@ -501,12 +514,14 @@ function Header() {
             transformOrigin={{ horizontal: 'right', vertical: 'top' }}
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-            <MenuItem onClick={handleMenuClose}>
-                <ListItemIcon>
-                    <PersonIcon fontSize="small" />
-                </ListItemIcon>
-                {t('menu-profile')}
-            </MenuItem>
+            <Link to={'/userprofile'} style={{ textDecoration: 'none', color: '#000000DE' }}>
+                <MenuItem onClick={handleMenuClose}>
+                    <ListItemIcon>
+                        <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    {t('menu-profile')}
+                </MenuItem>
+            </Link>
             <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                     <Logout fontSize="small" />
@@ -612,16 +627,18 @@ function Header() {
                     <Typography variant="h5" component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
                         Go Direct GL
                     </Typography>
-                    <Typography variant="h5" component="div" sx={{ display: { xs: 'block', sm: 'none' } }}>
-                        GD GL
-                    </Typography>
-                    <Typography
-                        variant="h8"
-                        component="div"
-                        sx={{ display: { xs: 'block', sm: 'block' }, marginLeft: 1 }}
-                    >
-                        v1.0.1
-                    </Typography>
+                    <Stack direction={'column'}>
+                        <Typography variant="h5" component="div" sx={{ display: { xs: 'block', sm: 'none' } }}>
+                            GD GL
+                        </Typography>
+                        <Typography
+                            variant="h8"
+                            component="div"
+                            sx={{ display: { xs: 'block', sm: 'block' }, marginLeft: 1 }}
+                        >
+                            v1.0.1
+                        </Typography>
+                    </Stack>
                     {/* <Search>
                         <SearchIconWrapper>
                             <SearchIcon />
@@ -689,12 +706,12 @@ function Header() {
                                 width: '100%',
                                 // textAlign: 'center',
                                 alignItems: 'center',
-                                // whiteSpace: 'nowrap',
+                                whiteSpace: 'nowrap',
                                 // overflow: 'hidden',
                                 // textOverflow: 'ellipsis',
                             }}
                         >
-                            {activeAccount.username}
+                            {userName[0]}
                         </Typography>
                         {/* <IconButton size="large" aria-label="show 4 new mails" color="inherit">
                             <Badge badgeContent={4} color="error">
@@ -715,8 +732,11 @@ function Header() {
                                 aria-haspopup="true"
                                 onClick={handleProfileMenuOpen}
                                 color="inherit"
+                                sx={{ textAlign: 'unset' }}
                             >
-                                <AccountCircle />
+                                <div style={{ display: 'block' }}>
+                                    <ReactNiceAvatar style={{ width: '35px', height: '35px' }} {...avaConfig} />
+                                </div>
                             </IconButton>
                         </Tooltip>
                     </Box>
@@ -920,7 +940,13 @@ function Header() {
                                                     color: '#ed6c02',
                                                 }}
                                             >
-                                                {index === 0 ? <ArticleIcon /> : <LibraryBooksIcon />}
+                                                {index === 0 ? (
+                                                    <ArticleIcon />
+                                                ) : index === 1 ? (
+                                                    <LibraryBooksIcon />
+                                                ) : (
+                                                    <TextSnippetIcon />
+                                                )}
                                             </ListItemIcon>
                                             <ListItemText primary={t(route.title)} sx={{ opacity: open ? 1 : 0 }} />
                                         </ListItemButton>

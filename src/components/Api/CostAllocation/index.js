@@ -12,6 +12,7 @@ export async function ApiCostAllocationListHeader(valueStatus, setDataListCostAl
             url += `&status=${valueStatus}`;
         }
         const response = await DomainApi.get(url);
+        // const dataTotal = [{ doc_code: 'TOTAL', total_cost: getTotals(response.data, 'total_cost') }, ...response.data];
         setDataListCostAllocationHeader(response.data.sort((a, b) => a.doc_code.localeCompare(b.doc_code)));
     } catch (error) {
         console.log(error);

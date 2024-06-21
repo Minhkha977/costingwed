@@ -6,5 +6,5 @@ import axios from 'axios';
 export default axios.create({
     baseURL: `https://gdsouth.japfa.com.vn:62450/`,
     // baseURL: `http://apps02.japfa.com.vn:52447/`,
-    // baseURL: `http://localhost:56027/`,
+    // baseURL: `http://localhost:56050/`,
 });

@@ -8,12 +8,12 @@ export async function ApiLivePigList(valuePeriodMonth, valuePeriodYear, setDataL
         }
         let url = `journal/unitcode/${localStorage.getItem(
             'Unit',
-        )}/live-pig-value/transfer-to-SH?username=${localStorage.getItem(
+        )}/live-pigs-value/transfer-to-SH?username=${localStorage.getItem(
             'UserName',
         )}&acc_period_month=${dateMonth}&acc_period_year=${valuePeriodYear}`;
 
         const response = await DomainApi.get(url);
-        setDataList(response.data);
+        setDataList(response.data.sort((a, b) => a.cost_center_name - b.cost_center_name));
     } catch (error) {
         console.log(error);
         toast.error(' Error api get data list!');
@@ -22,6 +22,7 @@ export async function ApiLivePigList(valuePeriodMonth, valuePeriodYear, setDataL
 
 export async function ApiCreateLivePig(
     access_token,
+    valueType,
     valueCostCenter,
     value,
     valueDescription,
@@ -42,6 +43,7 @@ export async function ApiCreateLivePig(
                 trans_value: value,
                 description: valueDescription,
                 username: localStorage.getItem('UserName'),
+                type: valueType,
             };
             const response = await DomainApi.post(
                 `journal/unitcode/${localStorage.getItem(
@@ -67,6 +69,7 @@ export async function ApiCreateLivePig(
 export async function ApiUpdateLivePig(
     access_token,
     valueCode,
+    valueType,
     valueCostCenter,
     value,
     valueDescription,
@@ -88,6 +91,7 @@ export async function ApiUpdateLivePig(
                 trans_value: value,
                 description: valueDescription,
                 username: localStorage.getItem('UserName'),
+                type: valueType,
             };
             const response = await DomainApi.put(
                 `journal/unitcode/${localStorage.getItem(

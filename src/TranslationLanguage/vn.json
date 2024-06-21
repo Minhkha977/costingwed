@@ -37,6 +37,7 @@
     "button-view-report": "Xem báo cáo",
     "button-calculate-cogm": "Tính COGS",
     "button-calculate-cost-transfer": "Tạo bút toán tự động",
+    "button-material-cost": "Nhập chi phí nguyên vật liệu",
 
     "toast-cancel-new": "Hủy bỏ tạo mới!",
     "toast-cancel-update": "Hủy bỏ cập nhật!",
@@ -143,9 +144,10 @@
     "expenses-period": "1. Chi phí trong kỳ",
 
     "report": "Báo cáo",
-    "menu-report-cogs": "Báo cáo COGS",
+    "menu-report-cogs": "Báo cáo COGM",
     "menu-report-inout-ward": "Báo Cáo InOut Ward",
     "menu-report-cogm": "Báo cáo COGM",
+    "menu-report-cogs-meat": "Báo cáo COGS Meat",
 
     "live-pig": "Live Pigs",
     "live-pig-title-list": "Danh sách Live Pigs từ farm đến SH",

@@ -98,9 +98,6 @@ function LivePig({ title }) {
         setValueNameCostCenter(name[0].name);
     };
 
-    //! on key event
-    // OnMultiKeyEvent(() => handleReopenPeriod(), 'r');
-
     // TODO call api get data account
     /* #region  call api list */
     const [reloadList, setReloadList] = React.useState(false);
@@ -347,6 +344,14 @@ function LivePig({ title }) {
         setIsLoading(false);
     }, [callApiDelete]);
     /* #endregion */
+
+    //! on key event
+    // OnMultiKeyEvent(() => handleReopenPeriod(), 'r');
+    OnMultiKeyEvent(handleOnClickNew, valueNewButton ? '' : 'n');
+    OnMultiKeyEvent(handleOnClickUpdate, valueUpdateButton ? '' : 'u');
+    OnMultiKeyEvent(handleClickSave, valueDisableSaveButton ? '' : 's');
+    OnMultiKeyEvent(handleOnClickDelete, 'd');
+
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={isLoading}>
             <div className="main">

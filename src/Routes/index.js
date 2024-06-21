@@ -6,10 +6,12 @@ import CostAllocation from '~/Pages/Accountant/CostAllocation';
 import CloseAccountingPeriod from '~/Pages/Accountant/CloseAccountingPeriod';
 import OpenAccountingPeriod from '~/Pages/Accountant/OpenAccountingPeriod';
 import { HeaderLayoutOnly } from '~/components/Layout';
-import Report_COGS from '~/Pages/Report/COGS';
+import Report_COGS from '~/Pages/Report/COGM';
 import Report_InOut_Ward from '~/Pages/Report/InOutWard';
 import { useTranslation } from 'react-i18next';
 import LivePig from '~/Pages/Accountant/LivePig';
+import UserProfile from '~/Pages/UserProfile';
+import Report_COGS_Meat from '~/Pages/Report/COGSMeat';
 
 export const publicRoutes = [
     { path: '/', component: Home, title: 'Dashboard' },
@@ -21,7 +23,9 @@ export const publicRoutes = [
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
     { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
-    { path: '/livepig', component: LivePig, title: 'live-pig' },
+    { path: '/userprofile', component: UserProfile, title: 'menu-profile' },
+    { path: '/reportcogsmeat', component: Report_COGS_Meat, title: 'menu-report-cogs-meat' },
+    // { path: '/livepig', component: LivePig, title: 'live-pig' },
     // { path: '/reportcogm', component: Report_COGM, title: 'menu-report-cogm' },
     // { path: '/following', component: Following, layout: HeaderLayoutOnly },
     // { path: '/login', component: Login, layout: null },
@@ -36,10 +40,11 @@ export const accountantRoutes = [
     { path: '/costallocation', component: CostAllocation, title: 'menu-allocation' },
     { path: '/closeaccountingperiod', component: CloseAccountingPeriod, title: 'menu-close-period' },
     { path: '/openaccountingperiod', component: OpenAccountingPeriod, title: 'menu-open-period' },
-    { path: '/livepig', component: LivePig, title: 'live-pig' },
+    // { path: '/livepig', component: LivePig, title: 'live-pig' },
 ];
 export const reportRoutes = [
     { path: '/reportcogs', component: Report_COGS, title: 'menu-report-cogs' },
     { path: '/reportinout', component: Report_InOut_Ward, title: 'menu-report-inout-ward' },
     // { path: '/reportcogm', component: Report_COGM, title: 'menu-report-cogm' },
+    { path: '/reportcogsmeat', component: Report_COGS_Meat, title: 'menu-report-cogs-meat' },
 ];

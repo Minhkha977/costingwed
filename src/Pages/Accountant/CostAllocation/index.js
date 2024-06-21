@@ -66,6 +66,14 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
+const getTotals = (data, key) => {
+    let total = 0;
+    data.forEach((item) => {
+        total += item[key];
+    });
+    return total;
+};
+
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     clipPath: 'inset(50%)',
@@ -208,7 +216,7 @@ function CostAllocation({ title }) {
 
     //! select row header in datagrid
     const onHandleRowsSelectionHeader = (ids) => {
-        const selectedRowsData = ids.map((id) => dataListHeader.find((row) => row.ids === id));
+        const selectedRowsData = ids.map((id) => dataListHeader.find((row) => row.doc_code === id));
         if (selectedRowsData) {
             {
                 selectedRowsData.map((key) => {
@@ -551,6 +559,14 @@ function CostAllocation({ title }) {
         },
     ];
 
+    const CustomFooter = (props) => {
+        return (
+            <Box sx={{ p: 1, display: 'flex', width: '100%', justifyContent: 'flex-end' }}>
+                Total Cost: {getTotals(dataListHeader, 'total_cost').toLocaleString()}
+            </Box>
+        );
+    };
+
     //! handler click export file
     const handleClickExport = () => {
         const data = dataListExport.map((el) => {
@@ -749,6 +765,131 @@ function CostAllocation({ title }) {
         setValueDisabledSaveButton(false);
     };
 
+    //? Mobile
+    //! button phan bo header
+    const mobileButtonAllocation = (
+        <Stack direction={'row'} justifyContent={'flex-end'} spacing={2} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            <LoadingButton
+                startIcon={<CurrencyExchangeIcon />}
+                variant="contained"
+                color="secondary"
+                loading={valueButtonProcess}
+                loadingPosition="start"
+                disabled={valueButtonProcess}
+                onClick={handleClickButtonProcess}
+                sx={{
+                    display: valueButtonProcess ? 'none' : null,
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {t('button-process')}
+            </LoadingButton>
+
+            <LoadingButton
+                startIcon={<StopCircleIcon />}
+                variant="contained"
+                color="error"
+                disabled={valueButtonPause}
+                onClick={handleClickButtonPause}
+                sx={{
+                    display: valueButtonPause ? 'none' : null,
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {t('button-pause')}
+            </LoadingButton>
+        </Stack>
+    );
+    //! button new update save header
+    const mobileButtonheader = (
+        <Stack direction={'column'} spacing={1} sx={{ display: { xs: 'flex', md: 'none' } }}>
+            <Stack direction={'row'} spacing={1} justifyContent={'space-between'}>
+                <LoadingButton
+                    fullWidth
+                    startIcon={<AddBoxIcon />}
+                    variant="contained"
+                    color="success"
+                    onClick={handleClickNewHeader}
+                    disabled={valueButtonNew}
+                    loading={valueButtonNew}
+                    loadingPosition="start"
+                    sx={{
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {t('button-new')}
+                </LoadingButton>
+
+                <LoadingButton
+                    fullWidth
+                    startIcon={<SystemUpdateAltIcon />}
+                    variant="contained"
+                    color="warning"
+                    onClick={handleClickUpdateHeader}
+                    disabled={valueButtonUpdate}
+                    loading={valueButtonUpdate}
+                    loadingPosition="start"
+                    sx={{
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {t('button-update')}
+                </LoadingButton>
+            </Stack>
+
+            <LoadingButton
+                startIcon={<SaveIcon />}
+                variant="contained"
+                color="primary"
+                onClick={handleClickSaveHeader}
+                disabled={valueDisabledSaveButton}
+            >
+                {t('button-save')}
+            </LoadingButton>
+        </Stack>
+    );
+    //! button detail
+    const mobileButtonDetail = (
+        <Stack
+            width={'100%'}
+            direction={'row'}
+            spacing={2}
+            alignItems={'center'}
+            justifyContent={'flex-end'}
+            sx={{ display: { xs: 'flex', md: 'none' } }}
+        >
+            <LoadingButton
+                component="label"
+                role={undefined}
+                variant="outlined"
+                tabIndex={-1}
+                startIcon={<PostAddIcon />}
+                sx={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                }}
+            >
+                {fileExcel
+                    ? fileExcel.length > 0
+                        ? fileExcel[0].name.slice(0, 20) + '...'
+                        : t('button-import')
+                    : t('button-import')}
+                <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
+            </LoadingButton>
+            <LoadingButton
+                component="label"
+                role={undefined}
+                variant="contained"
+                startIcon={<CloudUploadIcon />}
+                onClick={handleClickImportFile}
+                disabled={!valueEditGrid}
+                sx={{ whiteSpace: 'nowrap' }}
+            >
+                {t('button-upload')}
+            </LoadingButton>
+        </Stack>
+    );
     return (
         <Spin size="large" tip={'Loading'} style={{ maxHeight: 'fit-content' }} spinning={valueIsLoading}>
             <div className="main">
@@ -905,6 +1046,9 @@ function CostAllocation({ title }) {
                                                 <h5
                                                     style={{
                                                         fontWeight: 'bold',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
                                                     }}
                                                 >
                                                     {t('allocation-list')}
@@ -916,6 +1060,7 @@ function CostAllocation({ title }) {
                                                     onClick={handleClickExport}
                                                     loading={buttonExport}
                                                     loadingPosition="start"
+                                                    sx={{ whiteSpace: 'nowrap' }}
                                                 >
                                                     {t('button-export')}
                                                 </LoadingButton>
@@ -928,20 +1073,26 @@ function CostAllocation({ title }) {
                                                 <DataGrid
                                                     rows={dataListHeader}
                                                     columns={columnsHeader}
-                                                    initialState={{
-                                                        pagination: {
-                                                            paginationModel: { page: 0, pageSize: 5 },
-                                                        },
-                                                    }}
-                                                    pageSizeOptions={[5, 10, 15]}
+                                                    // initialState={{
+                                                    //     pagination: {
+                                                    //         paginationModel: {
+                                                    //             page: 0,
+                                                    //             pageSize: 5,
+                                                    //         },
+                                                    //     },
+                                                    // }}
+                                                    // pageSizeOptions={[5, 10, 15]}
                                                     autoHeight
-                                                    getRowId={(row) => row.ids}
+                                                    getRowId={(row) => row.doc_code}
                                                     loading={valueIsLoading}
                                                     onRowSelectionModelChange={(ids) =>
                                                         onHandleRowsSelectionHeader(ids)
                                                     }
                                                     showCellVerticalBorder
                                                     showColumnVerticalBorder
+                                                    slots={{
+                                                        footer: CustomFooter,
+                                                    }}
                                                 />
                                             </div>
                                         </Stack>
@@ -954,6 +1105,7 @@ function CostAllocation({ title }) {
                             <Item>
                                 <Grid>
                                     <Grid xs={12} md={12}>
+                                        {mobileButtonAllocation}
                                         <Stack
                                             width={'100%'}
                                             direction={'row'}
@@ -976,7 +1128,11 @@ function CostAllocation({ title }) {
                                                     {t('allocation-infor')}
                                                 </h5>
                                             </>
-                                            <Stack direction={'row'} spacing={1}>
+                                            <Stack
+                                                direction={'row'}
+                                                spacing={1}
+                                                sx={{ display: { xs: 'none', md: 'flex' } }}
+                                            >
                                                 <LoadingButton
                                                     startIcon={<AddBoxIcon />}
                                                     variant="contained"
@@ -991,6 +1147,7 @@ function CostAllocation({ title }) {
                                                 >
                                                     {t('button-new')}
                                                 </LoadingButton>
+
                                                 <LoadingButton
                                                     startIcon={<SystemUpdateAltIcon />}
                                                     variant="contained"
@@ -1005,6 +1162,7 @@ function CostAllocation({ title }) {
                                                 >
                                                     {t('button-update')}
                                                 </LoadingButton>
+
                                                 <LoadingButton
                                                     startIcon={<SaveIcon />}
                                                     variant="contained"
@@ -1014,6 +1172,7 @@ function CostAllocation({ title }) {
                                                 >
                                                     {t('button-save')}
                                                 </LoadingButton>
+
                                                 <LoadingButton
                                                     startIcon={<CurrencyExchangeIcon />}
                                                     variant="contained"
@@ -1029,6 +1188,7 @@ function CostAllocation({ title }) {
                                                 >
                                                     {t('button-process')}
                                                 </LoadingButton>
+
                                                 <LoadingButton
                                                     startIcon={<StopCircleIcon />}
                                                     variant="contained"
@@ -1331,12 +1491,14 @@ function CostAllocation({ title }) {
                                             </Grid>
                                         </Item>
                                     </Grid>
+                                    {mobileButtonheader}
                                 </Grid>
                             </Item>
                         </Grid>
                         <Grid xs={12} md={12}>
                             <Item>
-                                <Grid>
+                                {mobileButtonDetail}
+                                <Grid container spacing={2}>
                                     <Grid xs={12} md={12}>
                                         <Stack
                                             width={'100%'}
@@ -1359,37 +1521,45 @@ function CostAllocation({ title }) {
                                                 {t('entry-title-detail')}
                                             </h5>
                                             <Stack direction={'row'} spacing={1}>
-                                                <LoadingButton
-                                                    component="label"
-                                                    role={undefined}
-                                                    variant="outlined"
-                                                    tabIndex={-1}
-                                                    startIcon={<PostAddIcon />}
-                                                    sx={{
-                                                        width: 300,
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                    }}
-                                                >
-                                                    {fileExcel
-                                                        ? fileExcel.length > 0
-                                                            ? fileExcel[0].name.slice(0, 25) + '...'
-                                                            : t('button-import')
-                                                        : t('button-import')}
-                                                    <VisuallyHiddenInput type="file" onChange={handleClickChoseFile} />
-                                                </LoadingButton>
-                                                <LoadingButton
-                                                    component="label"
-                                                    role={undefined}
-                                                    variant="contained"
-                                                    startIcon={<CloudUploadIcon />}
-                                                    onClick={handleClickImportFile}
-                                                    disabled={!valueEditGrid}
-                                                    sx={{ whiteSpace: 'nowrap' }}
-                                                >
-                                                    {t('button-upload')}
-                                                </LoadingButton>
+                                                <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                                                    <Stack direction={'row'} spacing={1}>
+                                                        <LoadingButton
+                                                            component="label"
+                                                            role={undefined}
+                                                            variant="outlined"
+                                                            tabIndex={-1}
+                                                            startIcon={<PostAddIcon />}
+                                                            sx={{
+                                                                width: 300,
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                            }}
+                                                        >
+                                                            {fileExcel
+                                                                ? fileExcel.length > 0
+                                                                    ? fileExcel[0].name.slice(0, 25) + '...'
+                                                                    : t('button-import')
+                                                                : t('button-import')}
+                                                            <VisuallyHiddenInput
+                                                                type="file"
+                                                                onChange={handleClickChoseFile}
+                                                            />
+                                                        </LoadingButton>
+
+                                                        <LoadingButton
+                                                            component="label"
+                                                            role={undefined}
+                                                            variant="contained"
+                                                            startIcon={<CloudUploadIcon />}
+                                                            onClick={handleClickImportFile}
+                                                            disabled={!valueEditGrid}
+                                                            sx={{ whiteSpace: 'nowrap' }}
+                                                        >
+                                                            {t('button-upload')}
+                                                        </LoadingButton>
+                                                    </Stack>
+                                                </Box>
 
                                                 <LoadingButton
                                                     startIcon={<AddBoxIcon />}
@@ -1405,6 +1575,7 @@ function CostAllocation({ title }) {
                                             </Stack>
                                         </Stack>
                                     </Grid>
+
                                     <Grid xs={12} md={12} sx={{ width: '100%' }}>
                                         <Item>
                                             <Stack spacing={0}>

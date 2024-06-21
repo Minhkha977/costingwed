@@ -39,17 +39,11 @@ import { useTranslation } from 'react-i18next';
 import { LoadingButton } from '@mui/lab';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { Excel } from 'antd-table-saveas-excel';
-import {
-    Api_Export_InOut_CH,
-    Api_Export_InOut_SH,
-    Api_PDF_Report_InOutWard,
-    Api_PDF_Report_InOutWard_CH,
-    Api_Report_InOut,
-} from '~/components/Api/Report';
+import { Api_PDF_Report_COGM, Api_PDF_Report_COGS, Api_Report_COGM, Api_Report_COGS } from '~/components/Api/Report';
 import { useSelector } from 'react-redux';
 import SearchIcon from '@mui/icons-material/Search';
-import { Spin } from 'antd';
 import { toast, ToastContainer } from 'react-toastify';
+import { Spin } from 'antd';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -60,7 +54,7 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
-export default function Report_InOut_Ward({ title }) {
+export default function Report_COGM({ title }) {
     const access_token = useSelector((s) => s.FetchApi.token);
     const [isLoading, setIsLoading] = React.useState(false);
     const { t } = useTranslation();
@@ -68,9 +62,9 @@ export default function Report_InOut_Ward({ title }) {
     const dataCostCenter = useSelector((state) =>
         state.FetchApi.listData_CostCenter.filter((data) => data.kind_of_location !== null),
     );
-    const [valueKindLocation, setValueKindLocation] = React.useState('SH');
     const [valueDateAccountPeriod, setValueDateAccountPeriod] = React.useState(dayjs(dataPeriod_From_Redux));
     const [valueCostCenter, setValueCostCenter] = React.useState('BS048');
+    const [valueKindLocation, setValueKindLocation] = React.useState('SH');
     const [valueUrlBase64, setValueUrlBase64] = React.useState('');
 
     //todo: call api export file
@@ -84,7 +78,7 @@ export default function Report_InOut_Ward({ title }) {
                 const process = async () => {
                     setIsLoading(true);
                     setButtonExport(true);
-                    const status_code = await Api_Export_InOut_SH({
+                    const status_code = await Api_Report_COGS({
                         COSTCENTER: valueCostCenter,
                         PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                         PERIOD_YEAR: valueDateAccountPeriod.year(),
@@ -101,7 +95,7 @@ export default function Report_InOut_Ward({ title }) {
                 const process = async () => {
                     setIsLoading(true);
                     setButtonExport(true);
-                    const status_code = await Api_Export_InOut_CH({
+                    const status_code = await Api_Report_COGM({
                         COSTCENTER: valueCostCenter,
                         PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                         PERIOD_YEAR: valueDateAccountPeriod.year(),
@@ -116,7 +110,6 @@ export default function Report_InOut_Ward({ title }) {
             }
             setCallApi(false);
         }
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [callApi]);
     useEffect(() => {
@@ -124,7 +117,7 @@ export default function Report_InOut_Ward({ title }) {
             if (valueKindLocation == 'SH') {
                 const process = async () => {
                     setIsLoading(true);
-                    const status_code = await Api_PDF_Report_InOutWard({
+                    const status_code = await Api_PDF_Report_COGS({
                         COSTCENTER: valueCostCenter,
                         PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                         PERIOD_YEAR: valueDateAccountPeriod.year(),
@@ -140,7 +133,7 @@ export default function Report_InOut_Ward({ title }) {
             if (valueKindLocation == 'CH') {
                 const process = async () => {
                     setIsLoading(true);
-                    const status_code = await Api_PDF_Report_InOutWard_CH({
+                    const status_code = await Api_PDF_Report_COGM({
                         COSTCENTER: valueCostCenter,
                         PERIOD_MONTH: valueDateAccountPeriod.month() + 1,
                         PERIOD_YEAR: valueDateAccountPeriod.year(),
@@ -172,106 +165,111 @@ export default function Report_InOut_Ward({ title }) {
 
     const columnsExport = [
         {
-            title: '',
-            dataIndex: 'item_name',
-            key: 'item_name',
+            title: 'Results',
+            dataIndex: 'product_name',
+            key: 'product_name',
         },
         {
-            title: 'Opening Qty',
-            dataIndex: 'begin_qty',
-            key: 'begin_qty',
+            title: 'Kg',
+            dataIndex: 'weight_after_prcessing',
+            key: 'weight_after_prcessing',
         },
         {
-            title: 'Opening Value',
+            title: 'Yield',
             // width: 300,
-            dataIndex: 'begin_value',
-            key: 'begin_value',
+            dataIndex: 'yield_display',
+            key: 'yield_display',
         },
         {
-            title: 'Inward Qty',
-            dataIndex: 'inward_qty',
-            key: 'inward_qty',
+            title: 'HET',
+            dataIndex: 'HET',
+            key: 'HET',
         },
         {
-            title: 'Inward Value',
-            dataIndex: 'inward_value',
-            key: 'inward_value',
+            title: 'Basic Count',
+            dataIndex: 'basic_count',
+            key: 'basic_count',
         },
         {
-            title: 'Trans Fee Qty',
-            dataIndex: 'inward_trans_fee_qty',
-            key: 'inward_trans_fee_qty',
+            title: 'Material',
+            dataIndex: 'material_val',
+            key: 'material_val',
         },
         {
-            title: 'Trans Fee Value',
-            dataIndex: 'inward_trans_fee_value',
-            key: 'inward_trans_fee_value',
+            title: 'Direct Labor',
+            dataIndex: 'direct_labor',
+            key: 'direct_labor',
         },
         {
-            title: 'Outward Qty',
-            dataIndex: 'outward_qty',
-            key: 'outward_qty',
+            title: 'Processing Fee',
+            dataIndex: 'processing_fee',
+            key: 'processing_fee',
         },
         {
-            title: 'Outward Rate',
+            title: 'Transportation',
             // width: 300,
-            dataIndex: 'outward_rate',
-            key: 'outward_rate',
+            dataIndex: 'transportation',
+            key: 'transportation',
         },
         {
-            title: 'Outward Value',
-            dataIndex: 'outward_value',
-            key: 'outward_value',
+            title: 'Insurance',
+            dataIndex: 'insurance',
+            key: 'insurance',
         },
         {
-            title: 'Closing Qty',
-            dataIndex: 'end_qty',
-            key: 'end_qty',
+            title: 'FOH',
+            dataIndex: 'FOH',
+            key: 'FOH',
         },
         {
-            title: 'Closing Value',
-            dataIndex: 'end_value',
-            key: 'end_value',
+            title: 'Total Cost',
+            dataIndex: 'total_cost',
+            key: 'total_cost',
+        },
+        {
+            title: 'VND/KG',
+            dataIndex: 'cogs_value',
+            key: 'cogs_value',
         },
     ];
 
     //! handler click export file
     const handleClickExport = () => {
         if (valueKindLocation == 'SH') {
-            const data = dataListExport.map((el) => {
-                // let doc_date = dayjs(el.doc_date);
-                // let allcation_date = dayjs(el.allcation_date);
-                // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
-                // el.allcation_date =
-                //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
-                el.begin_qty = el.begin_qty.toLocaleString();
-                el.begin_value = el.begin_value.toLocaleString();
-                el.inward_qty = el.inward_qty.toLocaleString();
-                el.inward_value = el.inward_value.toLocaleString();
-                el.inward_trans_fee_qty = el.inward_trans_fee_qty.toLocaleString();
-                el.inward_trans_fee_value = el.inward_trans_fee_value.toLocaleString();
-                el.outward_qty = el.outward_qty.toLocaleString();
-                el.outward_rate = el.outward_rate.toLocaleString();
-                el.outward_value = el.outward_value.toLocaleString();
-                el.end_qty = el.end_qty.toLocaleString();
-                el.end_value = el.end_value.toLocaleString();
-                return el;
-            });
+            // const data = dataListExport.map((el) => {
+            //     // let doc_date = dayjs(el.doc_date);
+            //     // let allcation_date = dayjs(el.allcation_date);
+            //     // el.doc_date = doc_date.date() + '/' + (doc_date.month() + 1) + '/' + doc_date.year();
+            //     // el.allcation_date =
+            //     //     allcation_date.date() + '/' + (allcation_date.month() + 1) + '/' + allcation_date.year();
+            //     el.weight_after_prcessing = el.weight_after_prcessing.toLocaleString();
+            //     el.HET = el.HET.toLocaleString();
+            //     el.basic_count = el.basic_count.toLocaleString();
+            //     el.material_val = el.material_val.toLocaleString();
+            //     el.direct_labor = el.direct_labor.toLocaleString();
+            //     el.processing_fee = el.processing_fee.toLocaleString();
+            //     el.transportation = el.transportation.toLocaleString();
+            //     el.insurance = el.insurance.toLocaleString();
+            //     el.FOH = el.FOH.toLocaleString();
+            //     el.total_cost = el.total_cost.toLocaleString();
+            //     el.cogs_value = el.cogs_value.toLocaleString();
+            //     return el;
+            // });
 
             const excel = new Excel();
             excel
-                .addSheet('InOut Ward')
+                .addSheet('COGS')
                 .addColumns(columnsExport)
                 .addDataSource(
                     dataListExport.sort(function (a, b) {
-                        return a.item_name.localeCompare(b.item_name);
+                        return b.product_id.localeCompare(a.product_id);
                     }),
 
                     {
                         str2Percent: true,
                     },
                 )
-                .saveAs(`InOut_SH_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
+                .saveAs(`COGS_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xlsx`);
         }
         if (valueKindLocation == 'CH') {
             function download(filename, data) {
@@ -289,7 +287,7 @@ export default function Report_InOut_Ward({ title }) {
                 document.body.removeChild(link);
             }
             download(
-                `InOut_CH_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xls`,
+                `COGM_${valueDateAccountPeriod.format('YYYYMM')}_${dayjs().format('YYYYMMDD')}.xls`,
                 dataListExport,
             );
         }
@@ -310,7 +308,6 @@ export default function Report_InOut_Ward({ title }) {
                         <Typography color="text.primary">{t(title)}</Typography>
                     </Breadcrumbs>
                 </div>
-
                 <Box
                     sx={{
                         flexGrow: 1,
